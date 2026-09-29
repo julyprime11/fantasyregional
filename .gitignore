@@ -1,0 +1,44 @@
+# Dependencies and package manager logs
+node_modules/
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js and build output
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.turbo/
+.vercel/
+
+# Expo / React Native generated files
+.expo/
+web-build/
+expo-env.d.ts
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# Local environment and credentials
+.env*
+!.env.example
+!.env.*.example
+*.pem
+
+# Editor and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
