@@ -10,7 +10,9 @@
     "build:web": "npm run build --workspace=web",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
-    "test:ratings": "npm run test:ratings --workspace=@regional-fantasy/shared"
+    "test:ratings": "npm run test:ratings --workspace=@regional-fantasy/shared",
+    "test:fantasy": "npm run test:fantasy --workspace=@regional-fantasy/shared",
+    "test:fantasy-points": "npm run test:fantasy-points --workspace=@regional-fantasy/shared"
   },
   "devDependencies": {
     "eslint": "^9",

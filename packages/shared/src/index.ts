@@ -9,3 +9,5 @@ export { parseRatingInput } from "./master-data";
 export { MATCH_STATUSES, parseMatchInput, parseMatchId } from "./master-data";
 export { parseMatchPlayerId, parseMatchPlayerStats } from "./master-data";
 export { InputError, parseClubInput, parseTeamInput, parsePlayerInput, parsePlayerId, parseStaffInput, parseStaffId } from "./master-data";
+export * from "./fantasy-lineup";
+export * from "./fantasy-points";

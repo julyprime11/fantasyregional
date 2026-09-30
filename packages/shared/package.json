@@ -12,7 +12,9 @@
   "scripts": {
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test:ratings": "node --experimental-strip-types --test tests/ratings.test.mjs"
+    "test:ratings": "node --experimental-strip-types --test tests/ratings.test.mjs",
+    "test:fantasy": "node --experimental-strip-types --test tests/fantasy-lineup.test.mjs",
+    "test:fantasy-points": "node --experimental-strip-types --test tests/fantasy-points.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5"

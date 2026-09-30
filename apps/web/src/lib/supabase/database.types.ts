@@ -1,8 +1,13 @@
 // Manually maintained to match supabase/migrations/20260928000100_initial_schema.sql.
 // Replace with generated Supabase types when CLI tooling is introduced.
+
 import type { PlayerPosition } from "@regional-fantasy/shared";
 
-export type MatchStatus = "scheduled" | "finished" | "voting" | "closed";
+export type MatchStatus =
+  | "scheduled"
+  | "finished"
+  | "voting"
+  | "closed";
 
 export type Database = {
   public: {
@@ -31,6 +36,7 @@ export type Database = {
         };
         Relationships: [];
       };
+
       teams: {
         Row: {
           id: string;
@@ -63,6 +69,7 @@ export type Database = {
           },
         ];
       };
+
       players: {
         Row: {
           id: string;
@@ -107,6 +114,7 @@ export type Database = {
           },
         ];
       };
+
       staff: {
         Row: {
           id: string;
@@ -148,6 +156,7 @@ export type Database = {
           },
         ];
       };
+
       seasons: {
         Row: {
           id: string;
@@ -172,6 +181,7 @@ export type Database = {
         };
         Relationships: [];
       };
+
       competitions: {
         Row: {
           id: string;
@@ -201,6 +211,7 @@ export type Database = {
           },
         ];
       };
+
       matches: {
         Row: {
           id: string;
@@ -265,6 +276,7 @@ export type Database = {
           },
         ];
       };
+
       match_players: {
         Row: {
           id: string;
@@ -278,6 +290,7 @@ export type Database = {
           yellow_cards: number;
           red_cards: number;
           clean_sheet: boolean;
+          stats_completed: boolean;
           created_at: string;
         };
         Insert: {
@@ -292,6 +305,7 @@ export type Database = {
           yellow_cards?: number;
           red_cards?: number;
           clean_sheet?: boolean;
+          stats_completed?: boolean;
           created_at?: string;
         };
         Update: {
@@ -306,6 +320,7 @@ export type Database = {
           yellow_cards?: number;
           red_cards?: number;
           clean_sheet?: boolean;
+          stats_completed?: boolean;
           created_at?: string;
         };
         Relationships: [
@@ -332,6 +347,7 @@ export type Database = {
           },
         ];
       };
+
       ratings: {
         Row: {
           id: string;
@@ -377,7 +393,193 @@ export type Database = {
           },
         ];
       };
+
+      profiles: {
+  Row: {
+    id: string;
+    display_name: string;
+    voter_role: string | null;
+    created_at: string;
+  };
+  Insert: {
+    id: string;
+    display_name: string;
+    voter_role?: string | null;
+    created_at?: string;
+  };
+  Update: {
+    id?: string;
+    display_name?: string;
+    voter_role?: string | null;
+    created_at?: string;
+  };
+  Relationships: [];
+};
+
+      fantasy_leagues: {
+        Row: {
+          id: string;
+          team_id: string;
+          name: string;
+          code: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          name: string;
+          code: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          team_id?: string;
+          name?: string;
+          code?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_leagues_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fantasy_leagues_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      fantasy_league_members: {
+        Row: {
+          id: string;
+          league_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          user_id?: string;
+          joined_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_league_members_league_id_fkey";
+            columns: ["league_id"];
+            isOneToOne: false;
+            referencedRelation: "fantasy_leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fantasy_league_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      fantasy_lineups: {
+        Row: {
+          id: string;
+          league_id: string;
+          user_id: string;
+          match_id: string;
+          locked_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          user_id: string;
+          match_id: string;
+          locked_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          user_id?: string;
+          match_id?: string;
+          locked_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_lineups_match_id_fkey";
+            columns: ["match_id"];
+            isOneToOne: false;
+            referencedRelation: "matches";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fantasy_lineups_membership_fk";
+            columns: ["league_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "fantasy_league_members";
+            referencedColumns: ["league_id", "user_id"];
+          },
+        ];
+      };
+
+      fantasy_lineup_players: {
+        Row: {
+          id: string;
+          lineup_id: string;
+          player_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          lineup_id: string;
+          player_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          lineup_id?: string;
+          player_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_lineup_players_lineup_id_fkey";
+            columns: ["lineup_id"];
+            isOneToOne: false;
+            referencedRelation: "fantasy_lineups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fantasy_lineup_players_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
+
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
     Enums: { [_ in never]: never };

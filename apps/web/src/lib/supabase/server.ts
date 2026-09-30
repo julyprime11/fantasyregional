@@ -1,18 +1,56 @@
 import "server-only";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createServerClient,
+  type CookieOptions,
+} from "@supabase/ssr";
+
+import { cookies } from "next/headers";
+
 import type { Database } from "./database.types";
 import { getSupabaseEnv } from "./env";
 
-// A fresh anonymous client per call; no shared user session or cookie handling.
-export function createServerSupabaseClient(): SupabaseClient<Database> {
+export async function createServerSupabaseClient() {
   const { url, publishableKey } = getSupabaseEnv();
 
-  return createClient<Database>(url, publishableKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
+  const cookieStore = await cookies();
+
+  return createServerClient<Database>(
+    url,
+    publishableKey,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+
+        setAll(
+          cookiesToSet: {
+            name: string;
+            value: string;
+            options: CookieOptions;
+          }[],
+        ) {
+          try {
+            cookiesToSet.forEach(
+              ({ name, value, options }) => {
+                cookieStore.set(
+                  name,
+                  value,
+                  options,
+                );
+              },
+            );
+          } catch {
+            /*
+             * En algunos Server Components las cookies
+             * no se pueden modificar directamente.
+             * Más adelante añadiremos el proxy de sesión
+             * para gestionar también el refresh.
+             */
+          }
+        },
+      },
     },
-  });
+  );
 }

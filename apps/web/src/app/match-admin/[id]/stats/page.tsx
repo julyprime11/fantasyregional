@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
 import { getMatchById } from "@/data/matches";
 import { getMatchPlayers } from "@/data/match-players";
-import StatsForm from "./stats-form";
+
+import StatsManager from "./stats-manager";
 
 export default async function MatchStatsPage({
   params,
@@ -15,10 +17,11 @@ export default async function MatchStatsPage({
   let players;
 
   try {
-    [match, players] = await Promise.all([
-      getMatchById(id),
-      getMatchPlayers(id),
-    ]);
+    [match, players] =
+      await Promise.all([
+        getMatchById(id),
+        getMatchPlayers(id),
+      ]);
   } catch {
     return (
       <main className="mx-auto min-h-screen max-w-xl bg-zinc-50 p-4">
@@ -66,7 +69,7 @@ export default async function MatchStatsPage({
         </h1>
 
         <p className="mt-2 text-sm text-zinc-600">
-          Introduce los datos de cada jugador.
+          Selecciona el once inicial desde el campo y pulsa un jugador para introducir sus estadísticas.
         </p>
       </header>
 
@@ -88,65 +91,68 @@ export default async function MatchStatsPage({
           </Link>
         </section>
       ) : (
-        <section className="mt-6 space-y-5">
-          {players.map((entry) => {
-            const playerName = entry.player
-              ? `${entry.player.first_name} ${
-                  entry.player.last_name ?? ""
-                }`.trim()
-              : "Jugador no disponible";
+        <section className="mt-6">
+          <StatsManager
+            matchId={id}
+            players={players.map(
+              (entry) => ({
+                entryId:
+                  entry.id,
 
-            return (
-              <article
-                key={entry.id}
-                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      {entry.player?.shirt_number !== null &&
-                        entry.player?.shirt_number !== undefined && (
-                          <span className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-zinc-950 px-2 text-sm font-bold text-white">
-                            {entry.player.shirt_number}
-                          </span>
-                        )}
+                playerId:
+                  entry.player_id,
 
-                      <div>
-                        <h2 className="text-lg font-bold text-zinc-950">
-                          {playerName}
-                        </h2>
+                name:
+                  entry.player
+                    ? `${entry.player.first_name} ${
+                        entry.player.last_name ??
+                        ""
+                      }`.trim()
+                    : "Jugador no disponible",
 
-                        <p className="text-sm text-zinc-500">
-                          {entry.player?.position ?? "Sin posición"}
-                          {entry.team?.name
-                            ? ` · ${entry.team.name}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                shirtNumber:
+                  entry.player
+                    ?.shirt_number ??
+                  null,
 
-                  {entry.starter && (
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                      Titular
-                    </span>
-                  )}
-                </div>
+                position:
+                  entry.player
+                    ?.position ??
+                  "Sin posición",
 
-                <StatsForm
-                  matchId={id}
-                  entryId={entry.id}
-                  starter={entry.starter}
-                  minutesPlayed={entry.minutes_played}
-                  goals={entry.goals}
-                  assists={entry.assists}
-                  yellowCards={entry.yellow_cards}
-                  redCards={entry.red_cards}
-                  cleanSheet={entry.clean_sheet}
-                />
-              </article>
-            );
-          })}
+                teamId:
+                  entry.team_id,
+
+                teamName:
+                  entry.team?.name ??
+                  "Equipo no disponible",
+
+                starter:
+                  entry.starter,
+
+                statsCompleted:
+                  entry.stats_completed,
+
+                minutesPlayed:
+                  entry.minutes_played,
+
+                goals:
+                  entry.goals,
+
+                assists:
+                  entry.assists,
+
+                yellowCards:
+                  entry.yellow_cards,
+
+                redCards:
+                  entry.red_cards,
+
+                cleanSheet:
+                  entry.clean_sheet,
+              }),
+            )}
+          />
         </section>
       )}
     </main>
