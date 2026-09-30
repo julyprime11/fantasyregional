@@ -38,34 +38,40 @@ export function MobileVoteForm({
     state,
     formAction,
     pending,
-  ] = useActionState(
-    action,
-    {
-      status: "idle",
-      message: "",
-    },
-  );
+  ] =
+    useActionState(
+      action,
+      {
+        status: "idle",
+        message: "",
+      },
+    );
 
   const [
     scores,
     setScores,
-  ] = useState<
-    Record<
-      string,
-      number | null
-    >
-  >(() => {
-    const initial: Record<
-      string,
-      number | null
-    > = {};
+  ] =
+    useState<
+      Record<
+        string,
+        number | null
+      >
+    >(() => {
+      const initial: Record<
+        string,
+        number | null
+      > = {};
 
-    for (const player of players) {
-      initial[player.id] = null;
-    }
+      for (
+        const player of
+        players
+      ) {
+        initial[player.id] =
+          null;
+      }
 
-    return initial;
-  });
+      return initial;
+    });
 
   function setScore(
     playerId: string,
@@ -74,7 +80,8 @@ export function MobileVoteForm({
     setScores(
       (current) => ({
         ...current,
-        [playerId]: score,
+        [playerId]:
+          score,
       }),
     );
   }
@@ -85,7 +92,8 @@ export function MobileVoteForm({
     setScores(
       (current) => ({
         ...current,
-        [playerId]: null,
+        [playerId]:
+          null,
       }),
     );
   }
@@ -112,28 +120,34 @@ export function MobileVoteForm({
 
   return (
     <form
-      action={formAction}
-      className="mt-5"
+      action={
+        formAction
+      }
+      className="mt-7"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-end justify-between px-1">
         <div>
-          <h2 className="text-lg font-bold text-zinc-950">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+            Valoraciones
+          </p>
+
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
             Jugadores
           </h2>
 
-          <p className="text-xs text-zinc-500">
-            Pulsa una nota del 1 al 10.
+          <p className="mt-1 text-xs text-zinc-500">
+            Selecciona una nota del 1 al 10.
           </p>
         </div>
 
         <div className="text-right">
-          <span className="inline-flex rounded-full bg-zinc-200 px-3 py-1 text-xs font-bold text-zinc-700">
+          <span className="inline-flex rounded-full bg-white px-3 py-1.5 text-xs font-black text-zinc-500 shadow-sm ring-1 ring-black/5">
             {selectedCount} nuevos
           </span>
 
           {alreadyVotedCount >
             0 && (
-            <p className="mt-1 text-[11px] font-medium text-green-700">
+            <p className="mt-1 text-[10px] font-black text-[#0f3d2e]">
               {alreadyVotedCount} ya votados
             </p>
           )}
@@ -142,18 +156,26 @@ export function MobileVoteForm({
 
       {pendingPlayersCount ===
         0 && (
-        <div className="mt-4 rounded-2xl bg-green-50 p-4 ring-1 ring-green-100">
-          <p className="font-bold text-green-800">
-            Votación completada
-          </p>
+        <div className="mt-4 rounded-[1.4rem] bg-[#e8f2ed] p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3d2e] font-black text-white">
+              ✓
+            </div>
 
-          <p className="mt-1 text-sm text-green-700">
-            Ya has puntuado a todos los jugadores disponibles.
-          </p>
+            <div>
+              <p className="font-black text-[#0b2f23]">
+                Votación completada
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-[#557368]">
+                Ya has puntuado a todos los jugadores disponibles.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200">
+      <div className="mt-4 space-y-3">
         {players.map(
           (player) => {
             const selected =
@@ -166,174 +188,197 @@ export function MobileVoteForm({
               null;
 
             return (
-              <div
+              <article
                 key={
                   player.id
                 }
-                className={`border-b border-zinc-100 p-3 last:border-b-0 ${
+                className={`overflow-hidden rounded-[1.4rem] shadow-sm ring-1 ${
                   alreadyVoted
-                    ? "bg-green-50/50"
-                    : ""
+                    ? "bg-[#f0f6f3] ring-[#d7e8df]"
+                    : "bg-white ring-black/5"
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`flex h-8 min-w-8 shrink-0 items-center justify-center rounded-lg px-1 text-xs font-black ${
-                      alreadyVoted
-                        ? "bg-green-600 text-white"
-                        : "bg-zinc-950 text-white"
-                    }`}
-                  >
-                    {player.shirtNumber ??
-                      "—"}
-                  </span>
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-black ${
+                        alreadyVoted
+                          ? "bg-[#0f3d2e] text-white"
+                          : "bg-zinc-950 text-white"
+                      }`}
+                    >
+                      {player.shirtNumber ??
+                        "—"}
+                    </span>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-sm font-bold text-zinc-950">
-                        {
-                          player.name
-                        }
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="truncate font-black text-zinc-950">
+                          {player.name}
+                        </p>
+
+                        {alreadyVoted ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wide text-[#557368]">
+                              Votado
+                            </span>
+
+                            <span className="flex h-9 min-w-9 items-center justify-center rounded-full bg-[#0f3d2e] px-2 text-base font-black text-white">
+                              {player.existingScore}
+                            </span>
+                          </div>
+                        ) : selected !==
+                          null ? (
+                          <span className="flex h-9 min-w-9 items-center justify-center rounded-full bg-zinc-950 px-2 text-base font-black text-white">
+                            {selected}
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <p className="mt-1 truncate text-[11px] font-semibold text-zinc-400">
+                        {player.position}
+                        {" · "}
+                        {player.team}
                       </p>
+                    </div>
+                  </div>
 
-                      {alreadyVoted ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-green-700">
-                            ✓ Votado
+                  {!alreadyVoted && (
+                    <>
+                      <input
+                        type="hidden"
+                        name={`score:${player.id}`}
+                        value={
+                          selected ??
+                          ""
+                        }
+                      />
+
+                      <div className="mt-4 grid grid-cols-5 gap-2">
+                        {Array.from(
+                          {
+                            length: 10,
+                          },
+                          (
+                            _,
+                            index,
+                          ) =>
+                            index +
+                            1,
+                        ).map(
+                          (
+                            score,
+                          ) => (
+                            <button
+                              key={
+                                score
+                              }
+                              type="button"
+                              disabled={
+                                disabled ||
+                                pending
+                              }
+                              onClick={() =>
+                                setScore(
+                                  player.id,
+                                  score,
+                                )
+                              }
+                              className={`h-12 rounded-xl text-sm font-black transition active:scale-95 ${
+                                selected ===
+                                score
+                                  ? "bg-[#0f3d2e] text-white shadow-md"
+                                  : score >=
+                                      8
+                                    ? "bg-[#e8f2ed] text-[#0f3d2e]"
+                                    : score <=
+                                        4
+                                      ? "bg-red-50 text-red-600"
+                                      : "bg-zinc-100 text-zinc-700"
+                              } disabled:opacity-40`}
+                            >
+                              {
+                                score
+                              }
+                            </button>
+                          ),
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex gap-4 text-[9px] font-black uppercase tracking-wide">
+                          <span className="text-red-400">
+                            1 · Bajo
                           </span>
 
-                          <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-green-600 px-2 text-sm font-black text-white">
-                            {
-                              player.existingScore
-                            }
+                          <span className="text-zinc-400">
+                            5 · Bien
+                          </span>
+
+                          <span className="text-[#0f3d2e]">
+                            10 · Excelente
                           </span>
                         </div>
-                      ) : selected !==
-                        null ? (
-                        <span className="flex h-7 min-w-7 shrink-0 items-center justify-center rounded-full bg-zinc-950 px-2 text-sm font-black text-white">
-                          {
-                            selected
-                          }
-                        </span>
-                      ) : null}
-                    </div>
+                      </div>
 
-                    <p className="truncate text-[11px] text-zinc-400">
-                      {
-                        player.position
-                      }
-                      {" · "}
-                      {
-                        player.team
-                      }
-                    </p>
-                  </div>
-                </div>
-
-                {!alreadyVoted && (
-                  <>
-                    <input
-                      type="hidden"
-                      name={`score:${player.id}`}
-                      value={
-                        selected ??
-                        ""
-                      }
-                    />
-
-                    <div className="mt-2 grid grid-cols-10 gap-1">
-                      {Array.from(
-                        {
-                          length: 10,
-                        },
-                        (
-                          _,
-                          index,
-                        ) =>
-                          index +
-                          1,
-                      ).map(
-                        (
-                          score,
-                        ) => (
+                      {selected !==
+                        null && (
+                        <div className="mt-2 flex justify-end">
                           <button
-                            key={
-                              score
-                            }
                             type="button"
-                            disabled={
-                              disabled ||
-                              pending
-                            }
                             onClick={() =>
-                              setScore(
+                              clearScore(
                                 player.id,
-                                score,
                               )
                             }
-                            className={`h-9 min-w-0 rounded-lg text-xs font-black active:scale-95 ${
-                              selected ===
-                              score
-                                ? "bg-zinc-950 text-white"
-                                : "bg-zinc-100 text-zinc-700"
-                            } disabled:opacity-40`}
+                            className="text-[11px] font-bold text-zinc-400 underline"
                           >
-                            {
-                              score
-                            }
+                            Quitar nota
                           </button>
-                        ),
+                        </div>
                       )}
-                    </div>
-
-                    {selected !==
-                      null && (
-                      <div className="mt-1 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            clearScore(
-                              player.id,
-                            )
-                          }
-                          className="text-[11px] font-medium text-zinc-400 underline"
-                        >
-                          Quitar nota
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                    </>
+                  )}
+                </div>
+              </article>
             );
           },
         )}
       </div>
 
       {state.message && (
-        <p
+        <div
           role={
             state.status ===
             "error"
               ? "alert"
               : "status"
           }
-          className={`mt-4 rounded-xl p-4 text-sm font-medium ${
+          className={`mt-4 rounded-[1.2rem] p-4 ${
             state.status ===
             "error"
-              ? "bg-red-50 text-red-700"
-              : "bg-green-50 text-green-700"
+              ? "bg-red-50"
+              : "bg-[#e8f2ed]"
           }`}
         >
-          {
-            state.message
-          }
-        </p>
+          <p
+            className={`text-sm font-bold ${
+              state.status ===
+              "error"
+                ? "text-red-700"
+                : "text-[#0f3d2e]"
+            }`}
+          >
+            {
+              state.message
+            }
+          </p>
+        </div>
       )}
 
       {pendingPlayersCount >
         0 && (
-        <div className="sticky bottom-0 z-20 -mx-4 mt-5 border-t border-zinc-200 bg-zinc-50/95 p-4 backdrop-blur">
+        <div className="sticky bottom-0 z-20 -mx-4 mt-5 border-t border-zinc-200 bg-[#f2f4f2]/95 p-4 backdrop-blur">
           <button
             type="submit"
             disabled={
@@ -342,16 +387,31 @@ export function MobileVoteForm({
               selectedCount ===
                 0
             }
-            className="flex min-h-14 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-base font-bold text-white disabled:opacity-40"
+            className="flex min-h-14 w-full items-center justify-between rounded-[1.2rem] bg-[#0f3d2e] px-5 text-white shadow-lg disabled:opacity-40"
           >
-            {pending
-              ? "Enviando..."
-              : `Enviar ${selectedCount} ${
-                  selectedCount ===
+            <div className="text-left">
+              <p className="text-sm font-black">
+                {pending
+                  ? "Enviando votos..."
+                  : "Enviar votación"}
+              </p>
+
+              {!pending && (
+                <p className="mt-0.5 text-[10px] text-white/55">
+                  {selectedCount}{" "}
+                  {selectedCount ===
                   1
-                    ? "voto"
-                    : "votos"
-                }`}
+                    ? "jugador seleccionado"
+                    : "jugadores seleccionados"}
+                </p>
+              )}
+            </div>
+
+            {!pending && (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-black text-[#0f3d2e]">
+                →
+              </span>
+            )}
           </button>
         </div>
       )}

@@ -1,7 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import {
+  revalidatePath,
+} from "next/cache";
+
+import {
+  redirect,
+} from "next/navigation";
 
 import {
   InputError,
@@ -17,8 +22,13 @@ import {
   parseMatchPlayerStats,
 } from "@regional-fantasy/shared";
 
-import { createClub } from "@/data/clubs";
-import { createTeam } from "@/data/teams";
+import {
+  createClub,
+} from "@/data/clubs";
+
+import {
+  createTeam,
+} from "@/data/teams";
 
 import {
   createPlayer,
@@ -51,12 +61,19 @@ export type FormState = {
     | "idle"
     | "error"
     | "success";
+
   message: string;
-  values?: Record<string, string>;
+
+  values?: Record<
+    string,
+    string
+  >;
 };
 
 const forbiddenState: FormState = {
-  status: "error",
+  status:
+    "error",
+
   message:
     "No tienes permisos para realizar esta acción.",
 };
@@ -76,17 +93,25 @@ async function requireAdminAction(): Promise<
 
 async function save<T>(
   form: FormData,
+
   parse: (
-    input: Record<string, unknown>,
+    input: Record<
+      string,
+      unknown
+    >,
   ) => T,
+
   mutate: (
     input: T,
   ) => Promise<void>,
+
   successMessage =
     "Registro creado correctamente.",
 ): Promise<FormState> {
   const raw =
-    Object.fromEntries(form);
+    Object.fromEntries(
+      form,
+    );
 
   const values: Record<
     string,
@@ -98,37 +123,54 @@ async function save<T>(
     value,
   ] of form) {
     if (
-      !key.startsWith("$ACTION_") &&
-      typeof value === "string"
+      !key.startsWith(
+        "$ACTION_",
+      ) &&
+      typeof value ===
+        "string"
     ) {
-      values[key] = value;
+      values[key] =
+        value;
     }
   }
 
   let input: T;
 
   try {
-    input = parse(raw);
+    input =
+      parse(
+        raw,
+      );
   } catch (error) {
     return {
-      status: "error",
+      status:
+        "error",
+
       message:
-        error instanceof InputError
+        error instanceof
+        InputError
           ? error.message
           : "Revisa los datos del formulario.",
+
       values,
     };
   }
 
   try {
-    await mutate(input);
+    await mutate(
+      input,
+    );
   } catch (error) {
     return {
-      status: "error",
+      status:
+        "error",
+
       message:
-        error instanceof InputError
+        error instanceof
+        InputError
           ? error.message
           : "No se pudo guardar. Comprueba que el registro y las opciones seleccionadas sigan existiendo e inténtalo de nuevo.",
+
       values,
     };
   }
@@ -143,10 +185,14 @@ async function save<T>(
     "layout",
   );
 
-  revalidatePath("/");
+  revalidatePath(
+    "/",
+  );
 
   return {
-    status: "success",
+    status:
+      "success",
+
     message:
       successMessage,
   };
@@ -184,6 +230,7 @@ export async function addMatchPlayerAction(
 
   return save(
     form,
+
     (input) => ({
       matchId:
         parseMatchId(
@@ -264,7 +311,9 @@ export async function updateMatchPlayerStarterAction(
 
   try {
     const parsedMatchId =
-      parseMatchId(matchId);
+      parseMatchId(
+        matchId,
+      );
 
     const parsedEntryId =
       parseMatchPlayerId(
@@ -282,16 +331,22 @@ export async function updateMatchPlayerStarterAction(
     );
 
     return {
-      status: "success",
-      message: starter
-        ? "Jugador marcado como titular."
-        : "Jugador retirado del once inicial.",
+      status:
+        "success",
+
+      message:
+        starter
+          ? "Jugador marcado como titular."
+          : "Jugador retirado del once inicial.",
     };
   } catch (error) {
     return {
-      status: "error",
+      status:
+        "error",
+
       message:
-        error instanceof InputError
+        error instanceof
+        InputError
           ? error.message
           : "No se pudo actualizar el once inicial.",
     };
@@ -366,15 +421,18 @@ export async function updateMatchAction(
     return forbidden;
   }
 
+  const parsedMatchId =
+    parseMatchId(
+      matchId,
+    );
+
   const result =
     await save(
       form,
 
       (input) => ({
         id:
-          parseMatchId(
-            matchId,
-          ),
+          parsedMatchId,
 
         match:
           parseMatchInput(
@@ -382,7 +440,10 @@ export async function updateMatchAction(
           ),
       }),
 
-      ({ id, match }) =>
+      ({
+        id,
+        match,
+      }) =>
         updateMatch(
           id,
           match,
@@ -395,8 +456,16 @@ export async function updateMatchAction(
     result.status ===
     "success"
   ) {
+    revalidatePath(
+      `/match-admin/${parsedMatchId}`,
+    );
+
+    revalidatePath(
+      `/admin/matches/${parsedMatchId}/edit`,
+    );
+
     redirect(
-      "/admin/matches",
+      `/match-admin/${parsedMatchId}`,
     );
   }
 
@@ -467,7 +536,10 @@ export async function updatePlayerAction(
           ),
       }),
 
-      ({ id, player }) =>
+      ({
+        id,
+        player,
+      }) =>
         updatePlayer(
           id,
           player,
@@ -534,7 +606,10 @@ export async function updateStaffAction(
           ),
       }),
 
-      ({ id, staff }) =>
+      ({
+        id,
+        staff,
+      }) =>
         updateStaff(
           id,
           staff,

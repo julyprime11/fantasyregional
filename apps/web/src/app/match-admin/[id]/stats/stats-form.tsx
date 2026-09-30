@@ -53,18 +53,16 @@ export default function StatsForm({
     state,
     formAction,
     pending,
-  ] = useActionState(
-    action,
-    initialState,
-  );
+  ] =
+    useActionState(
+      action,
+      initialState,
+    );
 
-  /*
-   * Guardamos siempre la versión más reciente del callback
-   * sin provocar que el useEffect se ejecute de nuevo cada
-   * vez que renderiza el componente padre.
-   */
   const onSavedRef =
-    useRef(onSaved);
+    useRef(
+      onSaved,
+    );
 
   useEffect(() => {
     onSavedRef.current =
@@ -83,38 +81,49 @@ export default function StatsForm({
   const [
     minutes,
     setMinutes,
-  ] = useState(
-    minutesPlayed,
-  );
+  ] =
+    useState(
+      minutesPlayed,
+    );
 
   const [
     goalsValue,
     setGoalsValue,
-  ] = useState(goals);
+  ] =
+    useState(
+      goals,
+    );
 
   const [
     assistsValue,
     setAssistsValue,
-  ] = useState(assists);
+  ] =
+    useState(
+      assists,
+    );
 
   const [
     yellowValue,
     setYellowValue,
-  ] = useState(
-    yellowCards,
-  );
+  ] =
+    useState(
+      yellowCards,
+    );
 
   const [
     redValue,
     setRedValue,
-  ] = useState(
-    redCards,
-  );
+  ] =
+    useState(
+      redCards,
+    );
 
   return (
     <form
-      action={formAction}
-      className="mt-5 space-y-5"
+      action={
+        formAction
+      }
+      className="mt-5 space-y-4"
     >
       {starter && (
         <input
@@ -124,80 +133,128 @@ export default function StatsForm({
         />
       )}
 
-      <QuickNumberField
-        name="minutes_played"
-        label="Minutos"
-        value={minutes}
-        onChange={
-          setMinutes
-        }
-        max={120}
-        quickValues={[
-          0,
-          15,
-          30,
-          45,
-          60,
-          75,
-          90,
-        ]}
-      />
-
-      <div className="grid grid-cols-2 gap-3">
-        <QuickNumberField
-          name="goals"
-          label="Goles"
-          value={
-            goalsValue
-          }
-          onChange={
-            setGoalsValue
-          }
-        />
-
-        <QuickNumberField
-          name="assists"
-          label="Asistencias"
-          value={
-            assistsValue
-          }
-          onChange={
-            setAssistsValue
-          }
-        />
-
-        <QuickNumberField
-          name="yellow_cards"
-          label="Amarillas"
-          value={
-            yellowValue
-          }
-          onChange={
-            setYellowValue
-          }
-        />
-
-        <QuickNumberField
-          name="red_cards"
-          label="Rojas"
-          value={
-            redValue
-          }
-          onChange={
-            setRedValue
-          }
-        />
-      </div>
-
-      <label className="flex min-h-14 items-center justify-between rounded-xl bg-zinc-50 px-4">
-        <div>
-          <p className="font-semibold text-zinc-950">
-            Portería a cero
+      {/* MINUTOS */}
+      <section className="rounded-[1.4rem] bg-zinc-50 p-4">
+        <div className="mb-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
+            Participación
           </p>
 
-          <p className="text-xs text-zinc-500">
-            Aplicable según posición
-          </p>
+          <h3 className="mt-1 font-black text-zinc-950">
+            Minutos jugados
+          </h3>
+        </div>
+
+        <QuickNumberField
+          name="minutes_played"
+          label="Minutos"
+          value={minutes}
+          onChange={
+            setMinutes
+          }
+          max={120}
+          quickValues={[
+            0,
+            15,
+            30,
+            45,
+            60,
+            75,
+            90,
+          ]}
+          large
+        />
+      </section>
+
+      {/* RENDIMIENTO */}
+      <section>
+        <p className="px-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
+          Rendimiento
+        </p>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <StatBox
+            icon="⚽"
+            title="Goles"
+          >
+            <QuickNumberField
+              name="goals"
+              label="Goles"
+              value={
+                goalsValue
+              }
+              onChange={
+                setGoalsValue
+              }
+            />
+          </StatBox>
+
+          <StatBox
+            icon="👟"
+            title="Asistencias"
+          >
+            <QuickNumberField
+              name="assists"
+              label="Asistencias"
+              value={
+                assistsValue
+              }
+              onChange={
+                setAssistsValue
+              }
+            />
+          </StatBox>
+
+          <StatBox
+            icon="🟨"
+            title="Amarillas"
+          >
+            <QuickNumberField
+              name="yellow_cards"
+              label="Amarillas"
+              value={
+                yellowValue
+              }
+              onChange={
+                setYellowValue
+              }
+            />
+          </StatBox>
+
+          <StatBox
+            icon="🟥"
+            title="Rojas"
+          >
+            <QuickNumberField
+              name="red_cards"
+              label="Rojas"
+              value={
+                redValue
+              }
+              onChange={
+                setRedValue
+              }
+            />
+          </StatBox>
+        </div>
+      </section>
+
+      {/* PORTERÍA CERO */}
+      <label className="flex min-h-16 cursor-pointer items-center justify-between rounded-[1.3rem] bg-[#e8f2ed] px-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3d2e] text-white">
+            🧤
+          </div>
+
+          <div>
+            <p className="font-black text-[#0b2f23]">
+              Portería a cero
+            </p>
+
+            <p className="mt-0.5 text-[10px] font-semibold text-[#557368]">
+              Aplicable según posición
+            </p>
+          </div>
         </div>
 
         <input
@@ -206,40 +263,80 @@ export default function StatsForm({
           defaultChecked={
             cleanSheet
           }
-          className="h-6 w-6"
+          className="h-6 w-6 accent-[#0f3d2e]"
         />
       </label>
 
+      {/* ESTADO */}
       {state.status !==
         "idle" && (
-        <p
+        <div
           role={
             state.status ===
             "error"
               ? "alert"
-              : undefined
+              : "status"
           }
-          className={`rounded-xl p-3 text-sm ${
+          className={`rounded-[1.2rem] p-4 ${
             state.status ===
             "error"
-              ? "bg-red-50 text-red-700"
-              : "bg-green-50 text-green-700"
+              ? "bg-red-50"
+              : "bg-[#e8f2ed]"
           }`}
         >
-          {state.message}
-        </p>
+          <p
+            className={`text-sm font-bold ${
+              state.status ===
+              "error"
+                ? "text-red-700"
+                : "text-[#0f3d2e]"
+            }`}
+          >
+            {
+              state.message
+            }
+          </p>
+        </div>
       )}
 
       <button
         type="submit"
-        disabled={pending}
-        className="flex min-h-14 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 font-semibold text-white disabled:opacity-50"
+        disabled={
+          pending
+        }
+        className="flex min-h-14 w-full items-center justify-center rounded-[1.2rem] bg-[#0f3d2e] px-4 text-base font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-50"
       >
         {pending
           ? "Guardando..."
-          : "Guardar estadísticas"}
+          : "Guardar estadísticas →"}
       </button>
     </form>
+  );
+}
+
+function StatBox({
+  icon,
+  title,
+  children,
+}: {
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[1.3rem] bg-zinc-50 p-3">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-lg">
+          {icon}
+        </span>
+
+        <p className="text-xs font-black text-zinc-700">
+          {title}
+        </p>
+      </div>
+
+      {children}
+    </div>
   );
 }
 
@@ -250,6 +347,7 @@ function QuickNumberField({
   onChange,
   max,
   quickValues,
+  large = false,
 }: {
   name: string;
   label: string;
@@ -259,6 +357,7 @@ function QuickNumberField({
   ) => void;
   max?: number;
   quickValues?: number[];
+  large?: boolean;
 }) {
   function decrease() {
     onChange(
@@ -274,7 +373,8 @@ function QuickNumberField({
       value + 1;
 
     if (
-      max !== undefined
+      max !==
+      undefined
     ) {
       onChange(
         Math.min(
@@ -286,7 +386,9 @@ function QuickNumberField({
       return;
     }
 
-    onChange(next);
+    onChange(
+      next,
+    );
   }
 
   function setSafeValue(
@@ -299,7 +401,8 @@ function QuickNumberField({
       );
 
     if (
-      max !== undefined
+      max !==
+      undefined
     ) {
       safe =
         Math.min(
@@ -308,22 +411,30 @@ function QuickNumberField({
         );
     }
 
-    onChange(safe);
+    onChange(
+      safe,
+    );
   }
 
   return (
-    <div className="rounded-xl bg-zinc-50 p-3">
-      <p className="mb-3 text-sm font-medium text-zinc-700">
-        {label}
-      </p>
-
-      <div className="grid grid-cols-[52px_1fr_52px] items-center gap-2">
+    <div>
+      <div
+        className={`grid items-center gap-2 ${
+          large
+            ? "grid-cols-[56px_1fr_56px]"
+            : "grid-cols-[42px_1fr_42px]"
+        }`}
+      >
         <button
           type="button"
           onClick={
             decrease
           }
-          className="h-12 rounded-lg border border-zinc-300 bg-white text-2xl font-bold text-zinc-950 active:scale-95"
+          className={`rounded-xl bg-white font-black text-zinc-950 shadow-sm ring-1 ring-black/5 active:scale-95 ${
+            large
+              ? "h-14 text-2xl"
+              : "h-11 text-xl"
+          }`}
           aria-label={`Restar ${label}`}
         >
           −
@@ -331,12 +442,18 @@ function QuickNumberField({
 
         <input
           type="number"
-          name={name}
+          name={
+            name
+          }
           min={0}
-          max={max}
+          max={
+            max
+          }
           step={1}
           required
-          value={value}
+          value={
+            value
+          }
           onChange={(
             event,
           ) =>
@@ -348,7 +465,11 @@ function QuickNumberField({
             )
           }
           inputMode="numeric"
-          className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-3 text-center text-xl font-bold text-zinc-950 outline-none focus:border-zinc-950"
+          className={`w-full rounded-xl border-0 bg-white px-2 text-center font-black text-zinc-950 outline-none ring-1 ring-black/5 focus:ring-[#0f3d2e] ${
+            large
+              ? "h-14 text-2xl"
+              : "h-11 text-xl"
+          }`}
         />
 
         <button
@@ -356,7 +477,11 @@ function QuickNumberField({
           onClick={
             increase
           }
-          className="h-12 rounded-lg border border-zinc-300 bg-white text-2xl font-bold text-zinc-950 active:scale-95"
+          className={`rounded-xl bg-white font-black text-zinc-950 shadow-sm ring-1 ring-black/5 active:scale-95 ${
+            large
+              ? "h-14 text-2xl"
+              : "h-11 text-xl"
+          }`}
           aria-label={`Sumar ${label}`}
         >
           +
@@ -379,11 +504,11 @@ function QuickNumberField({
                     quickValue,
                   )
                 }
-                className={`min-h-10 rounded-lg border px-2 text-sm font-semibold ${
+                className={`min-h-10 rounded-xl px-2 text-xs font-black ${
                   value ===
                   quickValue
-                    ? "border-zinc-950 bg-zinc-950 text-white"
-                    : "border-zinc-300 bg-white text-zinc-700"
+                    ? "bg-[#0f3d2e] text-white"
+                    : "bg-white text-zinc-500 ring-1 ring-black/5"
                 }`}
               >
                 {

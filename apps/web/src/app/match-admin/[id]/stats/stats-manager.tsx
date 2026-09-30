@@ -275,7 +275,7 @@ export default function StatsManager({
       {errorMessage && (
         <p
           role="alert"
-          className="rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700"
+          className="rounded-[1.2rem] bg-red-50 p-4 text-sm font-bold text-red-700"
         >
           {errorMessage}
         </p>
@@ -337,25 +337,27 @@ export default function StatsManager({
                 teamId
               }
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-end justify-between px-1">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-950">
-                    {
-                      teamName
-                    }
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                    Once inicial
+                  </p>
+
+                  <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
+                    {teamName}
                   </h2>
 
                   <p className="mt-1 text-sm text-zinc-500">
-                    Selecciona el once inicial desde el campo
+                    Selecciona los titulares directamente desde el campo
                   </p>
                 </div>
 
                 <span
-                  className={`rounded-full px-3 py-1 text-sm font-bold ${
+                  className={`rounded-full px-4 py-2 text-xs font-black ${
                     starters.length ===
                     11
-                      ? "bg-green-100 text-green-800"
-                      : "bg-zinc-200 text-zinc-700"
+                      ? "bg-[#e8f2ed] text-[#0f3d2e]"
+                      : "bg-white text-zinc-500 ring-1 ring-black/5"
                   }`}
                 >
                   {
@@ -365,8 +367,16 @@ export default function StatsManager({
                 </span>
               </div>
 
-              <div className="mt-5 overflow-hidden rounded-3xl bg-emerald-700 p-3 shadow-lg ring-1 ring-emerald-800">
-                <div className="relative min-h-[570px] overflow-hidden rounded-2xl border-2 border-white/70">
+              <div className="mt-4 overflow-hidden rounded-[1.7rem] bg-[#087443] p-2.5 shadow-xl ring-1 ring-black/10">
+                <div
+                  className="relative min-h-[560px] overflow-hidden rounded-[1.35rem] border-2 border-white/70"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(255,255,255,0.045) 50%, transparent 50%)",
+                    backgroundSize:
+                      "64px 64px",
+                  }}
+                >
                   <div className="absolute left-0 right-0 top-1/2 border-t-2 border-white/60" />
 
                   <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
@@ -375,7 +385,7 @@ export default function StatsManager({
 
                   <div className="absolute bottom-0 left-1/2 h-16 w-40 -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
 
-                  <div className="relative z-10 flex min-h-[570px] flex-col justify-between px-2 py-5">
+                  <div className="relative z-10 flex min-h-[560px] flex-col justify-between px-2 py-5">
                     <StarterRow
                       players={
                         startersByLine.FWD
@@ -456,22 +466,26 @@ export default function StatsManager({
                 </div>
               </div>
 
-              <p className="mt-3 text-sm text-zinc-500">
-                Pulsa un jugador del campo para editar sus estadísticas.
+              <p className="mt-3 px-1 text-xs leading-5 text-zinc-500">
+                Pulsa sobre cualquier jugador del campo para editar sus estadísticas.
               </p>
 
-              <div className="mt-8 flex items-center justify-between">
+              <div className="mt-8 flex items-end justify-between px-1">
                 <div>
-                  <h3 className="text-lg font-bold text-zinc-950">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                    Plantilla
+                  </p>
+
+                  <h3 className="mt-1 text-xl font-black text-zinc-950">
                     Banquillo
                   </h3>
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Pulsa cualquier jugador para introducir sus estadísticas
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Pulsa un jugador para registrar sus estadísticas
                   </p>
                 </div>
 
-                <span className="text-sm text-zinc-500">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-zinc-500 shadow-sm ring-1 ring-black/5">
                   {
                     substitutes.length
                   }
@@ -480,11 +494,11 @@ export default function StatsManager({
 
               {substitutes.length ===
               0 ? (
-                <div className="mt-4 rounded-2xl bg-white p-5 text-sm text-zinc-500 shadow-sm ring-1 ring-zinc-200">
+                <div className="mt-4 rounded-[1.4rem] bg-white p-5 text-sm text-zinc-500 shadow-sm ring-1 ring-black/5">
                   No quedan jugadores en el banquillo.
                 </div>
               ) : (
-                <div className="mt-4 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200">
+                <div className="mt-4 overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-black/5">
                   {substitutes.map(
                     (
                       player,
@@ -555,16 +569,20 @@ export default function StatsManager({
               }
             >
               <div
-                className="max-h-[75vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl"
+                className="max-h-[78vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-[#f5f6f4] p-5 shadow-2xl sm:rounded-[2rem]"
                 onClick={(
                   event,
                 ) =>
                   event.stopPropagation()
                 }
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-end justify-between px-1">
                   <div>
-                    <h2 className="text-xl font-bold text-zinc-950">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                      Once inicial
+                    </p>
+
+                    <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
                       Seleccionar titular
                     </h2>
 
@@ -580,7 +598,7 @@ export default function StatsManager({
                         null,
                       )
                     }
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-xl font-bold text-zinc-700"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5"
                   >
                     ×
                   </button>
@@ -589,7 +607,7 @@ export default function StatsManager({
                 <div className="mt-5 space-y-2">
                   {available.length ===
                   0 ? (
-                    <p className="rounded-xl bg-zinc-50 p-4 text-sm text-zinc-500">
+                    <p className="rounded-[1.2rem] bg-white p-4 text-sm text-zinc-500 ring-1 ring-black/5">
                       No hay jugadores disponibles para esta posición.
                     </p>
                   ) : (
@@ -610,7 +628,7 @@ export default function StatsManager({
                               player,
                             )
                           }
-                          className="flex min-h-16 w-full items-center justify-between rounded-2xl bg-white px-4 text-left shadow-sm ring-1 ring-zinc-200 disabled:opacity-50"
+                          className="flex min-h-16 w-full items-center justify-between rounded-[1.2rem] bg-white px-4 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
                         >
                           <div className="flex items-center gap-3">
                             <PlayerNumber
@@ -620,13 +638,13 @@ export default function StatsManager({
                             />
 
                             <div>
-                              <p className="font-bold text-zinc-950">
+                              <p className="font-black text-zinc-950">
                                 {
                                   player.name
                                 }
                               </p>
 
-                              <p className="text-sm text-zinc-500">
+                              <p className="mt-1 text-xs font-semibold text-zinc-400">
                                 {
                                   player.position
                                 }
@@ -634,7 +652,7 @@ export default function StatsManager({
                             </div>
                           </div>
 
-                          <span className="text-xl font-bold">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-lg font-black text-white">
                             +
                           </span>
                         </button>
@@ -657,7 +675,7 @@ export default function StatsManager({
           }
         >
           <div
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-2xl sm:rounded-3xl"
+            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl sm:rounded-[2rem]"
             onClick={(
               event,
             ) =>
@@ -674,11 +692,11 @@ export default function StatsManager({
                 />
 
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
                     Estadísticas
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-bold text-zinc-950">
+                  <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
                     {
                       selectedPlayer.name
                     }
@@ -695,10 +713,10 @@ export default function StatsManager({
                   </p>
 
                   <span
-                    className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                    className={`mt-2 inline-flex rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
                       selectedPlayer.starter
-                        ? "bg-green-100 text-green-800"
-                        : "bg-zinc-100 text-zinc-700"
+                        ? "bg-[#e8f2ed] text-[#0f3d2e]"
+                        : "bg-zinc-100 text-zinc-500"
                     }`}
                   >
                     {selectedPlayer.starter
@@ -715,7 +733,7 @@ export default function StatsManager({
                     null,
                   )
                 }
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-bold text-zinc-700"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-black text-zinc-700"
               >
                 ×
               </button>
@@ -774,7 +792,7 @@ export default function StatsManager({
                     null,
                   );
                 }}
-                className="mt-4 min-h-12 w-full rounded-xl bg-red-50 px-4 font-semibold text-red-700 disabled:opacity-50"
+                className="mt-4 min-h-12 w-full rounded-[1rem] bg-red-50 px-4 font-black text-red-700 disabled:opacity-50"
               >
                 Quitar del once inicial
               </button>
@@ -795,7 +813,7 @@ export default function StatsManager({
                     null,
                   );
                 }}
-                className="mt-4 min-h-12 w-full rounded-xl bg-zinc-100 px-4 font-semibold text-zinc-950 disabled:opacity-50"
+                className="mt-4 min-h-12 w-full rounded-[1rem] bg-zinc-100 px-4 font-black text-zinc-950 disabled:opacity-50"
               >
                 Añadir al once inicial
               </button>
@@ -836,7 +854,8 @@ function StarterRow({
     <div
       className="grid items-start justify-items-center gap-1"
       style={{
-        gridTemplateColumns: `repeat(${slots}, minmax(0, 1fr))`,
+        gridTemplateColumns:
+          `repeat(${slots}, minmax(0, 1fr))`,
       }}
     >
       {players.map(
@@ -861,13 +880,13 @@ function StarterRow({
               }
             />
 
-            <span className="mt-1 max-w-full truncate rounded-md bg-zinc-950/80 px-2 py-1 text-[10px] font-bold text-white">
+            <span className="mt-1 max-w-full truncate rounded-md bg-zinc-950/85 px-2 py-1 text-[9px] font-black text-white shadow-sm">
               {
                 player.name
               }
             </span>
 
-            <span className="mt-1 text-[9px] font-semibold text-white/80">
+            <span className="mt-1 text-[8px] font-bold text-white/75">
               {
                 player.position
               }
@@ -884,11 +903,11 @@ function StarterRow({
           }
           className="flex w-full max-w-[82px] flex-col items-center"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-xl font-bold text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-xl font-black text-white backdrop-blur-sm">
             +
           </div>
 
-          <span className="mt-1 text-[10px] font-bold text-white/70">
+          <span className="mt-1 text-[9px] font-black text-white/70">
             {
               label
             }
@@ -926,24 +945,31 @@ function BenchPlayer({
         />
 
         <div className="min-w-0">
-          <p className="truncate font-bold text-zinc-950">
+          <p className="truncate font-black text-zinc-950">
             {
               player.name
             }
           </p>
 
-          <p className="mt-1 text-xs text-zinc-500">
-            {
-              player.position
-            }
+          <div className="mt-1 flex items-center gap-2 text-xs text-zinc-500">
+            <span>
+              {
+                player.position
+              }
+            </span>
 
             {player.statsCompleted && (
               <>
-                {" · "}
-                Estadísticas guardadas
+                <span>
+                  ·
+                </span>
+
+                <span className="font-bold text-[#0f3d2e]">
+                  Estadísticas guardadas
+                </span>
               </>
             )}
-          </p>
+          </div>
         </div>
       </button>
 
@@ -955,7 +981,7 @@ function BenchPlayer({
         onClick={
           onAddStarter
         }
-        className="shrink-0 rounded-xl bg-zinc-100 px-3 py-2 text-xs font-bold text-zinc-700 disabled:opacity-50"
+        className="shrink-0 rounded-xl bg-[#e8f2ed] px-3 py-2 text-xs font-black text-[#0f3d2e] disabled:opacity-50"
       >
         + XI
       </button>
@@ -978,15 +1004,15 @@ function PlayerNumber({
           : "h-12 w-12"
       } ${
         player.statsCompleted
-          ? "bg-green-500 text-white"
-          : "bg-white text-emerald-800"
+          ? "bg-[#0f3d2e] text-white"
+          : "bg-white text-[#0f5e3d]"
       }`}
     >
       {player.shirtNumber ??
         "—"}
 
       {player.statsCompleted && (
-        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-black text-green-600 shadow">
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-black text-[#0f3d2e] shadow">
           ✓
         </span>
       )}
