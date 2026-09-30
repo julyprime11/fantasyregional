@@ -94,11 +94,15 @@ async function assertFantasyContext(
   input: LineupIdentity,
 ): Promise<{
   teamId: string;
+  matchDate: string;
 }> {
   const supabase =
     await createServerSupabaseClient();
 
-  const { data: membership, error: membershipError } =
+  const {
+    data: membership,
+    error: membershipError,
+  } =
     await supabase
       .from("fantasy_league_members")
       .select("id")
@@ -116,7 +120,10 @@ async function assertFantasyContext(
     );
   }
 
-  const { data: league, error: leagueError } =
+  const {
+    data: league,
+    error: leagueError,
+  } =
     await supabase
       .from("fantasy_leagues")
       .select("id, team_id")
@@ -133,10 +140,15 @@ async function assertFantasyContext(
     );
   }
 
-  const { data: match, error: matchError } =
+  const {
+    data: match,
+    error: matchError,
+  } =
     await supabase
       .from("matches")
-      .select("id, home_team_id, away_team_id")
+      .select(
+        "id, home_team_id, away_team_id, match_date",
+      )
       .eq("id", input.matchId)
       .maybeSingle();
 
@@ -162,6 +174,7 @@ async function assertFantasyContext(
 
   return {
     teamId: league.team_id,
+    matchDate: match.match_date,
   };
 }
 
@@ -221,6 +234,26 @@ export async function saveFantasyLineup(
   const context =
     await assertFantasyContext(input);
 
+  /*
+   * Bloqueo automático:
+   * el XI ya no se puede modificar desde
+   * una hora antes del comienzo del partido.
+   */
+  const matchTime =
+    new Date(
+      context.matchDate,
+    ).getTime();
+
+  const lockTime =
+    matchTime -
+    60 * 60 * 1000;
+
+  if (Date.now() >= lockTime) {
+    throw new InputError(
+      "El plazo para modificar tu XI ha terminado. La alineación se bloquea una hora antes del partido.",
+    );
+  }
+
   const lineup =
     await getOrCreateFantasyLineup(input);
 
@@ -252,7 +285,10 @@ export async function saveFantasyLineup(
   const supabase =
     await createServerSupabaseClient();
 
-  const { data: players, error: playersError } =
+  const {
+    data: players,
+    error: playersError,
+  } =
     await supabase
       .from("players")
       .select(
@@ -289,10 +325,13 @@ export async function saveFantasyLineup(
 
   const validation =
     validateFantasyLineup(
-      players.map((player) => ({
-        id: player.id,
-        position: player.position,
-      })),
+      players.map(
+        (player) => ({
+          id: player.id,
+          position:
+            player.position,
+        }),
+      ),
     );
 
   if (!validation.valid) {
@@ -306,26 +345,33 @@ export async function saveFantasyLineup(
       lineup.id,
     );
 
-  const currentIds = new Set(
-    currentPlayers.map(
-      (entry) => entry.player_id,
-    ),
-  );
+  const currentIds =
+    new Set(
+      currentPlayers.map(
+        (entry) =>
+          entry.player_id,
+      ),
+    );
 
-  const nextIds = new Set(
-    uniquePlayerIds,
-  );
+  const nextIds =
+    new Set(
+      uniquePlayerIds,
+    );
 
   const playersToInsert =
     uniquePlayerIds.filter(
       (playerId) =>
-        !currentIds.has(playerId),
+        !currentIds.has(
+          playerId,
+        ),
     );
 
   const entriesToDelete =
     currentPlayers.filter(
       (entry) =>
-        !nextIds.has(entry.player_id),
+        !nextIds.has(
+          entry.player_id,
+        ),
     );
 
   /*
@@ -333,8 +379,13 @@ export async function saveFantasyLineup(
    * Así, si el INSERT falla, conservamos la
    * alineación anterior.
    */
-  if (playersToInsert.length > 0) {
-    const { error: insertError } =
+  if (
+    playersToInsert.length >
+    0
+  ) {
+    const {
+      error: insertError,
+    } =
       await supabase
         .from(
           "fantasy_lineup_players",
@@ -342,8 +393,10 @@ export async function saveFantasyLineup(
         .insert(
           playersToInsert.map(
             (playerId) => ({
-              lineup_id: lineup.id,
-              player_id: playerId,
+              lineup_id:
+                lineup.id,
+              player_id:
+                playerId,
             }),
           ),
         );
@@ -353,8 +406,13 @@ export async function saveFantasyLineup(
     }
   }
 
-  if (entriesToDelete.length > 0) {
-    const { error: deleteError } =
+  if (
+    entriesToDelete.length >
+    0
+  ) {
+    const {
+      error: deleteError,
+    } =
       await supabase
         .from(
           "fantasy_lineup_players",
@@ -363,7 +421,8 @@ export async function saveFantasyLineup(
         .in(
           "id",
           entriesToDelete.map(
-            (entry) => entry.id,
+            (entry) =>
+              entry.id,
           ),
         );
 
@@ -382,7 +441,10 @@ export async function saveFantasyLineup(
         updated_at:
           new Date().toISOString(),
       })
-      .eq("id", lineup.id)
+      .eq(
+        "id",
+        lineup.id,
+      )
       .select("*")
       .single();
 
@@ -408,8 +470,14 @@ export async function lockFantasyLineup(
         updated_at:
           new Date().toISOString(),
       })
-      .eq("id", lineupId)
-      .is("locked_at", null);
+      .eq(
+        "id",
+        lineupId,
+      )
+      .is(
+        "locked_at",
+        null,
+      );
 
   if (error) {
     throw error;

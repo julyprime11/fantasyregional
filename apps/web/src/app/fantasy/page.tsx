@@ -2,24 +2,37 @@ import Link from "next/link";
 
 import { requireUser } from "@/lib/auth";
 
+import LogoutButton from "./logout-button";
+
 export default async function FantasyPage() {
-  const user = await requireUser();
+  const user =
+    await requireUser();
 
   const displayName =
-    user.user_metadata?.display_name ??
-    user.email?.split("@")[0] ??
+    user.user_metadata
+      ?.display_name ??
+    user.email?.split(
+      "@",
+    )[0] ??
     "Jugador";
 
   return (
     <main className="mx-auto min-h-screen max-w-xl bg-zinc-50 px-4 py-8">
       <header>
-        <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-          Regional Fantasy
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+              Regional Fantasy
+            </p>
 
-        <h1 className="mt-2 text-3xl font-bold text-zinc-950">
-          Hola, {displayName}
-        </h1>
+            <h1 className="mt-2 text-3xl font-bold text-zinc-950">
+              Hola,{" "}
+              {displayName}
+            </h1>
+          </div>
+
+          <LogoutButton />
+        </div>
 
         <p className="mt-2 text-sm text-zinc-600">
           Gestiona tus ligas Fantasy y prepara tu equipo para la próxima jornada.
@@ -89,8 +102,8 @@ export default async function FantasyPage() {
         </p>
 
         <p className="mt-2 text-sm leading-6 text-zinc-500">
-          Elige tu XI para cada partido. Los puntos se calcularán a partir de
-          las valoraciones finales de los jugadores.
+          Elige tu XI para cada partido. Los puntos se calcularán a partir de las
+          valoraciones finales de los jugadores.
         </p>
       </section>
     </main>

@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
+
 import {
   getFantasyLeagueById,
   getFantasyLeagueMembers,
 } from "@/data/fantasy-leagues";
+
 import { getMatches } from "@/data/matches";
 import { getPlayersByTeam } from "@/data/players";
 import { getTeams } from "@/data/teams";
+
 import {
   getFantasyLineup,
   getFantasyLineupPlayers,
@@ -21,22 +24,32 @@ export default async function FantasyLineupPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
-  const { id: leagueId } = await params;
+  const user =
+    await requireUser();
+
+  const { id: leagueId } =
+    await params;
 
   const league =
-    await getFantasyLeagueById(leagueId);
+    await getFantasyLeagueById(
+      leagueId,
+    );
 
   if (!league) {
     notFound();
   }
 
   const members =
-    await getFantasyLeagueMembers(leagueId);
+    await getFantasyLeagueMembers(
+      leagueId,
+    );
 
-  const isMember = members.some(
-    (member) => member.user_id === user.id,
-  );
+  const isMember =
+    members.some(
+      (member) =>
+        member.user_id ===
+        user.id,
+    );
 
   if (!isMember) {
     return (
@@ -48,26 +61,34 @@ export default async function FantasyLineupPage({
     );
   }
 
-  const [matches, teams] =
+  const [
+    matches,
+    teams,
+  ] =
     await Promise.all([
       getMatches(),
       getTeams(),
     ]);
 
-  const now = Date.now();
+  const now =
+    Date.now();
 
   const nextMatch =
     matches
       .filter(
         (match) =>
-          match.status === "scheduled" &&
+          match.status ===
+            "scheduled" &&
           new Date(
             match.match_date,
-          ).getTime() > now &&
-          (match.home_team_id ===
-            league.team_id ||
+          ).getTime() >
+            now &&
+          (
+            match.home_team_id ===
+              league.team_id ||
             match.away_team_id ===
-              league.team_id),
+              league.team_id
+          ),
       )
       .sort(
         (a, b) =>
@@ -77,7 +98,8 @@ export default async function FantasyLineupPage({
           new Date(
             b.match_date,
           ).getTime(),
-      )[0] ?? null;
+      )[0] ??
+    null;
 
   if (!nextMatch) {
     return (
@@ -99,13 +121,25 @@ export default async function FantasyLineupPage({
           </p>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Debe existir un partido futuro con estado
-            «Programado» para el equipo de esta liga.
+            Debe existir un partido futuro con estado «Programado» para el equipo de esta liga.
           </p>
         </section>
       </main>
     );
   }
+
+  const matchTime =
+    new Date(
+      nextMatch.match_date,
+    ).getTime();
+
+  const lineupLockTime =
+    matchTime -
+    60 * 60 * 1000;
+
+  const lockedByTime =
+    now >=
+    lineupLockTime;
 
   const players =
     await getPlayersByTeam(
@@ -114,18 +148,20 @@ export default async function FantasyLineupPage({
 
   const activePlayers =
     players.filter(
-      (player) => player.active,
+      (player) =>
+        player.active,
     );
 
   const existingLineup =
     await getFantasyLineup({
       leagueId,
       userId: user.id,
-      matchId: nextMatch.id,
+      matchId:
+        nextMatch.id,
     });
 
-  let selectedPlayerIds: string[] =
-    [];
+  let selectedPlayerIds:
+    string[] = [];
 
   if (existingLineup) {
     const lineupPlayers =
@@ -135,26 +171,76 @@ export default async function FantasyLineupPage({
 
     selectedPlayerIds =
       lineupPlayers.map(
-        (entry) => entry.player_id,
+        (entry) =>
+          entry.player_id,
       );
   }
 
-  const teamNames = new Map(
-    teams.map((team) => [
-      team.id,
-      team.name,
-    ]),
-  );
+  const manuallyLocked =
+    existingLineup !==
+      null &&
+    existingLineup.locked_at !==
+      null;
+
+  const locked =
+    lockedByTime ||
+    manuallyLocked;
+
+  const teamNames =
+    new Map(
+      teams.map(
+        (team) => [
+          team.id,
+          team.name,
+        ],
+      ),
+    );
 
   const homeTeam =
     teamNames.get(
       nextMatch.home_team_id,
-    ) ?? "Equipo local";
+    ) ??
+    "Equipo local";
 
   const awayTeam =
     teamNames.get(
       nextMatch.away_team_id,
-    ) ?? "Equipo visitante";
+    ) ??
+    "Equipo visitante";
+
+  const matchDateLabel =
+    new Intl.DateTimeFormat(
+      "es-ES",
+      {
+        dateStyle:
+          "medium",
+        timeStyle:
+          "short",
+        timeZone:
+          "Europe/Madrid",
+      },
+    ).format(
+      new Date(
+        nextMatch.match_date,
+      ),
+    );
+
+  const lockDateLabel =
+    new Intl.DateTimeFormat(
+      "es-ES",
+      {
+        dateStyle:
+          "medium",
+        timeStyle:
+          "short",
+        timeZone:
+          "Europe/Madrid",
+      },
+    ).format(
+      new Date(
+        lineupLockTime,
+      ),
+    );
 
   return (
     <main className="mx-auto min-h-screen max-w-xl bg-zinc-50 px-4 py-8">
@@ -199,45 +285,72 @@ export default async function FantasyLineupPage({
         </div>
 
         <p className="mt-4 text-sm font-semibold text-zinc-600">
-          {new Intl.DateTimeFormat(
-            "es-ES",
-            {
-              dateStyle: "medium",
-              timeStyle: "short",
-              timeZone:
-                "Europe/Madrid",
-            },
-          ).format(
-            new Date(
-              nextMatch.match_date,
-            ),
-          )}
+          {matchDateLabel}
         </p>
       </section>
 
-      <LineupForm
-        leagueId={leagueId}
-        matchId={nextMatch.id}
-        players={activePlayers.map(
-          (player) => ({
-            id: player.id,
-            firstName:
-              player.first_name,
-            lastName:
-              player.last_name,
-            shirtNumber:
-              player.shirt_number,
-            position:
-              player.position,
-          }),
+      <section
+        className={`mt-4 rounded-2xl p-4 ${
+          locked
+            ? "bg-red-50 text-red-800"
+            : "bg-amber-50 text-amber-900"
+        }`}
+      >
+        {locked ? (
+          <>
+            <p className="font-bold">
+              Mi XI está bloqueado
+            </p>
+
+            <p className="mt-1 text-sm">
+              El plazo para modificar la alineación terminó una hora antes del partido.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-bold">
+              Cierre de alineaciones
+            </p>
+
+            <p className="mt-1 text-sm">
+              Podrás modificar tu XI hasta {lockDateLabel}.
+            </p>
+          </>
         )}
+      </section>
+
+      <LineupForm
+        leagueId={
+          leagueId
+        }
+        matchId={
+          nextMatch.id
+        }
+        players={
+          activePlayers.map(
+            (player) => ({
+              id:
+                player.id,
+
+              firstName:
+                player.first_name,
+
+              lastName:
+                player.last_name,
+
+              shirtNumber:
+                player.shirt_number,
+
+              position:
+                player.position,
+            }),
+          )
+        }
         initialSelectedIds={
           selectedPlayerIds
         }
         locked={
-          existingLineup !== null &&
-          existingLineup.locked_at !==
-            null
+          locked
         }
       />
     </main>
