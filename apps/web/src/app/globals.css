@@ -1,26 +1,118 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f6f4;
+  --foreground: #18181b;
+
+  --football-green: #0f3d2e;
+  --football-green-strong: #0b2f23;
+  --football-green-soft: #e8f2ed;
+
+  --surface: #ffffff;
+  --surface-muted: #f0f1ef;
+
+  --border: #e4e4e7;
+  --muted: #71717a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    var(--font-geist-sans),
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #cfe5da;
+  color: #0b2f23;
+}
+
+/*
+ * Contenedor principal pensado para móvil.
+ * En escritorio mantiene una anchura cómoda sin
+ * convertirse en una web demasiado extendida.
+ */
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--background);
+}
+
+/*
+ * Superficie estilo aplicación.
+ */
+.app-card {
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.03),
+    0 8px 24px rgb(0 0 0 / 0.04);
+}
+
+/*
+ * Botón principal de la identidad visual.
+ */
+.app-primary {
+  background: var(--football-green);
+  color: white;
+}
+
+.app-primary:hover {
+  background: var(--football-green-strong);
+}
+
+/*
+ * Scroll más limpio en carruseles horizontales móviles.
+ */
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * Respeta la zona inferior de iPhone con Home Indicator.
+ */
+.safe-bottom {
+  padding-bottom:
+    max(
+      1rem,
+      env(safe-area-inset-bottom)
+    );
 }

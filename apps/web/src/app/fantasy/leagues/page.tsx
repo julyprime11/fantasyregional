@@ -1,23 +1,28 @@
 import Link from "next/link";
 
 import { requireUser } from "@/lib/auth";
+
 import {
   getFantasyLeagueById,
   getUserFantasyLeagues,
 } from "@/data/fantasy-leagues";
 
 export default async function FantasyLeaguesPage() {
-  const user = await requireUser();
+  const user =
+    await requireUser();
 
   const memberships =
-    await getUserFantasyLeagues(user.id);
+    await getUserFantasyLeagues(
+      user.id,
+    );
 
   const leagues = (
     await Promise.all(
-      memberships.map((membership) =>
-        getFantasyLeagueById(
-          membership.league_id,
-        ),
+      memberships.map(
+        (membership) =>
+          getFantasyLeagueById(
+            membership.league_id,
+          ),
       ),
     )
   ).filter(
@@ -29,124 +34,164 @@ export default async function FantasyLeaguesPage() {
           typeof getFantasyLeagueById
         >
       >
-    > => league !== null,
+    > =>
+      league !== null,
   );
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl bg-zinc-50 px-4 py-8">
-      <header>
-        <Link
-          href="/fantasy"
-          className="text-sm font-medium text-zinc-600 underline"
-        >
-          ← Volver
-        </Link>
+    <main className="mx-auto min-h-screen max-w-xl">
+      <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-5 text-white">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[30px] border-white/5" />
 
-        <p className="mt-5 text-sm font-medium uppercase tracking-wide text-zinc-500">
-          Regional Fantasy
-        </p>
+        <div className="relative z-10">
+          <Link
+            href="/fantasy"
+            className="inline-flex items-center text-sm font-bold text-white/70"
+          >
+            ← Inicio
+          </Link>
 
-        <h1 className="mt-1 text-3xl font-bold text-zinc-950">
-          Mis ligas
-        </h1>
+          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
+            Fantasy Regional
+          </p>
 
-        <p className="mt-2 text-sm text-zinc-600">
-          Crea una liga con tus amigos o únete mediante un código.
-        </p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">
+            Mis ligas
+          </h1>
+
+          <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">
+            Crea una liga privada o únete con un código.
+          </p>
+        </div>
       </header>
 
-      <section className="mt-6 grid grid-cols-2 gap-3">
-        <Link
-          href="/fantasy/leagues/create"
-          className="flex min-h-28 flex-col justify-between rounded-2xl bg-zinc-950 p-5 text-white shadow-sm"
-        >
-          <span className="text-2xl font-bold">
-            +
-          </span>
+      <div className="px-4 pb-8">
+        <section className="relative z-10 -mt-1 grid grid-cols-2 gap-3 pt-5">
+          <Link
+            href="/fantasy/leagues/create"
+            className="rounded-[1.4rem] bg-zinc-950 p-4 text-white shadow-lg active:scale-[0.98]"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl font-black">
+              +
+            </div>
 
-          <div>
-            <p className="font-bold">
+            <p className="mt-5 text-lg font-black">
               Crear liga
             </p>
 
-            <p className="mt-1 text-xs text-zinc-300">
-              Invita después a otros usuarios
+            <p className="mt-1 text-xs leading-5 text-zinc-400">
+              Crea una liga privada e invita a otros.
             </p>
-          </div>
-        </Link>
+          </Link>
 
-        <Link
-          href="/fantasy/leagues/join"
-          className="flex min-h-28 flex-col justify-between rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200"
-        >
-          <span className="text-2xl font-bold text-zinc-950">
-            #
-          </span>
+          <Link
+            href="/fantasy/leagues/join"
+            className="rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl font-black text-[#0f3d2e]">
+              #
+            </div>
 
-          <div>
-            <p className="font-bold text-zinc-950">
+            <p className="mt-5 text-lg font-black text-zinc-950">
               Unirme
             </p>
 
-            <p className="mt-1 text-xs text-zinc-500">
-              Introduce el código de una liga
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Entra con el código de una liga.
             </p>
+          </Link>
+        </section>
+
+        <section className="mt-8">
+          <div className="flex items-end justify-between px-1">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                Competición
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
+                Tus ligas
+              </h2>
+            </div>
+
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-zinc-500 shadow-sm ring-1 ring-black/5">
+              {leagues.length}
+            </span>
           </div>
-        </Link>
-      </section>
 
-      <section className="mt-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-zinc-950">
-            Tus ligas
-          </h2>
+          {leagues.length ===
+          0 ? (
+            <div className="mt-4 rounded-[1.5rem] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
+                🏆
+              </div>
 
-          <span className="text-sm text-zinc-500">
-            {leagues.length}
-          </span>
-        </div>
+              <p className="mt-4 font-black text-zinc-950">
+                Todavía no tienes ligas
+              </p>
 
-        {leagues.length === 0 ? (
-          <div className="mt-4 rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-zinc-200">
-            <p className="font-semibold text-zinc-950">
-              Todavía no tienes ligas
-            </p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                Crea una nueva o únete a una existente mediante su código.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {leagues.map(
+                (
+                  league,
+                  index,
+                ) => (
+                  <Link
+                    key={
+                      league.id
+                    }
+                    href={`/fantasy/leagues/${league.id}`}
+                    className="group block overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+                  >
+                    <div className="flex items-center justify-between gap-4 p-4">
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
+                          {index + 1}
+                        </div>
 
-            <p className="mt-2 text-sm text-zinc-500">
-              Crea una nueva o únete a una existente mediante su código.
-            </p>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {leagues.map((league) => (
-              <Link
-                key={league.id}
-                href={`/fantasy/leagues/${league.id}`}
-                className="flex min-h-20 items-center justify-between rounded-2xl bg-white px-5 shadow-sm ring-1 ring-zinc-200"
-              >
-                <div>
-                  <h3 className="font-bold text-zinc-950">
-                    {league.name}
-                  </h3>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-black text-zinc-950">
+                            {
+                              league.name
+                            }
+                          </h3>
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    {league.team?.name ??
-                      "Equipo no disponible"}
-                  </p>
+                          <p className="mt-1 truncate text-xs font-medium text-zinc-500">
+                            {league.team
+                              ?.name ??
+                              "Equipo no disponible"}
+                          </p>
 
-                  <p className="mt-1 text-xs font-medium text-zinc-400">
-                    Código: {league.code}
-                  </p>
-                </div>
+                          <div className="mt-2 inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1">
+                            <span className="text-[9px] font-black uppercase tracking-wide text-zinc-400">
+                              Código
+                            </span>
 
-                <span className="text-xl text-zinc-400">
-                  →
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+                            <span className="ml-2 text-[10px] font-black tracking-wider text-zinc-700">
+                              {
+                                league.code
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-950 font-black text-white transition group-hover:translate-x-1">
+                        →
+                      </span>
+                    </div>
+                  </Link>
+                ),
+              )}
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
