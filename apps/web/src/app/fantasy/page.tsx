@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { requireUser } from "@/lib/auth";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isAdminRole } from "@/lib/roles";
 
 import LogoutButton from "./logout-button";
 
@@ -8,13 +10,36 @@ export default async function FantasyPage() {
   const user =
     await requireUser();
 
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data: profile,
+  } =
+    await supabase
+      .from("profiles")
+      .select(
+        "display_name, voter_role",
+      )
+      .eq(
+        "id",
+        user.id,
+      )
+      .maybeSingle();
+
   const displayName =
+    profile?.display_name ??
     user.user_metadata
       ?.display_name ??
     user.email?.split(
       "@",
     )[0] ??
     "Jugador";
+
+  const canAccessMatchAdmin =
+    isAdminRole(
+      profile?.voter_role,
+    );
 
   return (
     <main className="mx-auto min-h-screen max-w-xl bg-zinc-50 px-4 py-8">
@@ -26,9 +51,16 @@ export default async function FantasyPage() {
             </p>
 
             <h1 className="mt-2 text-3xl font-bold text-zinc-950">
-              Hola,{" "}
-              {displayName}
+              Hola, {displayName}
             </h1>
+
+            {profile?.voter_role && (
+              <p className="mt-1 text-xs font-medium text-zinc-400">
+                {formatRole(
+                  profile.voter_role,
+                )}
+              </p>
+            )}
           </div>
 
           <LogoutButton />
@@ -39,7 +71,40 @@ export default async function FantasyPage() {
         </p>
       </header>
 
-      <section className="mt-8">
+      {canAccessMatchAdmin && (
+        <section className="mt-8">
+          <Link
+            href="/match-admin"
+            className="flex min-h-24 items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-400"
+          >
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-zinc-400">
+                Administración
+              </p>
+
+              <p className="mt-1 text-lg font-bold text-zinc-950">
+                Match Admin
+              </p>
+
+              <p className="mt-1 text-sm text-zinc-500">
+                Convocatoria, estadísticas, votación y resultados
+              </p>
+            </div>
+
+            <span className="ml-4 text-2xl font-bold text-zinc-400">
+              →
+            </span>
+          </Link>
+        </section>
+      )}
+
+      <section
+        className={
+          canAccessMatchAdmin
+            ? "mt-4"
+            : "mt-8"
+        }
+      >
         <Link
           href="/fantasy/leagues"
           className="flex min-h-24 items-center justify-between rounded-2xl bg-zinc-950 px-5 py-4 text-white shadow-sm"
@@ -108,4 +173,25 @@ export default async function FantasyPage() {
       </section>
     </main>
   );
+}
+
+function formatRole(
+  role: string,
+): string {
+  switch (role) {
+    case "entrenador":
+      return "Entrenador";
+
+    case "cuerpo_tecnico":
+      return "Cuerpo técnico";
+
+    case "directiva":
+      return "Directiva";
+
+    case "jugador":
+      return "Jugador";
+
+    default:
+      return role;
+  }
 }
