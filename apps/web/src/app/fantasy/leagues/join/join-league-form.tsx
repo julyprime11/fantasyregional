@@ -8,7 +8,11 @@ import {
   useRouter,
 } from "next/navigation";
 
-export default function JoinLeagueForm() {
+export default function JoinLeagueForm({
+  initialCode = "",
+}: {
+  initialCode?: string;
+}) {
   const router =
     useRouter();
 
@@ -16,7 +20,9 @@ export default function JoinLeagueForm() {
     code,
     setCode,
   ] =
-    useState("");
+    useState(
+      initialCode,
+    );
 
   const [
     pending,
@@ -73,7 +79,9 @@ export default function JoinLeagueForm() {
       }
 
       router.push(
-        `/fantasy/leagues/${result.id}`,
+        `/fantasy?league=${encodeURIComponent(
+          result.id,
+        )}`,
       );
 
       router.refresh();
@@ -87,7 +95,8 @@ export default function JoinLeagueForm() {
   }
 
   const validCode =
-    code.trim().length >= 4;
+    code.trim().length >=
+    4;
 
   return (
     <form
@@ -136,8 +145,12 @@ export default function JoinLeagueForm() {
               )
             }
             required
-            minLength={4}
-            maxLength={12}
+            minLength={
+              4
+            }
+            maxLength={
+              12
+            }
             autoComplete="off"
             autoCapitalize="characters"
             placeholder="CASTELLO26"
@@ -172,7 +185,7 @@ export default function JoinLeagueForm() {
             }`}
           >
             {validCode
-              ? "Código válido para intentar entrar."
+              ? "Código listo para intentar entrar."
               : "El código debe tener al menos 4 caracteres."}
           </p>
         </div>

@@ -15,8 +15,18 @@ export default function ShareLeagueButton({
     useState(false);
 
   async function shareLeague() {
+    const baseUrl =
+      window.location.origin;
+
+    const inviteUrl =
+      `${baseUrl}/fantasy/leagues/join?code=${encodeURIComponent(
+        code,
+      )}`;
+
     const text =
-      `Únete a mi liga "${leagueName}" en Fantasy Regional.\nCódigo: ${code}`;
+      `Únete a mi liga "${leagueName}" en Fantasy Regional.\n\n` +
+      `Código: ${code}\n\n` +
+      `Únete directamente aquí:\n${inviteUrl}`;
 
     try {
       if (
@@ -34,7 +44,7 @@ export default function ShareLeagueButton({
       }
 
       await navigator.clipboard.writeText(
-        code,
+        text,
       );
 
       setCopied(true);
@@ -45,10 +55,8 @@ export default function ShareLeagueButton({
         2000,
       );
     } catch {
-      /*
-       * Si el usuario cancela el menú
-       * de compartir no hacemos nada.
-       */
+      // El usuario puede cancelar
+      // el menú de compartir.
     }
   }
 
