@@ -1,6 +1,8 @@
 import Link from "next/link";
 
-import { requireUser } from "@/lib/auth";
+import {
+  requireUser,
+} from "@/lib/auth";
 
 import {
   getFantasyLeagueById,
@@ -39,158 +41,165 @@ export default async function FantasyLeaguesPage() {
   );
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl">
-      <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-5 text-white">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[30px] border-white/5" />
+    <main className="min-h-screen bg-[#f2f4f2] pb-28">
+      <div className="mx-auto max-w-xl">
+        {/* CABECERA */}
+        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-6 text-white shadow-lg">
+          <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
 
-        <div className="relative z-10">
-          <Link
-            href="/fantasy"
-            className="inline-flex items-center text-sm font-bold text-white/70"
-          >
-            ← Inicio
-          </Link>
+          <div className="absolute -bottom-20 -left-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
 
-          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-            Fantasy Regional
-          </p>
+          <div className="relative z-10">
+            <Link
+              href="/fantasy"
+              className="text-xs font-bold text-white/65"
+            >
+              ← Inicio
+            </Link>
 
-          <h1 className="mt-2 text-3xl font-black tracking-tight">
-            Mis ligas
-          </h1>
-
-          <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">
-            Crea una liga privada o únete con un código.
-          </p>
-        </div>
-      </header>
-
-      <div className="px-4 pb-8">
-        <section className="relative z-10 -mt-1 grid grid-cols-2 gap-3 pt-5">
-          <Link
-            href="/fantasy/leagues/create"
-            className="rounded-[1.4rem] bg-zinc-950 p-4 text-white shadow-lg active:scale-[0.98]"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-2xl font-black">
-              +
-            </div>
-
-            <p className="mt-5 text-lg font-black">
-              Crear liga
+            <p className="mt-6 text-[9px] font-black uppercase tracking-[0.22em] text-white/50">
+              Fantasy Regional
             </p>
 
-            <p className="mt-1 text-xs leading-5 text-zinc-400">
-              Crea una liga privada e invita a otros.
-            </p>
-          </Link>
+            <div className="mt-1 flex items-end justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-black tracking-tight">
+                  Mis ligas
+                </h1>
 
-          <Link
-            href="/fantasy/leagues/join"
-            className="rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl font-black text-[#0f3d2e]">
-              #
-            </div>
-
-            <p className="mt-5 text-lg font-black text-zinc-950">
-              Unirme
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-zinc-500">
-              Entra con el código de una liga.
-            </p>
-          </Link>
-        </section>
-
-        <section className="mt-8">
-          <div className="flex items-end justify-between px-1">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
-                Competición
-              </p>
-
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
-                Tus ligas
-              </h2>
-            </div>
-
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-zinc-500 shadow-sm ring-1 ring-black/5">
-              {leagues.length}
-            </span>
-          </div>
-
-          {leagues.length ===
-          0 ? (
-            <div className="mt-4 rounded-[1.5rem] bg-white p-6 text-center shadow-sm ring-1 ring-black/5">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
-                🏆
+                <p className="mt-1 text-sm text-white/60">
+                  Elige la competición que quieres consultar.
+                </p>
               </div>
 
-              <p className="mt-4 font-black text-zinc-950">
-                Todavía no tienes ligas
+              <div className="flex h-11 min-w-11 items-center justify-center rounded-2xl bg-white/10 px-3 text-sm font-black">
+                {leagues.length}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="px-4">
+          {/* CREAR / UNIRSE */}
+          <section className="mt-5 grid grid-cols-2 gap-3">
+            <Link
+              href="/fantasy/leagues/create"
+              className="rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
+                +
+              </div>
+
+              <p className="mt-3 font-black text-zinc-950">
+                Crear liga
               </p>
 
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
-                Crea una nueva o únete a una existente mediante su código.
+              <p className="mt-1 text-[10px] leading-4 text-zinc-500">
+                Nueva competición
               </p>
+            </Link>
+
+            <Link
+              href="/fantasy/leagues/join"
+              className="rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
+                #
+              </div>
+
+              <p className="mt-3 font-black text-zinc-950">
+                Unirme
+              </p>
+
+              <p className="mt-1 text-[10px] leading-4 text-zinc-500">
+                Introducir código
+              </p>
+            </Link>
+          </section>
+
+          {/* LISTA */}
+          <section className="mt-7">
+            <div className="flex items-center justify-between px-1">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                  Competiciones
+                </p>
+
+                <h2 className="mt-1 text-xl font-black text-zinc-950">
+                  Tus ligas
+                </h2>
+              </div>
+
+              <span className="text-[10px] font-bold text-zinc-400">
+                {leagues.length}
+              </span>
             </div>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {leagues.map(
-                (
-                  league,
-                  index,
-                ) => (
-                  <Link
-                    key={
-                      league.id
-                    }
-                    href={`/fantasy/leagues/${league.id}`}
-                    className="group block overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
-                  >
-                    <div className="flex items-center justify-between gap-4 p-4">
-                      <div className="flex min-w-0 items-center gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
-                          {index + 1}
+
+            {leagues.length ===
+            0 ? (
+              <div className="mt-3 rounded-[1.4rem] bg-white p-5 text-center shadow-sm ring-1 ring-black/5">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
+                  🏆
+                </div>
+
+                <p className="mt-4 font-black text-zinc-950">
+                  Todavía no tienes ligas
+                </p>
+
+                <p className="mt-2 text-xs leading-5 text-zinc-500">
+                  Crea una nueva o únete mediante un código de invitación.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {leagues.map(
+                  (league) => (
+                    <Link
+                      key={
+                        league.id
+                      }
+                      href={`/fantasy?league=${encodeURIComponent(
+                        league.id,
+                      )}`}
+                      className="group flex items-center justify-between gap-4 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
+                          🏆
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="truncate text-base font-black text-zinc-950">
+                          <h3 className="truncate font-black text-zinc-950">
                             {
                               league.name
                             }
                           </h3>
 
-                          <p className="mt-1 truncate text-xs font-medium text-zinc-500">
+                          <p className="mt-1 truncate text-[10px] font-semibold text-zinc-500">
                             {league.team
                               ?.name ??
                               "Equipo no disponible"}
                           </p>
 
-                          <div className="mt-2 inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1">
-                            <span className="text-[9px] font-black uppercase tracking-wide text-zinc-400">
-                              Código
-                            </span>
-
-                            <span className="ml-2 text-[10px] font-black tracking-wider text-zinc-700">
-                              {
-                                league.code
-                              }
-                            </span>
-                          </div>
+                          <p className="mt-1 text-[9px] font-black uppercase tracking-wide text-zinc-400">
+                            Código{" "}
+                            {
+                              league.code
+                            }
+                          </p>
                         </div>
                       </div>
 
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-950 font-black text-white transition group-hover:translate-x-1">
                         →
                       </span>
-                    </div>
-                  </Link>
-                ),
-              )}
-            </div>
-          )}
-        </section>
+                    </Link>
+                  ),
+                )}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </main>
   );

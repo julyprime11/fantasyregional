@@ -1,8 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import {
+  revalidatePath,
+} from "next/cache";
 
-import { InputError } from "@regional-fantasy/shared";
+import {
+  InputError,
+} from "@regional-fantasy/shared";
 
 import {
   updateProfileVoterRole,
@@ -17,12 +21,14 @@ export type UserRoleState = {
     | "idle"
     | "error"
     | "success";
+
   message: string;
 };
 
 const allowedRoles =
   new Set([
     "jugador",
+    "player",
     "entrenador",
     "cuerpo_tecnico",
     "directiva",
@@ -38,7 +44,9 @@ export async function updateUserVoterRoleAction(
 
   if (!isAdmin) {
     return {
-      status: "error",
+      status:
+        "error",
+
       message:
         "No tienes permisos para modificar roles.",
     };
@@ -78,18 +86,29 @@ export async function updateUserVoterRoleAction(
       "/admin/users",
     );
 
-    revalidatePath("/");
+    revalidatePath(
+      "/fantasy",
+    );
+
+    revalidatePath(
+      "/",
+    );
 
     return {
-      status: "success",
+      status:
+        "success",
+
       message:
         "Rol actualizado correctamente.",
     };
   } catch (error) {
     return {
-      status: "error",
+      status:
+        "error",
+
       message:
-        error instanceof InputError
+        error instanceof
+        InputError
           ? error.message
           : "No se pudo actualizar el rol.",
     };

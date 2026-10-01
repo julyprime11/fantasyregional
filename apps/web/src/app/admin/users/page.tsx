@@ -5,6 +5,10 @@ import {
 } from "@/data/profiles";
 
 import {
+  formatRole,
+} from "@/lib/roles";
+
+import {
   updateUserVoterRoleAction,
 } from "./actions";
 
@@ -33,7 +37,7 @@ export default async function AdminUsersPage() {
         </h1>
 
         <p className="mt-2 text-sm text-zinc-600">
-          Gestiona el rol de votación de cada usuario.
+          Gestiona el rol de cada usuario.
         </p>
       </header>
 
@@ -69,11 +73,9 @@ export default async function AdminUsersPage() {
                       </span>
 
                       <p className="mt-1 font-semibold text-zinc-700">
-                        {profile.voter_role
-                          ? formatRole(
-                              profile.voter_role,
-                            )
-                          : "Sin rol"}
+                        {formatRole(
+                          profile.voter_role,
+                        )}
                       </p>
                     </div>
                   </div>
@@ -97,25 +99,4 @@ export default async function AdminUsersPage() {
       )}
     </main>
   );
-}
-
-function formatRole(
-  role: string,
-): string {
-  switch (role) {
-    case "jugador":
-      return "Jugador";
-
-    case "entrenador":
-      return "Entrenador";
-
-    case "cuerpo_tecnico":
-      return "Cuerpo técnico";
-
-    case "directiva":
-      return "Directiva";
-
-    default:
-      return role;
-  }
 }

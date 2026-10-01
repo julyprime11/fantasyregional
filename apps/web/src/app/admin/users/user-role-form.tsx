@@ -20,8 +20,11 @@ type Props = {
 };
 
 const initialState: UserRoleState = {
-  status: "idle",
-  message: "",
+  status:
+    "idle",
+
+  message:
+    "",
 };
 
 export default function UserRoleForm({
@@ -32,10 +35,11 @@ export default function UserRoleForm({
     state,
     formAction,
     pending,
-  ] = useActionState(
-    action,
-    initialState,
-  );
+  ] =
+    useActionState(
+      action,
+      initialState,
+    );
 
   return (
     <form
@@ -44,13 +48,14 @@ export default function UserRoleForm({
     >
       <label className="block">
         <span className="text-sm font-medium text-zinc-700">
-          Rol de votación
+          Rol
         </span>
 
         <select
           name="voter_role"
           defaultValue={
-            currentRole ?? ""
+            currentRole ??
+            ""
           }
           className="mt-2 h-12 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-950 outline-none focus:border-zinc-950"
         >
@@ -59,7 +64,11 @@ export default function UserRoleForm({
           </option>
 
           <option value="jugador">
-            Jugador
+            Jugador Fantasy
+          </option>
+
+          <option value="player">
+            Jugador equipo
           </option>
 
           <option value="entrenador">
@@ -76,9 +85,27 @@ export default function UserRoleForm({
         </select>
       </label>
 
+      <div className="rounded-xl bg-zinc-50 p-3 text-xs leading-5 text-zinc-500">
+        <p>
+          <strong className="text-zinc-700">
+            Jugador Fantasy:
+          </strong>{" "}
+          puede jugar al Fantasy, pero no votar.
+        </p>
+
+        <p className="mt-1">
+          <strong className="text-zinc-700">
+            Jugador equipo:
+          </strong>{" "}
+          puede jugar al Fantasy y votar cuando el plazo esté abierto.
+        </p>
+      </div>
+
       <button
         type="submit"
-        disabled={pending}
+        disabled={
+          pending
+        }
         className="flex min-h-11 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-50"
       >
         {pending

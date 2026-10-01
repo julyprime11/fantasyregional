@@ -22,16 +22,17 @@ import {
 } from "@/data/ratings";
 
 import {
-  isDevelopmentVotingEnabled,
-} from "@/lib/development-voting";
-
-import {
   requireUser,
 } from "@/lib/auth";
 
 import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
+
+import {
+  canVote,
+  formatRole,
+} from "@/lib/roles";
 
 import {
   submitVotesAction,
@@ -41,47 +42,13 @@ import {
   MobileVoteForm,
 } from "./vote-form";
 
-export default async function MatchAdminVotePage({
+export default async function MatchVotePage({
   params,
 }: {
   params: Promise<{
     id: string;
   }>;
 }) {
-  if (
-    !isDevelopmentVotingEnabled()
-  ) {
-    return (
-      <main className="mx-auto min-h-screen max-w-xl">
-        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-8 pt-5 text-white">
-          <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[30px] border-white/5" />
-
-          <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-              Match Admin
-            </p>
-
-            <h1 className="mt-2 text-3xl font-black">
-              Votación
-            </h1>
-          </div>
-        </header>
-
-        <div className="px-4">
-          <section className="mt-5 rounded-[1.5rem] bg-amber-50 p-5">
-            <p className="font-black text-amber-800">
-              Votación no disponible
-            </p>
-
-            <p className="mt-2 text-sm text-amber-700">
-              La votación temporal solo está habilitada durante el desarrollo.
-            </p>
-          </section>
-        </div>
-      </main>
-    );
-  }
-
   const user =
     await requireUser();
 
@@ -183,6 +150,11 @@ export default async function MatchAdminVotePage({
       )
       .maybeSingle();
 
+  const userCanVote =
+    canVote(
+      profile?.voter_role,
+    );
+
   const existingVotesByPlayer =
     new Map(
       existingVotes.map(
@@ -227,6 +199,43 @@ export default async function MatchAdminVotePage({
   const totalCount =
     squad.length;
 
+  const now =
+    Date.now();
+
+  const opensAt =
+    match.voting_opens_at
+      ? new Date(
+          match.voting_opens_at,
+        ).getTime()
+      : null;
+
+  const closesAt =
+    match.voting_closes_at
+      ? new Date(
+          match.voting_closes_at,
+        ).getTime()
+      : null;
+
+  const votingNotStarted =
+    opensAt !== null &&
+    Number.isFinite(
+      opensAt,
+    ) &&
+    now < opensAt;
+
+  const votingExpired =
+    closesAt !== null &&
+    Number.isFinite(
+      closesAt,
+    ) &&
+    now > closesAt;
+
+  const votingAvailable =
+    match.status ===
+      "voting" &&
+    !votingNotStarted &&
+    !votingExpired;
+
   return (
     <main className="mx-auto min-h-screen max-w-xl">
       {/* CABECERA */}
@@ -237,16 +246,16 @@ export default async function MatchAdminVotePage({
 
         <div className="relative z-10">
           <Link
-            href={`/match-admin/${matchId}`}
+            href="/fantasy"
             className="text-sm font-bold text-white/70"
           >
-            ← Volver al partido
+            ← Volver a Fantasy
           </Link>
 
           <div className="mt-7 flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-                Match Admin
+                Regional Fantasy
               </p>
 
               <h1 className="mt-2 text-3xl font-black tracking-tight">
@@ -261,12 +270,14 @@ export default async function MatchAdminVotePage({
             {profile && (
               <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
                 <p className="text-[10px] font-black text-white">
-                  {profile.display_name}
+                  {profile.display_name ??
+                    "Usuario"}
                 </p>
 
                 <p className="mt-0.5 text-[9px] uppercase tracking-wide text-white/45">
-                  {profile.voter_role ??
-                    "Sin rol"}
+                  {formatRole(
+                    profile.voter_role,
+                  )}
                 </p>
               </div>
             )}
@@ -293,9 +304,11 @@ export default async function MatchAdminVotePage({
                 <div className="rounded-2xl bg-zinc-950 px-4 py-3 text-center text-white">
                   <p className="whitespace-nowrap text-xl font-black">
                     {match.home_score}
+
                     <span className="mx-2 text-zinc-500">
                       -
                     </span>
+
                     {match.away_score}
                   </p>
                 </div>
@@ -319,61 +332,63 @@ export default async function MatchAdminVotePage({
         </section>
 
         {/* PROGRESO */}
-        <section className="mt-4 rounded-[1.4rem] bg-[#e8f2ed] p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#557368]">
-                Progreso
-              </p>
+        {match.status ===
+          "voting" &&
+          totalCount >
+            0 && (
+            <section className="mt-4 rounded-[1.4rem] bg-[#e8f2ed] p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#557368]">
+                    Progreso
+                  </p>
 
-              <p className="mt-1 font-black text-[#0b2f23]">
-                {votedCount} de {totalCount} votados
-              </p>
-            </div>
+                  <p className="mt-1 font-black text-[#0b2f23]">
+                    {votedCount} de{" "}
+                    {totalCount} votados
+                  </p>
+                </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f3d2e] text-sm font-black text-white">
-              {totalCount > 0
-                ? Math.round(
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#0f3d2e] text-sm font-black text-white">
+                  {Math.round(
                     (votedCount /
                       totalCount) *
                       100,
-                  )
-                : 0}
-              %
-            </div>
-          </div>
+                  )}
+                  %
+                </div>
+              </div>
 
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/70">
-            <div
-              className="h-full rounded-full bg-[#0f3d2e]"
-              style={{
-                width: `${
-                  totalCount > 0
-                    ? Math.min(
-                        (votedCount /
-                          totalCount) *
-                          100,
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/70">
+                <div
+                  className="h-full rounded-full bg-[#0f3d2e]"
+                  style={{
+                    width: `${Math.min(
+                      (votedCount /
+                        totalCount) *
                         100,
-                      )
-                    : 0
-                }%`,
-              }}
-            />
-          </div>
-        </section>
+                      100,
+                    )}%`,
+                  }}
+                />
+              </div>
+            </section>
+          )}
 
-        {!profile?.voter_role && (
-          <section className="mt-5 rounded-[1.3rem] bg-red-50 p-4">
-            <p className="font-black text-red-700">
-              Rol de votación no configurado
+        {/* SIN PERMISO */}
+        {!userCanVote && (
+          <section className="mt-5 rounded-[1.3rem] bg-zinc-100 p-4">
+            <p className="font-black text-zinc-800">
+              Votación no disponible
             </p>
 
-            <p className="mt-1 text-sm leading-5 text-red-600">
-              Tu usuario necesita un valor en profiles.voter_role para poder votar.
+            <p className="mt-1 text-sm leading-5 text-zinc-600">
+              Tu tipo de usuario no tiene permiso para votar los partidos.
             </p>
           </section>
         )}
 
+        {/* ESTADO DE VOTACIÓN */}
         {match.status !==
         "voting" ? (
           <section className="mt-6 rounded-[1.4rem] bg-amber-50 p-5">
@@ -383,6 +398,26 @@ export default async function MatchAdminVotePage({
 
             <p className="mt-1 text-sm leading-6 text-amber-700">
               El partido debe estar en estado «Votación abierta» para puntuar.
+            </p>
+          </section>
+        ) : votingNotStarted ? (
+          <section className="mt-6 rounded-[1.4rem] bg-amber-50 p-5">
+            <p className="font-black text-amber-900">
+              La votación todavía no ha comenzado
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-amber-700">
+              El plazo de votación está configurado, pero todavía no ha llegado la hora de apertura.
+            </p>
+          </section>
+        ) : votingExpired ? (
+          <section className="mt-6 rounded-[1.4rem] bg-amber-50 p-5">
+            <p className="font-black text-amber-900">
+              Votación finalizada
+            </p>
+
+            <p className="mt-1 text-sm leading-6 text-amber-700">
+              El plazo configurado para votar este partido ya ha terminado.
             </p>
           </section>
         ) : squad.length ===
@@ -399,7 +434,8 @@ export default async function MatchAdminVotePage({
               match.id,
             )}
             disabled={
-              !profile?.voter_role
+              !userCanVote ||
+              !votingAvailable
             }
             players={squad.map(
               (entry) => ({
