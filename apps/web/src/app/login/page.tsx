@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -83,33 +84,42 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f2f4f2]">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col">
-        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-10 pt-8 text-white shadow-lg">
+    <main className="app-screen bg-[#f2f4f2]">
+      <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col">
+        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-8 pt-[calc(env(safe-area-inset-top)+1rem)] text-white shadow-lg">
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[30px] border-white/5" />
 
           <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
 
           <div className="relative z-10">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-2xl shadow-sm">
-              ⚽
+            <div className="flex items-center gap-4">
+              <Image
+                src="/icon-192.png"
+                alt="Fantasy Regional"
+                width={72}
+                height={72}
+                priority
+                className="h-[72px] w-[72px] rounded-[1.35rem] shadow-lg ring-1 ring-white/15"
+              />
+
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">
+                  Fantasy Regional
+                </p>
+
+                <h1 className="mt-1 text-3xl font-black tracking-tight">
+                  Bienvenido
+                </h1>
+              </div>
             </div>
 
-            <p className="mt-6 text-[10px] font-black uppercase tracking-[0.22em] text-white/50">
-              Fantasy Regional
-            </p>
-
-            <h1 className="mt-2 text-4xl font-black tracking-tight">
-              Bienvenido
-            </h1>
-
-            <p className="mt-3 max-w-sm text-sm leading-6 text-white/70">
+            <p className="mt-4 max-w-sm text-sm leading-5 text-white/70">
               Accede a tus ligas, prepara tu XI y sigue cada jornada.
             </p>
           </div>
         </header>
 
-        <div className="flex-1 px-4 pb-8">
+        <div className="flex-1 px-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
           <section className="relative z-10 -mt-2 rounded-[1.6rem] bg-white p-5 shadow-lg ring-1 ring-black/5">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
