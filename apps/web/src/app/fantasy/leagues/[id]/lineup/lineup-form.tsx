@@ -104,7 +104,9 @@ export default function LineupForm({
     validateFantasyLineup(
       initialPlayers.map(
         (player) => ({
-          id: player.id,
+          id:
+            player.id,
+
           position:
             player.position,
         }),
@@ -201,7 +203,9 @@ export default function LineupForm({
     validateFantasyLineup(
       selectedPlayers.map(
         (player) => ({
-          id: player.id,
+          id:
+            player.id,
+
           position:
             player.position,
         }),
@@ -232,7 +236,9 @@ export default function LineupForm({
       }
 
       return result;
-    }, [selectedPlayers]);
+    }, [
+      selectedPlayers,
+    ]);
 
   const groupedPlayers =
     useMemo(() => {
@@ -258,7 +264,9 @@ export default function LineupForm({
       }
 
       return result;
-    }, [players]);
+    }, [
+      players,
+    ]);
 
   const availableForSlot =
     openSlot === null
@@ -363,10 +371,13 @@ export default function LineupForm({
 
     const limits = {
       GK: 1,
+
       DEF:
         selectedFormation.defenders,
+
       MID:
         selectedFormation.midfielders,
+
       FWD:
         selectedFormation.forwards,
     };
@@ -424,6 +435,7 @@ export default function LineupForm({
               JSON.stringify({
                 leagueId,
                 matchId,
+
                 playerIds:
                   selectedIds,
               }),
@@ -457,27 +469,28 @@ export default function LineupForm({
   }
 
   return (
-    <section className="mt-7">
-      {/* FORMACIÓN */}
-      <div className="flex items-end justify-between px-1">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
-            Táctica
-          </p>
+    <section className="mt-4">
+      {/* FORMACIÓN COMPACTA */}
+      <div className="flex items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-2">
+          <div>
+            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#0f3d2e]">
+              Táctica
+            </p>
 
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
-            Formación
-          </h2>
+            <h2 className="mt-0.5 text-lg font-black tracking-tight text-zinc-950">
+              Formación
+            </h2>
+          </div>
         </div>
 
-        <span className="rounded-full bg-[#0f3d2e] px-4 py-2 text-sm font-black text-white">
-          {
-            selectedFormation.name
-          }
+        <span className="rounded-full bg-[#0f3d2e] px-3 py-1.5 text-xs font-black text-white">
+          {selectedFormation.name}
         </span>
       </div>
 
-      <div className="hide-scrollbar mt-4 flex gap-2 overflow-x-auto pb-2">
+      {/* SELECTOR FORMACIÓN */}
+      <div className="hide-scrollbar mt-2.5 flex gap-2 overflow-x-auto pb-1.5">
         {FORMATIONS.map(
           (formation) => (
             <button
@@ -493,41 +506,43 @@ export default function LineupForm({
                   formation,
                 )
               }
-              className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-black transition ${
+              className={`shrink-0 rounded-full px-3.5 py-2 text-[11px] font-black transition ${
                 selectedFormation.name ===
                 formation.name
-                  ? "bg-zinc-950 text-white shadow-md"
+                  ? "bg-zinc-950 text-white shadow-sm"
                   : "bg-white text-zinc-600 ring-1 ring-black/5"
               } disabled:opacity-40`}
             >
-              {
-                formation.name
-              }
+              {formation.name}
             </button>
           ),
         )}
       </div>
 
-      {/* CAMPO */}
-      <div className="mt-4 overflow-hidden rounded-[1.7rem] bg-[#087443] p-2.5 shadow-xl ring-1 ring-black/10">
+      {/* CAMPO COMPACTO */}
+      <div className="mt-2.5 overflow-hidden rounded-[1.45rem] bg-[#087443] p-2 shadow-xl ring-1 ring-black/10">
         <div
-          className="relative min-h-[560px] overflow-hidden rounded-[1.35rem] border-2 border-white/70"
+          className="relative min-h-[430px] overflow-hidden rounded-[1.15rem] border-2 border-white/70 sm:min-h-[520px]"
           style={{
             background:
               "linear-gradient(90deg, rgba(255,255,255,0.045) 50%, transparent 50%)",
+
             backgroundSize:
-              "64px 64px",
+              "54px 54px",
           }}
         >
+          {/* MEDIO CAMPO */}
           <div className="absolute left-0 right-0 top-1/2 border-t-2 border-white/60" />
 
-          <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
+          <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
 
-          <div className="absolute left-1/2 top-0 h-16 w-40 -translate-x-1/2 border-x-2 border-b-2 border-white/60" />
+          {/* ÁREAS */}
+          <div className="absolute left-1/2 top-0 h-12 w-32 -translate-x-1/2 border-x-2 border-b-2 border-white/60" />
 
-          <div className="absolute bottom-0 left-1/2 h-16 w-40 -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
+          <div className="absolute bottom-0 left-1/2 h-12 w-32 -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
 
-          <div className="relative z-10 flex min-h-[560px] flex-col justify-between px-2 py-5">
+          {/* JUGADORES */}
+          <div className="relative z-10 flex min-h-[430px] flex-col justify-between px-1.5 py-3 sm:min-h-[520px] sm:py-5">
             <FieldRow
               players={
                 selectedByLine.FWD
@@ -613,8 +628,8 @@ export default function LineupForm({
         </div>
       </div>
 
-      {/* CONTADORES */}
-      <div className="mt-4 grid grid-cols-4 gap-2">
+      {/* RESUMEN COMPACTO */}
+      <div className="mt-2.5 grid grid-cols-5 gap-1.5">
         <Counter
           label="POR"
           value={
@@ -656,49 +671,37 @@ export default function LineupForm({
             selectedFormation.forwards
           }
         />
-      </div>
-
-      {/* TOTAL XI */}
-      <div className="mt-3 flex items-center justify-between rounded-[1.4rem] bg-zinc-950 px-5 py-4 text-white">
-        <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
-            Alineación
-          </p>
-
-          <p className="mt-1 font-black">
-            Jugadores seleccionados
-          </p>
-        </div>
 
         <div
-          className={`flex h-12 min-w-12 items-center justify-center rounded-full px-2 text-lg font-black ${
+          className={`rounded-xl px-1 py-2 text-center ring-1 ${
             selectedIds.length ===
             11
-              ? "bg-[#17814f] text-white"
-              : "bg-white/10 text-white"
+              ? "bg-[#0f3d2e] text-white ring-[#0f3d2e]"
+              : "bg-zinc-950 text-white ring-zinc-950"
           }`}
         >
-          {
-            selectedIds.length
-          }
+          <p className="text-sm font-black">
+            {selectedIds.length}
+            <span className="text-[8px] opacity-60">
+              /11
+            </span>
+          </p>
 
-          <span className="ml-0.5 text-[10px] text-white/60">
-            /11
-          </span>
+          <p className="mt-0.5 text-[7px] font-black uppercase tracking-wide opacity-60">
+            XI
+          </p>
         </div>
       </div>
 
       {/* MENSAJES */}
       {errorMessage && (
-        <p className="mt-5 rounded-[1.2rem] bg-red-50 p-4 text-sm font-medium text-red-700">
-          {
-            errorMessage
-          }
+        <p className="mt-3 rounded-[1rem] bg-red-50 p-3 text-xs font-medium text-red-700">
+          {errorMessage}
         </p>
       )}
 
       {message && (
-        <p className="mt-5 rounded-[1.2rem] bg-green-50 p-4 text-sm font-medium text-green-700">
+        <p className="mt-3 rounded-[1rem] bg-green-50 p-3 text-xs font-medium text-green-700">
           {message}
         </p>
       )}
@@ -712,7 +715,7 @@ export default function LineupForm({
               !current,
           )
         }
-        className="mt-5 flex min-h-14 w-full items-center justify-between rounded-[1.3rem] bg-white px-5 font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
+        className="mt-3 flex min-h-12 w-full items-center justify-between rounded-[1.1rem] bg-white px-4 text-sm font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
       >
         <span>
           {showSquad
@@ -720,7 +723,7 @@ export default function LineupForm({
             : "Ver todos los jugadores"}
         </span>
 
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 text-sm">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-xs">
           {showSquad
             ? "↑"
             : "↓"}
@@ -806,7 +809,7 @@ export default function LineupForm({
           }
         >
           <div
-            className="max-h-[78vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-[#f5f6f4] p-5 shadow-2xl sm:rounded-[2rem]"
+            className="max-h-[78vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-[#f5f6f4] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[2rem]"
             onClick={(
               event,
             ) =>
@@ -819,11 +822,11 @@ export default function LineupForm({
                   Mi XI
                 </p>
 
-                <h2 className="mt-1 text-2xl font-black text-zinc-950">
+                <h2 className="mt-1 text-xl font-black text-zinc-950">
                   Seleccionar jugador
                 </h2>
 
-                <p className="mt-1 text-sm text-zinc-500">
+                <p className="mt-1 text-xs text-zinc-500">
                   {openSlot ===
                     "GK" &&
                     "Porteros disponibles"}
@@ -855,7 +858,7 @@ export default function LineupForm({
               </button>
             </div>
 
-            <div className="mt-5 space-y-2">
+            <div className="mt-4 space-y-2">
               {availableForSlot.length ===
               0 ? (
                 <p className="rounded-[1.2rem] bg-white p-4 text-sm text-zinc-500 ring-1 ring-black/5">
@@ -883,27 +886,23 @@ export default function LineupForm({
                           null,
                         );
                       }}
-                      className="flex min-h-16 w-full items-center justify-between rounded-2xl bg-white px-4 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
+                      className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-white px-3 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[#e8f2ed] font-black text-[#0f3d2e]">
+                        <span className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
                           {player.shirtNumber ??
                             "—"}
                         </span>
 
                         <div>
-                          <p className="font-black text-zinc-950">
-                            {
-                              player.firstName
-                            }{" "}
+                          <p className="text-sm font-black text-zinc-950">
+                            {player.firstName}{" "}
                             {player.lastName ??
                               ""}
                           </p>
 
-                          <p className="mt-0.5 text-xs font-medium text-zinc-400">
-                            {
-                              player.position
-                            }
+                          <p className="mt-0.5 text-[10px] font-medium text-zinc-400">
+                            {player.position}
                           </p>
                         </div>
                       </div>
@@ -920,10 +919,10 @@ export default function LineupForm({
         </div>
       )}
 
-      {/* GUARDADO */}
-      <div className="sticky bottom-[72px] z-30 -mx-4 mt-6 border-t border-zinc-200 bg-[#f5f6f4]/95 p-4 backdrop-blur">
+      {/* GUARDADO STICKY */}
+      <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 -mx-4 mt-4 border-t border-zinc-200 bg-[#f5f6f4]/95 px-4 py-2.5 backdrop-blur">
         {locked ? (
-          <div className="flex min-h-14 items-center justify-center rounded-[1.2rem] bg-zinc-200 px-4 text-center font-black text-zinc-600">
+          <div className="flex min-h-12 items-center justify-center rounded-[1rem] bg-zinc-200 px-4 text-center text-sm font-black text-zinc-600">
             🔒 Alineación bloqueada
           </div>
         ) : (
@@ -938,7 +937,7 @@ export default function LineupForm({
               selectedIds.length !==
                 11
             }
-            className="min-h-14 w-full rounded-[1.2rem] bg-[#0f3d2e] px-4 text-base font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-40"
+            className="min-h-12 w-full rounded-[1rem] bg-[#0f3d2e] px-4 text-sm font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-40"
           >
             {pending
               ? "Guardando..."
@@ -960,11 +959,17 @@ function FieldRow({
 }: {
   players: Player[];
   slots: number;
-  label: FieldLine;
+
+  label:
+    FieldLine;
+
   onRemove: (
     player: Player,
   ) => void;
-  onAdd: () => void;
+
+  onAdd:
+    () => void;
+
   locked: boolean;
 }) {
   const labels = {
@@ -976,7 +981,7 @@ function FieldRow({
 
   return (
     <div
-      className="grid items-start justify-items-center gap-1"
+      className="grid items-start justify-items-center gap-0.5"
       style={{
         gridTemplateColumns:
           `repeat(${slots}, minmax(0, 1fr))`,
@@ -986,7 +991,10 @@ function FieldRow({
         length:
           slots,
       }).map(
-        (_, index) => {
+        (
+          _,
+          index,
+        ) => {
           const player =
             players[
               index
@@ -1003,18 +1011,16 @@ function FieldRow({
                 onClick={
                   onAdd
                 }
-                className="flex w-full max-w-[82px] flex-col items-center disabled:opacity-60"
+                className="flex w-full max-w-[64px] flex-col items-center disabled:opacity-60"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-xl font-black text-white backdrop-blur-sm">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-lg font-black text-white backdrop-blur-sm">
                   +
                 </div>
 
-                <span className="mt-1 text-[9px] font-black text-white/70">
-                  {
-                    labels[
-                      label
-                    ]
-                  }
+                <span className="mt-0.5 text-[7px] font-black text-white/70">
+                  {labels[
+                    label
+                  ]}
                 </span>
               </button>
             );
@@ -1038,21 +1044,19 @@ function FieldRow({
                   player,
                 )
               }
-              className="flex w-full max-w-[88px] flex-col items-center disabled:opacity-90"
+              className="flex w-full max-w-[66px] flex-col items-center disabled:opacity-90"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-12 sm:w-12">
                 {player.shirtNumber ??
                   "•"}
               </div>
 
-              <span className="mt-1 max-w-full truncate rounded-md bg-zinc-950/85 px-2 py-1 text-[9px] font-black text-white shadow-sm">
+              <span className="mt-0.5 max-w-full truncate rounded bg-zinc-950/85 px-1.5 py-0.5 text-[7px] font-black text-white shadow-sm sm:text-[9px]">
                 {name}
               </span>
 
-              <span className="mt-1 text-[8px] font-bold text-white/75">
-                {
-                  player.position
-                }
+              <span className="mt-0.5 text-[7px] font-bold text-white/70">
+                {player.position}
               </span>
             </button>
           );
@@ -1070,30 +1074,37 @@ function PlayerSection({
   locked,
 }: {
   title: string;
-  players: Player[];
-  selectedIds: string[];
+
+  players:
+    Player[];
+
+  selectedIds:
+    string[];
+
   onToggle: (
     player: Player,
   ) => void;
-  locked: boolean;
+
+  locked:
+    boolean;
 }) {
   return (
-    <section className="mt-7">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <h3 className="text-lg font-black text-zinc-950">
+    <section className="mt-5">
+      <div className="mb-2 flex items-center justify-between px-1">
+        <h3 className="text-base font-black text-zinc-950">
           {title}
         </h3>
 
-        <span className="text-xs font-bold text-zinc-400">
-          {
-            players.length
-          }
+        <span className="text-[10px] font-bold text-zinc-400">
+          {players.length}
         </span>
       </div>
 
       <div className="space-y-2">
         {players.map(
-          (player) => {
+          (
+            player,
+          ) => {
             const selected =
               selectedIds.includes(
                 player.id,
@@ -1113,7 +1124,7 @@ function PlayerSection({
                     player,
                   )
                 }
-                className={`flex min-h-16 w-full items-center justify-between rounded-[1.2rem] px-4 text-left shadow-sm ring-1 transition ${
+                className={`flex min-h-14 w-full items-center justify-between rounded-[1rem] px-3 text-left shadow-sm ring-1 transition ${
                   selected
                     ? "bg-[#0f3d2e] text-white ring-[#0f3d2e]"
                     : "bg-white text-zinc-950 ring-black/5"
@@ -1121,7 +1132,7 @@ function PlayerSection({
               >
                 <div className="flex items-center gap-3">
                   <span
-                    className={`flex h-11 min-w-11 items-center justify-center rounded-xl font-black ${
+                    className={`flex h-10 min-w-10 items-center justify-center rounded-xl text-sm font-black ${
                       selected
                         ? "bg-white/15 text-white"
                         : "bg-[#e8f2ed] text-[#0f3d2e]"
@@ -1132,24 +1143,20 @@ function PlayerSection({
                   </span>
 
                   <div>
-                    <p className="font-black">
-                      {
-                        player.firstName
-                      }{" "}
+                    <p className="text-sm font-black">
+                      {player.firstName}{" "}
                       {player.lastName ??
                         ""}
                     </p>
 
                     <p
-                      className={`mt-0.5 text-xs font-medium ${
+                      className={`mt-0.5 text-[10px] font-medium ${
                         selected
                           ? "text-white/60"
                           : "text-zinc-400"
                       }`}
                     >
-                      {
-                        player.position
-                      }
+                      {player.position}
                     </p>
                   </div>
                 </div>
@@ -1188,18 +1195,18 @@ function Counter({
 
   return (
     <div
-      className={`rounded-2xl px-2 py-3 text-center ring-1 ${
+      className={`rounded-xl px-1 py-2 text-center ring-1 ${
         complete
           ? "bg-[#e8f2ed] text-[#0f3d2e] ring-[#d7e8df]"
           : "bg-white text-zinc-950 ring-black/5"
       }`}
     >
-      <p className="text-lg font-black">
+      <p className="text-sm font-black">
         {value}/{target}
       </p>
 
       <p
-        className={`mt-1 text-[9px] font-black uppercase tracking-wide ${
+        className={`mt-0.5 text-[7px] font-black uppercase tracking-wide ${
           complete
             ? "text-[#557368]"
             : "text-zinc-400"

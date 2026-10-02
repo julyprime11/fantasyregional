@@ -2,17 +2,27 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
+
 import type {
   PlayerPosition,
 } from "@regional-fantasy/shared";
+
 import {
   getFantasyLeagueById,
   getFantasyLeagueMembers,
 } from "@/data/fantasy-leagues";
 
-import { getMatches } from "@/data/matches";
-import { getPlayersByTeam } from "@/data/players";
-import { getTeams } from "@/data/teams";
+import {
+  getMatches,
+} from "@/data/matches";
+
+import {
+  getPlayersByTeam,
+} from "@/data/players";
+
+import {
+  getTeams,
+} from "@/data/teams";
 
 import {
   getFantasyLineup,
@@ -24,10 +34,17 @@ import LineupForm from "./lineup-form";
 export default async function FantasyLineupPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
-  const user = await requireUser();
-  const { id: leagueId } = await params;
+  const user =
+    await requireUser();
+
+  const {
+    id: leagueId,
+  } =
+    await params;
 
   const league =
     await getFantasyLeagueById(
@@ -60,22 +77,28 @@ export default async function FantasyLineupPage({
     );
   }
 
-  const [matches, teams] =
+  const [
+    matches,
+    teams,
+  ] =
     await Promise.all([
       getMatches(),
       getTeams(),
     ]);
 
-  const now = Date.now();
+  const now =
+    Date.now();
 
   const nextMatch =
     matches
       .filter(
         (match) =>
-          match.status === "scheduled" &&
+          match.status ===
+            "scheduled" &&
           new Date(
             match.match_date,
-          ).getTime() > now &&
+          ).getTime() >
+            now &&
           (
             match.home_team_id ===
               league.team_id ||
@@ -91,31 +114,36 @@ export default async function FantasyLineupPage({
           new Date(
             b.match_date,
           ).getTime(),
-      )[0] ?? null;
+      )[0] ??
+    null;
 
   if (!nextMatch) {
     return (
-      <main className="mx-auto min-h-screen max-w-xl">
-        <header className="rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-5 text-white">
-          <Link
-            href={`/fantasy/leagues/${leagueId}`}
-            className="text-sm font-bold text-white/70"
-          >
-            ← Volver a la liga
-          </Link>
+      <main className="app-screen mx-auto max-w-xl bg-[#f2f4f2]">
+        <header className="relative overflow-hidden rounded-b-[1.75rem] bg-[#0f3d2e] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+0.7rem)] text-white shadow-lg">
+          <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
 
-          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-white/50">
-            {league.name}
-          </p>
+          <div className="relative z-10">
+            <Link
+              href={`/fantasy/leagues/${leagueId}`}
+              className="text-xs font-bold text-white/65"
+            >
+              ← Volver a la liga
+            </Link>
 
-          <h1 className="mt-2 text-3xl font-black">
-            Mi XI
-          </h1>
+            <p className="mt-4 text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+              {league.name}
+            </p>
+
+            <h1 className="mt-1 text-2xl font-black tracking-tight">
+              Mi XI
+            </h1>
+          </div>
         </header>
 
         <div className="px-4">
-          <section className="mt-6 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
+          <section className="mt-4 rounded-[1.4rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg">
               ⚽
             </div>
 
@@ -139,10 +167,13 @@ export default async function FantasyLineupPage({
 
   const lineupLockTime =
     matchTime -
-    60 * 60 * 1000;
+    60 *
+      60 *
+      1000;
 
   const lockedByTime =
-    now >= lineupLockTime;
+    now >=
+    lineupLockTime;
 
   const players =
     await getPlayersByTeam(
@@ -158,7 +189,10 @@ export default async function FantasyLineupPage({
   const existingLineup =
     await getFantasyLineup({
       leagueId,
-      userId: user.id,
+
+      userId:
+        user.id,
+
       matchId:
         nextMatch.id,
     });
@@ -180,7 +214,8 @@ export default async function FantasyLineupPage({
   }
 
   const manuallyLocked =
-    existingLineup !== null &&
+    existingLineup !==
+      null &&
     existingLineup.locked_at !==
       null;
 
@@ -214,11 +249,21 @@ export default async function FantasyLineupPage({
     new Intl.DateTimeFormat(
       "es-ES",
       {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
+        weekday:
+          "short",
+
+        day:
+          "numeric",
+
+        month:
+          "short",
+
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
         timeZone:
           "Europe/Madrid",
       },
@@ -232,8 +277,12 @@ export default async function FantasyLineupPage({
     new Intl.DateTimeFormat(
       "es-ES",
       {
-        hour: "2-digit",
-        minute: "2-digit",
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
         timeZone:
           "Europe/Madrid",
       },
@@ -244,89 +293,105 @@ export default async function FantasyLineupPage({
     );
 
   return (
-    <main className="mx-auto min-h-screen max-w-xl">
-      {/* CABECERA */}
-      <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-5 text-white">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full border-[30px] border-white/5" />
+    <main className="app-screen mx-auto max-w-xl bg-[#f2f4f2]">
+      {/* CABECERA COMPACTA */}
+      <header className="relative overflow-hidden rounded-b-[1.8rem] bg-[#0f3d2e] px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.65rem)] text-white shadow-lg">
+        <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
+
+        <div className="absolute -left-14 bottom-[-60px] h-36 w-36 rounded-full border-[22px] border-white/5" />
 
         <div className="relative z-10">
-          <Link
-            href={`/fantasy/leagues/${leagueId}`}
-            className="text-sm font-bold text-white/70"
-          >
-            ← Volver a la liga
-          </Link>
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              href={`/fantasy/leagues/${leagueId}`}
+              className="text-xs font-bold text-white/65"
+            >
+              ← Liga
+            </Link>
 
-          <p className="mt-7 text-[10px] font-black uppercase tracking-[0.2em] text-white/50">
+            <div
+              className={`rounded-xl px-3 py-1.5 text-right ${
+                locked
+                  ? "bg-red-500/15"
+                  : "bg-white/10"
+              }`}
+            >
+              <p className="text-[8px] font-black uppercase tracking-wide text-white/45">
+                Cierre
+              </p>
+
+              <p className="mt-0.5 text-sm font-black">
+                {lockDateLabel}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
             {league.name}
           </p>
 
-          <div className="mt-2 flex items-end justify-between gap-3">
+          <div className="mt-1 flex items-end justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-black tracking-tight">
+              <h1 className="text-[2rem] font-black tracking-tight">
                 Mi XI
               </h1>
 
-              <p className="mt-1 text-sm text-white/60">
+              <p className="mt-0.5 text-xs text-white/55">
                 Alineación Fantasy
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white/10 px-4 py-2 text-center">
-              <p className="text-[9px] font-black uppercase tracking-wide text-white/50">
-                Cierre
-              </p>
-
-              <p className="mt-0.5 text-lg font-black">
-                {lockDateLabel}
-              </p>
-            </div>
+            <span
+              className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wide ${
+                locked
+                  ? "bg-red-500/15 text-red-200"
+                  : "bg-white/10 text-white/65"
+              }`}
+            >
+              {locked
+                ? "Cerrada"
+                : "Editable"}
+            </span>
           </div>
         </div>
       </header>
 
       <div className="px-4 pb-8">
-        {/* PARTIDO */}
-        <section className="relative z-10 -mt-1 pt-5">
-          <div className="overflow-hidden rounded-[1.5rem] bg-white shadow-sm ring-1 ring-black/5">
-            <div className="px-5 py-4 text-center">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
-                Próximo partido
+        {/* PARTIDO COMPACTO */}
+        <section className="mt-3">
+          <div className="overflow-hidden rounded-[1.25rem] bg-white shadow-sm ring-1 ring-black/5">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3">
+              <p className="text-right text-[11px] font-black leading-4 text-zinc-950">
+                {homeTeam}
               </p>
 
-              <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                <p className="text-sm font-black leading-5 text-zinc-950">
-                  {homeTeam}
-                </p>
-
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-950 text-[10px] font-black text-white">
-                  VS
-                </div>
-
-                <p className="text-sm font-black leading-5 text-zinc-950">
-                  {awayTeam}
-                </p>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-[9px] font-black text-white">
+                VS
               </div>
+
+              <p className="text-left text-[11px] font-black leading-4 text-zinc-950">
+                {awayTeam}
+              </p>
             </div>
 
-            <div className="border-t border-zinc-100 bg-zinc-50 px-4 py-3 text-center">
-              <p className="text-xs font-bold capitalize text-zinc-500">
+            <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 text-center">
+              <p className="text-[10px] font-bold capitalize text-zinc-500">
                 {matchDateLabel}
               </p>
             </div>
           </div>
         </section>
 
-        {/* ESTADO */}
+        {/* ESTADO COMPACTO */}
         <section
-          className={`mt-3 flex items-start gap-3 rounded-[1.3rem] p-4 ${
+          className={`mt-2.5 flex items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ${
             locked
               ? "bg-red-50"
               : "bg-[#e8f2ed]"
           }`}
         >
           <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm ${
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs ${
               locked
                 ? "bg-red-600 text-white"
                 : "bg-[#0f3d2e] text-white"
@@ -337,9 +402,9 @@ export default async function FantasyLineupPage({
               : "✓"}
           </div>
 
-          <div>
+          <div className="min-w-0">
             <p
-              className={`text-sm font-black ${
+              className={`text-xs font-black ${
                 locked
                   ? "text-red-800"
                   : "text-[#0b2f23]"
@@ -351,15 +416,15 @@ export default async function FantasyLineupPage({
             </p>
 
             <p
-              className={`mt-1 text-xs leading-5 ${
+              className={`mt-0.5 truncate text-[10px] ${
                 locked
                   ? "text-red-600"
                   : "text-[#557368]"
               }`}
             >
               {locked
-                ? "El plazo para modificar tu XI ya ha terminado."
-                : `Puedes realizar cambios hasta las ${lockDateLabel}.`}
+                ? "Ya no se pueden realizar cambios."
+                : `Cambios disponibles hasta las ${lockDateLabel}.`}
             </p>
           </div>
         </section>
@@ -371,26 +436,24 @@ export default async function FantasyLineupPage({
           matchId={
             nextMatch.id
           }
-          players={
-            activePlayers.map(
-              (player) => ({
-                id:
-                  player.id,
+          players={activePlayers.map(
+            (player) => ({
+              id:
+                player.id,
 
-                firstName:
-                  player.first_name,
+              firstName:
+                player.first_name,
 
-                lastName:
-                  player.last_name,
+              lastName:
+                player.last_name,
 
-                shirtNumber:
-                  player.shirt_number,
+              shirtNumber:
+                player.shirt_number,
 
-               position:
-  player.position as PlayerPosition,
-              }),
-            )
-          }
+              position:
+                player.position as PlayerPosition,
+            }),
+          )}
           initialSelectedIds={
             selectedPlayerIds
           }
