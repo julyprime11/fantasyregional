@@ -488,9 +488,12 @@ export async function startLiveSecondHalf(
 /*
  * FINALIZAR PARTIDO
  *
- * El resultado se guarda en la misma
- * operación lógica en la que cerramos
- * el partido.
+ * Al finalizar:
+ * - cerramos los minutos
+ * - guardamos el marcador final
+ * - marcamos todas las estadísticas como completadas
+ * - detenemos el cronómetro
+ * - cerramos el partido
  */
 export async function finishLiveMatch(
   matchId: string,
@@ -534,13 +537,41 @@ export async function finishLiveMatch(
   }
 
   /*
-   * Cerramos primero los minutos de
-   * todos los jugadores que siguen
-   * actualmente sobre el terreno.
+   * Cerramos los minutos de los
+   * jugadores que siguen en campo.
    */
   await finalizeMatchPlayerMinutes(
     matchId,
   );
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  /*
+   * Al finalizar ya consideramos revisadas
+   * las estadísticas de todos los jugadores.
+   *
+   * Esto hará que aparezca automáticamente
+   * el check verde sin tener que entrar
+   * jugador por jugador.
+   */
+  const {
+    error: completedError,
+  } =
+    await supabase
+      .from("match_players")
+      .update({
+        stats_completed:
+          true,
+      } as never)
+      .eq(
+        "match_id",
+        matchId,
+      );
+
+  if (completedError) {
+    throw completedError;
+  }
 
   const clockSeconds =
     calculateRunningClock(
@@ -549,9 +580,6 @@ export async function finishLiveMatch(
 
   const now =
     new Date().toISOString();
-
-  const supabase =
-    await createServerSupabaseClient();
 
   const {
     error,
@@ -604,6 +632,7 @@ export async function finishLiveMatch(
  * - quién está en campo
  * - minutos automáticos
  * - estadísticas del partido
+ * - estado de completado
  *
  * Así el partido vuelve realmente
  * a su estado previo al inicio.
