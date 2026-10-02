@@ -44,12 +44,6 @@ export async function submitVotesAction(
   _previous: VoteState,
   form: FormData,
 ): Promise<VoteState> {
-  /*
-   * Solo conservamos las notas.
-   *
-   * voter_id y voter_role nunca se aceptan
-   * desde el navegador.
-   */
   const values: Record<
     string,
     string
@@ -85,15 +79,15 @@ export async function submitVotesAction(
     const supabase =
       await createServerSupabaseClient();
 
-    /*
-     * PERFIL Y ROL
-     */
     const {
       data: profile,
-      error: profileError,
+      error:
+        profileError,
     } =
       await supabase
-        .from("profiles")
+        .from(
+          "profiles",
+        )
         .select(
           "id, display_name, voter_role",
         )
@@ -103,7 +97,9 @@ export async function submitVotesAction(
         )
         .maybeSingle();
 
-    if (profileError) {
+    if (
+      profileError
+    ) {
       throw profileError;
     }
 
@@ -119,15 +115,6 @@ export async function submitVotesAction(
       };
     }
 
-    /*
-     * Aquí está la nueva seguridad.
-     *
-     * jugador -> NO
-     * player -> SÍ
-     * entrenador -> SÍ
-     * cuerpo_tecnico -> SÍ
-     * directiva -> SÍ
-     */
     if (
       !canVote(
         profile.voter_role,
@@ -144,15 +131,15 @@ export async function submitVotesAction(
       };
     }
 
-    /*
-     * COMPROBAMOS EL PARTIDO DESDE EL SERVIDOR
-     */
     const {
       data: match,
-      error: matchError,
+      error:
+        matchError,
     } =
       await supabase
-        .from("matches")
+        .from(
+          "matches",
+        )
         .select(
           `
             id,
@@ -167,7 +154,9 @@ export async function submitVotesAction(
         )
         .maybeSingle();
 
-    if (matchError) {
+    if (
+      matchError
+    ) {
       throw matchError;
     }
 
@@ -183,10 +172,6 @@ export async function submitVotesAction(
       };
     }
 
-    /*
-     * El partido debe estar expresamente
-     * en estado voting.
-     */
     if (
       match.status !==
       "voting"
@@ -205,10 +190,6 @@ export async function submitVotesAction(
     const now =
       Date.now();
 
-    /*
-     * Si se ha configurado fecha de apertura,
-     * no permitimos votar antes.
-     */
     if (
       match.voting_opens_at
     ) {
@@ -236,10 +217,6 @@ export async function submitVotesAction(
       }
     }
 
-    /*
-     * Si se ha configurado fecha de cierre,
-     * no permitimos votar después.
-     */
     if (
       match.voting_closes_at
     ) {
@@ -267,10 +244,6 @@ export async function submitVotesAction(
       }
     }
 
-    /*
-     * Los datos sensibles los construimos
-     * exclusivamente en el servidor.
-     */
     const raw: Record<
       string,
       unknown
@@ -304,19 +277,25 @@ export async function submitVotesAction(
       `/match-admin/${parsedMatchId}/results`,
     );
 
+    revalidatePath(
+      `/match-admin/${parsedMatchId}`,
+    );
+
     return {
       status:
         "success",
 
       message:
-        `Se han guardado ${count} ${
-          count ===
-          1
-            ? "voto"
-            : "votos"
-        } correctamente.`,
+        count === 1
+          ? "Valoración guardada correctamente."
+          : `${count} valoraciones guardadas correctamente.`,
     };
   } catch (error) {
+    console.error(
+      "submitVotesAction:",
+      error,
+    );
+
     return {
       status:
         "error",
@@ -325,7 +304,10 @@ export async function submitVotesAction(
         error instanceof
         InputError
           ? error.message
-          : "No se pudieron guardar los votos. Inténtalo de nuevo.",
+          : error instanceof
+              Error
+            ? error.message
+            : "No se pudieron guardar las valoraciones. Inténtalo de nuevo.",
 
       values,
     };

@@ -2,34 +2,77 @@ import "server-only";
 
 import {
   calculateFantasyLineupPoints,
+  PLAYER_POSITIONS,
+  type PlayerPosition,
 } from "@regional-fantasy/shared";
 
-import { getFantasyLeagueMembers } from "./fantasy-leagues";
-import { getMatchResults } from "./match-results";
+import {
+  getFantasyLeagueMembers,
+} from "./fantasy-leagues";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  getMatchResults,
+} from "./match-results";
+
+import {
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
 
 export type FantasyStandingEntry = {
-  user_id: string;
-  display_name: string;
-  total_points: number;
-  played_matches: number;
+  user_id:
+    string;
+
+  display_name:
+    string;
+
+  total_points:
+    number;
+
+  played_matches:
+    number;
 };
 
 type FantasyLineupRow = {
-  id: string;
-  user_id: string;
-  match_id: string;
+  id:
+    string;
+
+  user_id:
+    string;
+
+  match_id:
+    string;
 };
 
 type FantasyLineupPlayerRow = {
-  lineup_id: string;
-  player_id: string;
+  lineup_id:
+    string;
+
+  player_id:
+    string;
 };
+
+function toPlayerPosition(
+  value:
+    string | null | undefined,
+): PlayerPosition | null {
+  if (!value) {
+    return null;
+  }
+
+  return PLAYER_POSITIONS.includes(
+    value as PlayerPosition,
+  )
+    ? (
+        value as PlayerPosition
+      )
+    : null;
+}
 
 export async function getFantasyLeagueStandings(
   leagueId: string,
-): Promise<FantasyStandingEntry[]> {
+): Promise<
+  FantasyStandingEntry[]
+> {
   const members =
     await getFantasyLeagueMembers(
       leagueId,
@@ -38,13 +81,21 @@ export async function getFantasyLeagueStandings(
   const supabase =
     await createServerSupabaseClient();
 
-  const { data: lineups, error: lineupsError } =
+  const {
+    data: lineups,
+    error: lineupsError,
+  } =
     await supabase
-      .from("fantasy_lineups")
+      .from(
+        "fantasy_lineups",
+      )
       .select(
         "id, user_id, match_id",
       )
-      .eq("league_id", leagueId);
+      .eq(
+        "league_id",
+        leagueId,
+      );
 
   if (lineupsError) {
     throw lineupsError;
@@ -56,7 +107,10 @@ export async function getFantasyLeagueStandings(
       FantasyStandingEntry
     >();
 
-  for (const member of members) {
+  for (
+    const member of
+    members
+  ) {
     standings.set(
       member.user_id,
       {
@@ -68,26 +122,38 @@ export async function getFantasyLeagueStandings(
             ?.display_name ??
           "Usuario",
 
-        total_points: 0,
-        played_matches: 0,
+        total_points:
+          0,
+
+        played_matches:
+          0,
       },
     );
   }
 
-  if (lineups.length === 0) {
+  if (
+    lineups.length ===
+    0
+  ) {
     return sortStandings(
-      [...standings.values()],
+      [
+        ...standings.values(),
+      ],
     );
   }
 
   const lineupIds =
     lineups.map(
-      (lineup) => lineup.id,
+      (
+        lineup,
+      ) =>
+        lineup.id,
     );
 
   const {
     data: lineupPlayers,
-    error: lineupPlayersError,
+    error:
+      lineupPlayersError,
   } =
     await supabase
       .from(
@@ -101,7 +167,9 @@ export async function getFantasyLeagueStandings(
         lineupIds,
       );
 
-  if (lineupPlayersError) {
+  if (
+    lineupPlayersError
+  ) {
     throw lineupPlayersError;
   }
 
@@ -118,7 +186,8 @@ export async function getFantasyLeagueStandings(
     const existing =
       playersByLineup.get(
         entry.lineup_id,
-      ) ?? [];
+      ) ??
+      [];
 
     existing.push(
       entry.player_id,
@@ -147,12 +216,13 @@ export async function getFantasyLeagueStandings(
     const selectedPlayerIds =
       playersByLineup.get(
         lineup.id,
-      ) ?? [];
+      ) ??
+      [];
 
     /*
-     * Solo consideramos una jornada
-     * Fantasy válida si la alineación
-     * contiene exactamente 11 jugadores.
+     * Una alineación Fantasy solo
+     * puntúa si contiene exactamente
+     * once jugadores.
      */
     if (
       selectedPlayerIds.length !==
@@ -179,12 +249,9 @@ export async function getFantasyLeagueStandings(
     }
 
     /*
-     * Solo los partidos cerrados tienen
-     * resultados definitivos para la
-     * clasificación Fantasy.
-     *
-     * Durante "voting" las notas son
-     * provisionales y no se suman todavía.
+     * Solo sumamos partidos cerrados.
+     * Durante la votación las notas
+     * todavía son provisionales.
      */
     if (
       matchResults.status !==
@@ -195,29 +262,129 @@ export async function getFantasyLeagueStandings(
       continue;
     }
 
-    const ratingByPlayer =
+    const resultByPlayer =
       new Map(
         matchResults.rows.map(
-          (row) => [
+          (
+            row,
+          ) => [
             row.entry.player_id,
-            row.rating.final_rating,
+            row,
           ],
         ),
       );
 
+    /*
+     * Duración de referencia del
+     * encuentro para la regla especial
+     * del portero.
+     */
+    const matchMinutes =
+      Math.max(
+        0,
+        ...matchResults.rows.map(
+          (
+            row,
+          ) =>
+            row.entry
+              .minutes_played,
+        ),
+      );
+
+    const fantasyInputs =
+      selectedPlayerIds
+        .map(
+          (
+            playerId,
+          ) => {
+            const result =
+              resultByPlayer.get(
+                playerId,
+              );
+
+            if (!result) {
+              return null;
+            }
+
+            const position =
+              toPlayerPosition(
+                result.entry
+                  .player
+                  ?.position ??
+                  null,
+              );
+
+            if (!position) {
+              return null;
+            }
+
+            return {
+              player_id:
+                playerId,
+
+              position,
+
+              minutes_played:
+                result.entry
+                  .minutes_played,
+
+              goals:
+                result.entry
+                  .goals,
+
+              assists:
+                result.entry
+                  .assists,
+
+              yellow_cards:
+                result.entry
+                  .yellow_cards,
+
+              red_cards:
+                result.entry
+                  .red_cards,
+
+              clean_sheet:
+                result.entry
+                  .clean_sheet,
+
+              starter:
+                result.entry
+                  .starter,
+
+              match_minutes:
+                matchMinutes,
+
+              panel_rating:
+                result.rating
+                  .final_rating,
+            };
+          },
+        )
+        .filter(
+          (
+            entry,
+          ): entry is NonNullable<
+            typeof entry
+          > =>
+            entry !== null,
+        );
+
+    /*
+     * Si falta algún jugador de los
+     * once en los resultados, no
+     * puntuamos todavía esa jornada.
+     */
+    if (
+      fantasyInputs.length !==
+      11
+    ) {
+      continue;
+    }
+
     const fantasyResult =
       calculateFantasyLineupPoints(
-        selectedPlayerIds.map(
-          (playerId) => ({
-            player_id:
-              playerId,
-
-            final_rating:
-              ratingByPlayer.get(
-                playerId,
-              ) ?? null,
-          }),
-        ),
+        fantasyInputs,
       );
 
     const standing =
@@ -237,15 +404,21 @@ export async function getFantasyLeagueStandings(
   }
 
   return sortStandings(
-    [...standings.values()],
+    [
+      ...standings.values(),
+    ],
   );
 }
 
 function sortStandings(
-  entries: FantasyStandingEntry[],
+  entries:
+    FantasyStandingEntry[],
 ): FantasyStandingEntry[] {
   return entries.sort(
-    (a, b) => {
+    (
+      a,
+      b,
+    ) => {
       if (
         b.total_points !==
         a.total_points

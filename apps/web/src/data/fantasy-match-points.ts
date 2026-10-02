@@ -2,7 +2,9 @@ import "server-only";
 
 import {
   calculateFantasyLineupPoints,
+  PLAYER_POSITIONS,
   type FantasyPlayerPointsResult,
+  type PlayerPosition,
 } from "@regional-fantasy/shared";
 
 import {
@@ -10,51 +12,135 @@ import {
   getFantasyLineupPlayers,
 } from "./fantasy-lineups";
 
-import { getMatchResults } from "./match-results";
+import {
+  getMatchResults,
+} from "./match-results";
 
 export type FantasyMatchPlayerPoints = {
   player_id: string;
+
   player_name: string;
-  shirt_number: number | null;
-  position: string | null;
 
-  starter: boolean;
-  minutes_played: number;
+  shirt_number:
+    number | null;
 
-  final_rating: number | null;
-  points: number;
-  rateable: boolean;
+  position:
+    string | null;
+
+  starter:
+    boolean;
+
+  minutes_played:
+    number;
+
+  /*
+   * Conservamos este nombre para no
+   * romper pantallas existentes.
+   *
+   * Ahora representa la valoración
+   * ponderada del panel.
+   */
+  final_rating:
+    number | null;
+
+  rounded_rating:
+    number | null;
+
+  points:
+    number;
+
+  rateable:
+    boolean;
+
+  breakdown: {
+    minutes:
+      number;
+
+    goals:
+      number;
+
+    assists:
+      number;
+
+    clean_sheet:
+      number;
+
+    cards:
+      number;
+
+    rating:
+      number;
+  };
 };
 
 export type FantasyMatchPointsResult =
   | {
-      status: "not_found";
+      status:
+        "not_found";
     }
   | {
-      status: "not_ready";
-      reason: string;
+      status:
+        "not_ready";
+
+      reason:
+        string;
     }
   | {
-      status: "ready";
-      total_points: number;
-      players: FantasyMatchPlayerPoints[];
+      status:
+        "ready";
+
+      total_points:
+        number;
+
+      players:
+        FantasyMatchPlayerPoints[];
     };
 
-export async function getFantasyMatchPoints(input: {
-  leagueId: string;
-  userId: string;
-  matchId: string;
-}): Promise<FantasyMatchPointsResult> {
+function toPlayerPosition(
+  value:
+    string | null | undefined,
+): PlayerPosition | null {
+  if (!value) {
+    return null;
+  }
+
+  return PLAYER_POSITIONS.includes(
+    value as PlayerPosition,
+  )
+    ? (
+        value as PlayerPosition
+      )
+    : null;
+}
+
+export async function getFantasyMatchPoints(
+  input: {
+    leagueId:
+      string;
+
+    userId:
+      string;
+
+    matchId:
+      string;
+  },
+): Promise<FantasyMatchPointsResult> {
   const lineup =
     await getFantasyLineup({
-      leagueId: input.leagueId,
-      userId: input.userId,
-      matchId: input.matchId,
+      leagueId:
+        input.leagueId,
+
+      userId:
+        input.userId,
+
+      matchId:
+        input.matchId,
     });
 
   if (!lineup) {
     return {
-      status: "not_found",
+      status:
+        "not_found",
     };
   }
 
@@ -69,59 +155,136 @@ export async function getFantasyMatchPoints(input: {
     );
 
   if (
-    results.status !== "ready" ||
-    results.phase !== "final"
+    results.status !==
+      "ready" ||
+    results.phase !==
+      "final"
   ) {
     return {
-      status: "not_ready",
+      status:
+        "not_ready",
+
       reason:
         "Los puntos Fantasy todavía no están disponibles porque el partido no tiene resultados finales.",
     };
   }
 
-  const ratingByPlayer =
+  /*
+   * Índice de resultados reales
+   * por jugador.
+   */
+  const resultByPlayer =
     new Map(
       results.rows.map(
-        (row) => [
+        (
+          row,
+        ) => [
           row.entry.player_id,
-          row.rating.final_rating,
+          row,
         ],
       ),
     );
 
-  const starterByPlayer =
-    new Map(
-      results.rows.map(
-        (row) => [
-          row.entry.player_id,
-          row.entry.starter,
-        ],
-      ),
-    );
-
-  const minutesByPlayer =
-    new Map(
-      results.rows.map(
-        (row) => [
-          row.entry.player_id,
+  /*
+   * Duración real aproximada del partido:
+   * usamos el mayor número de minutos
+   * registrado entre todos los participantes.
+   *
+   * Esto permite aplicar correctamente
+   * la regla del portero que debe disputar
+   * todo el encuentro.
+   */
+  const matchMinutes =
+    Math.max(
+      0,
+      ...results.rows.map(
+        (
+          row,
+        ) =>
           row.entry.minutes_played,
-        ],
       ),
     );
+
+  const fantasyInputs =
+    lineupPlayers
+      .map(
+        (
+          lineupEntry,
+        ) => {
+          const result =
+            resultByPlayer.get(
+              lineupEntry.player_id,
+            );
+
+          if (!result) {
+            return null;
+          }
+
+          const position =
+            toPlayerPosition(
+              result.entry.player
+                ?.position ??
+                lineupEntry.player
+                  ?.position ??
+                null,
+            );
+
+          if (!position) {
+            return null;
+          }
+
+          return {
+            player_id:
+              lineupEntry.player_id,
+
+            position,
+
+            minutes_played:
+              result.entry
+                .minutes_played,
+
+            goals:
+              result.entry.goals,
+
+            assists:
+              result.entry.assists,
+
+            yellow_cards:
+              result.entry
+                .yellow_cards,
+
+            red_cards:
+              result.entry
+                .red_cards,
+
+            clean_sheet:
+              result.entry
+                .clean_sheet,
+
+            starter:
+              result.entry.starter,
+
+            match_minutes:
+              matchMinutes,
+
+            panel_rating:
+              result.rating
+                .final_rating,
+          };
+        },
+      )
+      .filter(
+        (
+          entry,
+        ): entry is NonNullable<
+          typeof entry
+        > =>
+          entry !== null,
+      );
 
   const fantasy =
     calculateFantasyLineupPoints(
-      lineupPlayers.map(
-        (entry) => ({
-          player_id:
-            entry.player_id,
-
-          final_rating:
-            ratingByPlayer.get(
-              entry.player_id,
-            ) ?? null,
-        }),
-      ),
+      fantasyInputs,
     );
 
   const pointsByPlayer =
@@ -130,7 +293,9 @@ export async function getFantasyMatchPoints(input: {
       FantasyPlayerPointsResult
     >(
       fantasy.players.map(
-        (player) => [
+        (
+          player,
+        ) => [
           player.player_id,
           player,
         ],
@@ -139,7 +304,14 @@ export async function getFantasyMatchPoints(input: {
 
   const players =
     lineupPlayers.map(
-      (entry) => {
+      (
+        entry,
+      ) => {
+        const result =
+          resultByPlayer.get(
+            entry.player_id,
+          );
+
         const playerPoints =
           pointsByPlayer.get(
             entry.player_id,
@@ -148,7 +320,8 @@ export async function getFantasyMatchPoints(input: {
         const playerName =
           entry.player
             ? `${entry.player.first_name} ${
-                entry.player.last_name ?? ""
+                entry.player.last_name ??
+                ""
               }`.trim()
             : "Jugador no disponible";
 
@@ -170,41 +343,67 @@ export async function getFantasyMatchPoints(input: {
             null,
 
           starter:
-            starterByPlayer.get(
-              entry.player_id,
-            ) ?? false,
+            result?.entry
+              .starter ??
+            false,
 
           minutes_played:
-            minutesByPlayer.get(
-              entry.player_id,
-            ) ?? 0,
+            result?.entry
+              .minutes_played ??
+            0,
 
           final_rating:
-            ratingByPlayer.get(
-              entry.player_id,
-            ) ?? null,
+            result?.rating
+              .final_rating ??
+            null,
+
+          rounded_rating:
+            playerPoints
+              ?.rounded_rating ??
+            null,
 
           points:
-            playerPoints?.points ??
+            playerPoints
+              ?.points ??
             0,
 
           rateable:
             playerPoints
               ?.rateable ??
             false,
+
+          breakdown:
+            playerPoints
+              ?.breakdown ?? {
+              minutes:
+                0,
+
+              goals:
+                0,
+
+              assists:
+                0,
+
+              clean_sheet:
+                0,
+
+              cards:
+                0,
+
+              rating:
+                0,
+            },
         };
       },
     );
 
-  /*
-   * Aquí no ordenamos por puntos porque en la
-   * pantalla de jornada vamos a separar después
-   * titulares y banquillo.
-   */
   return {
-    status: "ready",
+    status:
+      "ready",
+
     total_points:
       fantasy.total_points,
+
     players,
   };
 }
