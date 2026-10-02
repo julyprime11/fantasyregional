@@ -1,5 +1,8 @@
 import { MATCH_STATUSES } from "@regional-fantasy/shared";
-import type { MatchStatus } from "@/lib/supabase/database.types";
+import type { Database } from "@/lib/supabase/database.types";
+
+type MatchStatus =
+  Database["public"]["Tables"]["matches"]["Row"]["status"];
 import type { CompetitionRow } from "@/data/competitions";
 import type { TeamRow } from "@/data/teams";
 import type { Field } from "../create-form";

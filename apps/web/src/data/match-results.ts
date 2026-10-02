@@ -1,5 +1,7 @@
 import "server-only";
-
+import type {
+  PlayerPosition,
+} from "@regional-fantasy/shared";
 import {
   calculatePlayerRating,
   selectMatchMvp,
@@ -135,8 +137,11 @@ export async function getMatchResults(
             entry.player_id,
 
           position:
-            entry.player?.position ??
-            null,
+  entry.player?.position
+    ? (
+        entry.player.position as PlayerPosition
+      )
+    : null,
 
           minutes_played:
             entry.minutes_played,

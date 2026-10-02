@@ -1,5 +1,7 @@
 import "server-only";
-
+import type {
+  PlayerPosition,
+} from "@regional-fantasy/shared";
 import {
   InputError,
   validateFantasyLineup,
@@ -329,7 +331,7 @@ export async function saveFantasyLineup(
         (player) => ({
           id: player.id,
           position:
-            player.position,
+  player.position as PlayerPosition,
         }),
       ),
     );

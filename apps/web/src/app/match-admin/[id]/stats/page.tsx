@@ -1,27 +1,72 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
-import { getMatchById } from "@/data/matches";
-import { getMatchPlayers } from "@/data/match-players";
+import {
+  notFound,
+} from "next/navigation";
 
+import {
+  getLiveMatchById,
+  getMatchById,
+} from "@/data/matches";
+
+import {
+  getMatchPlayers,
+} from "@/data/match-players";
+
+import {
+  getMatchEvents,
+} from "@/data/match-events";
+
+import {
+  getTeams,
+} from "@/data/teams";
+
+import LiveMatchController from "./live-match-controller";
+import MatchTimeline from "./match-timeline";
 import StatsManager from "./stats-manager";
 
 export default async function MatchStatsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 }) {
   const { id } =
     await params;
 
   let match;
+  let liveMatch;
   let players;
+  let teams;
+  let events;
 
   try {
-    [match, players] =
+    [
+      match,
+      liveMatch,
+      players,
+      teams,
+      events,
+    ] =
       await Promise.all([
-        getMatchById(id),
-        getMatchPlayers(id),
+        getMatchById(
+          id,
+        ),
+
+        getLiveMatchById(
+          id,
+        ),
+
+        getMatchPlayers(
+          id,
+        ),
+
+        getTeams(),
+
+        getMatchEvents(
+          id,
+        ),
       ]);
   } catch {
     return (
@@ -42,7 +87,7 @@ export default async function MatchStatsPage({
             </p>
 
             <h1 className="mt-2 text-3xl font-black">
-              Estadísticas
+              Partido en directo
             </h1>
           </div>
         </header>
@@ -74,6 +119,134 @@ export default async function MatchStatsPage({
         player.starter,
     ).length;
 
+  const onField =
+    players.filter(
+      (player) =>
+        player.on_field,
+    ).length;
+
+  /*
+   * NOMBRES DE LOS EQUIPOS
+   */
+  const teamNames =
+    new Map(
+      teams.map(
+        (team) => [
+          team.id,
+          team.name,
+        ],
+      ),
+    );
+
+  const homeTeam =
+    teamNames.get(
+      match.home_team_id,
+    ) ??
+    "Equipo local";
+
+  const awayTeam =
+    teamNames.get(
+      match.away_team_id,
+    ) ??
+    "Equipo visitante";
+
+  /*
+   * NOMBRES DE JUGADORES PARA
+   * LA CRONOLOGÍA DE EVENTOS
+   */
+  const playerNames =
+    Object.fromEntries(
+      players.map(
+        (entry) => [
+          entry.player_id,
+
+          entry.player
+            ? `${entry.player.first_name} ${
+                entry.player.last_name ??
+                ""
+              }`.trim()
+            : "Jugador",
+        ],
+      ),
+    );
+
+  /*
+   * EQUIPOS GESTIONADOS
+   *
+   * Los detectamos automáticamente
+   * a partir de match_players.
+   *
+   * Ahora:
+   * - si solo tenemos jugadores del Castelló,
+   *   aparecerá únicamente Castelló.
+   *
+   * Futuro:
+   * - si también cargamos jugadores del rival,
+   *   aparecerán automáticamente los dos equipos.
+   *
+   * No dependemos del nombre del club.
+   * Trabajamos siempre con team_id.
+   */
+  const managedTeamsMap =
+    new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        cleanSheet: boolean;
+      }
+    >();
+
+  for (
+    const entry of
+    players
+  ) {
+    const current =
+      managedTeamsMap.get(
+        entry.team_id,
+      );
+
+    const teamName =
+      entry.team?.name ??
+      teamNames.get(
+        entry.team_id,
+      ) ??
+      "Equipo";
+
+    if (!current) {
+      managedTeamsMap.set(
+        entry.team_id,
+        {
+          id:
+            entry.team_id,
+
+          name:
+            teamName,
+
+          cleanSheet:
+            entry.clean_sheet,
+        },
+      );
+
+      continue;
+    }
+
+    /*
+     * El equipo se considera con
+     * portería a cero únicamente si
+     * todos sus match_players tienen
+     * clean_sheet=true.
+     */
+    current.cleanSheet =
+      current.cleanSheet &&
+      entry.clean_sheet;
+  }
+
+  const managedTeams =
+    Array.from(
+      managedTeamsMap.values(),
+    );
+
   return (
     <main className="mx-auto min-h-screen max-w-xl">
       {/* CABECERA */}
@@ -95,16 +268,87 @@ export default async function MatchStatsPage({
           </p>
 
           <h1 className="mt-2 text-3xl font-black tracking-tight">
-            Estadísticas
+            Partido en directo
           </h1>
 
           <p className="mt-2 max-w-sm text-sm leading-6 text-white/65">
-            Configura el once y registra el rendimiento de cada jugador.
+            Controla el tiempo, las sustituciones y las estadísticas mientras se juega.
           </p>
         </div>
       </header>
 
       <div className="px-4 pb-8">
+        {/* MATCH CENTER */}
+        <section className="mt-5">
+          <LiveMatchController
+            matchId={
+              id
+            }
+            homeTeam={
+              homeTeam
+            }
+            awayTeam={
+              awayTeam
+            }
+            homeScore={
+              match.home_score
+            }
+            awayScore={
+              match.away_score
+            }
+            phase={
+              liveMatch.live_phase
+            }
+            clockSeconds={
+              liveMatch.live_clock_seconds
+            }
+            clockStartedAt={
+              liveMatch.live_clock_started_at
+            }
+            managedTeams={
+              managedTeams
+            }
+          />
+        </section>
+
+        {/* CRONOLOGÍA */}
+        <section className="mt-5">
+          <MatchTimeline
+            matchId={
+              id
+            }
+            initialEvents={events.map(
+              (
+                event,
+              ) => ({
+                id:
+                  event.id,
+
+                matchId:
+                  event.match_id,
+
+                eventType:
+                  event.event_type,
+
+                playerId:
+                  event.player_id,
+
+                secondaryPlayerId:
+                  event.secondary_player_id,
+
+                minute:
+                  event.minute,
+
+                createdAt:
+                  event.created_at,
+              }),
+            )}
+            playerNames={
+              playerNames
+            }
+          />
+        </section>
+
         {/* RESUMEN */}
         <section className="mt-5 grid grid-cols-3 gap-2">
           <Summary
@@ -116,9 +360,17 @@ export default async function MatchStatsPage({
 
           <Summary
             value={
-              starters
+              liveMatch.live_phase ===
+              "not_started"
+                ? starters
+                : onField
             }
-            label="Titulares"
+            label={
+              liveMatch.live_phase ===
+              "not_started"
+                ? "Titulares"
+                : "En campo"
+            }
           />
 
           <Summary
@@ -143,7 +395,7 @@ export default async function MatchStatsPage({
               </p>
 
               <p className="mt-1 text-xs leading-5 text-[#557368]">
-                Añade titulares desde el campo y pulsa cualquier jugador para registrar minutos, goles, asistencias y tarjetas.
+                Antes del partido configura el XI. Durante el directo, pulsa un jugador para registrar estadísticas o realizar una sustitución.
               </p>
             </div>
           </div>
@@ -174,9 +426,16 @@ export default async function MatchStatsPage({
         ) : (
           <section className="mt-8">
             <StatsManager
-              matchId={id}
+              matchId={
+                id
+              }
+              livePhase={
+                liveMatch.live_phase
+              }
               players={players.map(
-                (entry) => ({
+                (
+                  entry,
+                ) => ({
                   entryId:
                     entry.id,
 
@@ -205,11 +464,18 @@ export default async function MatchStatsPage({
                     entry.team_id,
 
                   teamName:
-                    entry.team?.name ??
+                    entry.team
+                      ?.name ??
                     "Equipo no disponible",
 
                   starter:
                     entry.starter,
+
+                  onField:
+                    entry.on_field,
+
+                  enteredMinute:
+                    entry.entered_minute,
 
                   statsCompleted:
                     entry.stats_completed,
@@ -247,7 +513,9 @@ function Summary({
   highlight = false,
 }: {
   value: number;
+
   label: string;
+
   highlight?: boolean;
 }) {
   return (

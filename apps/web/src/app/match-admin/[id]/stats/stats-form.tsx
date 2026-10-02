@@ -12,22 +12,62 @@ import {
   type FormState,
 } from "@/app/admin/actions";
 
+import {
+  createBrowserSupabaseClient,
+} from "@/lib/supabase/client";
+
+import {
+  updateQuickPlayerStatAction,
+} from "./actions";
+
+import type {
+  QuickStatField,
+} from "@/data/match-players";
+
 type StatsFormProps = {
   matchId: string;
+
   entryId: string;
+
   starter: boolean;
+
   minutesPlayed: number;
+
   goals: number;
+
   assists: number;
+
   yellowCards: number;
+
   redCards: number;
+
   cleanSheet: boolean;
+
   onSaved?: () => void;
 };
 
 const initialState: FormState = {
-  status: "idle",
-  message: "",
+  status:
+    "idle",
+
+  message:
+    "",
+};
+
+type RealtimeMatchPlayer = {
+  minutes_played?: number;
+
+  goals?: number;
+
+  assists?: number;
+
+  yellow_cards?: number;
+
+  red_cards?: number;
+
+  clean_sheet?: boolean;
+
+  stats_completed?: boolean;
 };
 
 export default function StatsForm({
@@ -67,7 +107,9 @@ export default function StatsForm({
   useEffect(() => {
     onSavedRef.current =
       onSaved;
-  }, [onSaved]);
+  }, [
+    onSaved,
+  ]);
 
   useEffect(() => {
     if (
@@ -76,7 +118,9 @@ export default function StatsForm({
     ) {
       onSavedRef.current?.();
     }
-  }, [state.status]);
+  }, [
+    state.status,
+  ]);
 
   const [
     minutes,
@@ -118,408 +162,844 @@ export default function StatsForm({
       redCards,
     );
 
-  return (
-    <form
-      action={
-        formAction
-      }
-      className="mt-5 space-y-4"
-    >
-      {starter && (
-        <input
-          type="hidden"
-          name="starter"
-          value="on"
-        />
-      )}
-
-      {/* MINUTOS */}
-      <section className="rounded-[1.4rem] bg-zinc-50 p-4">
-        <div className="mb-3">
-          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-            Participación
-          </p>
-
-          <h3 className="mt-1 font-black text-zinc-950">
-            Minutos jugados
-          </h3>
-        </div>
-
-        <QuickNumberField
-          name="minutes_played"
-          label="Minutos"
-          value={minutes}
-          onChange={
-            setMinutes
-          }
-          max={120}
-          quickValues={[
-            0,
-            15,
-            30,
-            45,
-            60,
-            75,
-            90,
-          ]}
-          large
-        />
-      </section>
-
-      {/* RENDIMIENTO */}
-      <section>
-        <p className="px-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-          Rendimiento
-        </p>
-
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <StatBox
-            icon="⚽"
-            title="Goles"
-          >
-            <QuickNumberField
-              name="goals"
-              label="Goles"
-              value={
-                goalsValue
-              }
-              onChange={
-                setGoalsValue
-              }
-            />
-          </StatBox>
-
-          <StatBox
-            icon="👟"
-            title="Asistencias"
-          >
-            <QuickNumberField
-              name="assists"
-              label="Asistencias"
-              value={
-                assistsValue
-              }
-              onChange={
-                setAssistsValue
-              }
-            />
-          </StatBox>
-
-          <StatBox
-            icon="🟨"
-            title="Amarillas"
-          >
-            <QuickNumberField
-              name="yellow_cards"
-              label="Amarillas"
-              value={
-                yellowValue
-              }
-              onChange={
-                setYellowValue
-              }
-            />
-          </StatBox>
-
-          <StatBox
-            icon="🟥"
-            title="Rojas"
-          >
-            <QuickNumberField
-              name="red_cards"
-              label="Rojas"
-              value={
-                redValue
-              }
-              onChange={
-                setRedValue
-              }
-            />
-          </StatBox>
-        </div>
-      </section>
-
-      {/* PORTERÍA CERO */}
-      <label className="flex min-h-16 cursor-pointer items-center justify-between rounded-[1.3rem] bg-[#e8f2ed] px-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f3d2e] text-white">
-            🧤
-          </div>
-
-          <div>
-            <p className="font-black text-[#0b2f23]">
-              Portería a cero
-            </p>
-
-            <p className="mt-0.5 text-[10px] font-semibold text-[#557368]">
-              Aplicable según posición
-            </p>
-          </div>
-        </div>
-
-        <input
-          type="checkbox"
-          name="clean_sheet"
-          defaultChecked={
-            cleanSheet
-          }
-          className="h-6 w-6 accent-[#0f3d2e]"
-        />
-      </label>
-
-      {/* ESTADO */}
-      {state.status !==
-        "idle" && (
-        <div
-          role={
-            state.status ===
-            "error"
-              ? "alert"
-              : "status"
-          }
-          className={`rounded-[1.2rem] p-4 ${
-            state.status ===
-            "error"
-              ? "bg-red-50"
-              : "bg-[#e8f2ed]"
-          }`}
-        >
-          <p
-            className={`text-sm font-bold ${
-              state.status ===
-              "error"
-                ? "text-red-700"
-                : "text-[#0f3d2e]"
-            }`}
-          >
-            {
-              state.message
-            }
-          </p>
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={
-          pending
-        }
-        className="flex min-h-14 w-full items-center justify-center rounded-[1.2rem] bg-[#0f3d2e] px-4 text-base font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-50"
-      >
-        {pending
-          ? "Guardando..."
-          : "Guardar estadísticas →"}
-      </button>
-    </form>
-  );
-}
-
-function StatBox({
-  icon,
-  title,
-  children,
-}: {
-  icon: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-[1.3rem] bg-zinc-50 p-3">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-lg">
-          {icon}
-        </span>
-
-        <p className="text-xs font-black text-zinc-700">
-          {title}
-        </p>
-      </div>
-
-      {children}
-    </div>
-  );
-}
-
-function QuickNumberField({
-  name,
-  label,
-  value,
-  onChange,
-  max,
-  quickValues,
-  large = false,
-}: {
-  name: string;
-  label: string;
-  value: number;
-  onChange: (
-    value: number,
-  ) => void;
-  max?: number;
-  quickValues?: number[];
-  large?: boolean;
-}) {
-  function decrease() {
-    onChange(
-      Math.max(
-        0,
-        value - 1,
-      ),
+  const [
+    cleanSheetValue,
+    setCleanSheetValue,
+  ] =
+    useState(
+      cleanSheet,
     );
-  }
 
-  function increase() {
-    const next =
-      value + 1;
+  const [
+    quickPendingField,
+    setQuickPendingField,
+  ] =
+    useState<
+      QuickStatField | null
+    >(null);
+
+  const [
+    quickError,
+    setQuickError,
+  ] =
+    useState("");
+
+  const [
+    realtimeStatus,
+    setRealtimeStatus,
+  ] =
+    useState<
+      | "connecting"
+      | "connected"
+      | "error"
+    >(
+      "connecting",
+    );
+
+  /*
+   * Si llegan nuevos valores desde el padre
+   * después de un refresh, sincronizamos
+   * el estado local.
+   */
+  useEffect(() => {
+    setMinutes(
+      minutesPlayed,
+    );
+  }, [
+    minutesPlayed,
+  ]);
+
+  useEffect(() => {
+    setGoalsValue(
+      goals,
+    );
+  }, [
+    goals,
+  ]);
+
+  useEffect(() => {
+    setAssistsValue(
+      assists,
+    );
+  }, [
+    assists,
+  ]);
+
+  useEffect(() => {
+    setYellowValue(
+      yellowCards,
+    );
+  }, [
+    yellowCards,
+  ]);
+
+  useEffect(() => {
+    setRedValue(
+      redCards,
+    );
+  }, [
+    redCards,
+  ]);
+
+  useEffect(() => {
+    setCleanSheetValue(
+      cleanSheet,
+    );
+  }, [
+    cleanSheet,
+  ]);
+
+  /*
+   * ===============================
+   * REALTIME / MULTIUSUARIO
+   * ===============================
+   *
+   * Al abrir un jugador:
+   *
+   * 1. Leemos el estado más reciente.
+   * 2. Nos suscribimos a cambios.
+   *
+   * Así, si otro directivo actualiza
+   * goles, tarjetas, clean sheet, etc.,
+   * este modal recibe el nuevo valor.
+   */
+  useEffect(() => {
+    const supabase =
+      createBrowserSupabaseClient();
+
+    let mounted =
+      true;
+
+    async function loadLatest() {
+      const {
+        data,
+        error,
+      } =
+        await supabase
+          .from(
+            "match_players",
+          )
+          .select(
+            `
+              minutes_played,
+              goals,
+              assists,
+              yellow_cards,
+              red_cards,
+              clean_sheet,
+              stats_completed
+            `,
+          )
+          .eq(
+            "match_id",
+            matchId,
+          )
+          .eq(
+            "id",
+            entryId,
+          )
+          .maybeSingle();
+
+      if (
+        !mounted
+      ) {
+        return;
+      }
+
+      if (
+        error ||
+        !data
+      ) {
+        setRealtimeStatus(
+          "error",
+        );
+
+        return;
+      }
+
+      setMinutes(
+        data.minutes_played ??
+          0,
+      );
+
+      setGoalsValue(
+        data.goals ??
+          0,
+      );
+
+      setAssistsValue(
+        data.assists ??
+          0,
+      );
+
+      setYellowValue(
+        data.yellow_cards ??
+          0,
+      );
+
+      setRedValue(
+        data.red_cards ??
+          0,
+      );
+
+      setCleanSheetValue(
+        data.clean_sheet ??
+          false,
+      );
+    }
+
+    void loadLatest();
+
+    const channel =
+      supabase
+        .channel(
+          `match-player-form-${entryId}`,
+        )
+        .on(
+          "postgres_changes",
+          {
+            event:
+              "UPDATE",
+
+            schema:
+              "public",
+
+            table:
+              "match_players",
+
+            filter:
+              `id=eq.${entryId}`,
+          },
+          (
+            payload,
+          ) => {
+            const updated =
+              payload.new as
+                RealtimeMatchPlayer;
+
+            if (
+              typeof updated.minutes_played ===
+              "number"
+            ) {
+              setMinutes(
+                updated.minutes_played,
+              );
+            }
+
+            if (
+              typeof updated.goals ===
+              "number"
+            ) {
+              setGoalsValue(
+                updated.goals,
+              );
+            }
+
+            if (
+              typeof updated.assists ===
+              "number"
+            ) {
+              setAssistsValue(
+                updated.assists,
+              );
+            }
+
+            if (
+              typeof updated.yellow_cards ===
+              "number"
+            ) {
+              setYellowValue(
+                updated.yellow_cards,
+              );
+            }
+
+            if (
+              typeof updated.red_cards ===
+              "number"
+            ) {
+              setRedValue(
+                updated.red_cards,
+              );
+            }
+
+            if (
+              typeof updated.clean_sheet ===
+              "boolean"
+            ) {
+              setCleanSheetValue(
+                updated.clean_sheet,
+              );
+            }
+          },
+        )
+        .subscribe(
+          (
+            status,
+          ) => {
+            if (
+              !mounted
+            ) {
+              return;
+            }
+
+            if (
+              status ===
+              "SUBSCRIBED"
+            ) {
+              setRealtimeStatus(
+                "connected",
+              );
+            }
+
+            if (
+              status ===
+                "CHANNEL_ERROR" ||
+              status ===
+                "TIMED_OUT"
+            ) {
+              setRealtimeStatus(
+                "error",
+              );
+            }
+          },
+        );
+
+    return () => {
+      mounted =
+        false;
+
+      void supabase.removeChannel(
+        channel,
+      );
+    };
+  }, [
+    matchId,
+    entryId,
+  ]);
+
+  /*
+   * ===============================
+   * QUICK STATS
+   * ===============================
+   */
+  async function changeQuickStat(
+    field: QuickStatField,
+    delta: 1 | -1,
+  ) {
+    if (
+      quickPendingField !==
+      null
+    ) {
+      return;
+    }
+
+    setQuickError("");
+
+    setQuickPendingField(
+      field,
+    );
+
+    const result =
+      await updateQuickPlayerStatAction(
+        matchId,
+        entryId,
+        field,
+        delta,
+      );
+
+    setQuickPendingField(
+      null,
+    );
 
     if (
-      max !==
-      undefined
+      result.status ===
+      "error"
     ) {
-      onChange(
-        Math.min(
-          max,
-          next,
-        ),
+      setQuickError(
+        result.message,
       );
 
       return;
     }
 
-    onChange(
-      next,
-    );
-  }
-
-  function setSafeValue(
-    nextValue: number,
-  ) {
-    let safe =
-      Math.max(
-        0,
-        nextValue,
-      );
-
     if (
-      max !==
-      undefined
+      typeof result.value !==
+      "number"
     ) {
-      safe =
-        Math.min(
-          max,
-          safe,
-        );
+      return;
     }
 
-    onChange(
-      safe,
-    );
+    switch (
+      field
+    ) {
+      case "goals":
+        setGoalsValue(
+          result.value,
+        );
+
+        break;
+
+      case "assists":
+        setAssistsValue(
+          result.value,
+        );
+
+        break;
+
+      case "yellow_cards":
+        setYellowValue(
+          result.value,
+        );
+
+        break;
+
+      case "red_cards":
+        setRedValue(
+          result.value,
+        );
+
+        break;
+    }
   }
 
   return (
-    <div>
+    <div className="mt-5 space-y-5">
+      {/* ESTADO REALTIME */}
       <div
-        className={`grid items-center gap-2 ${
-          large
-            ? "grid-cols-[56px_1fr_56px]"
-            : "grid-cols-[42px_1fr_42px]"
+        className={`flex items-center justify-between rounded-xl px-3 py-2 ${
+          realtimeStatus ===
+          "connected"
+            ? "bg-[#edf5f1]"
+            : realtimeStatus ===
+                "error"
+              ? "bg-amber-50"
+              : "bg-zinc-100"
         }`}
       >
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              realtimeStatus ===
+              "connected"
+                ? "bg-emerald-500"
+                : realtimeStatus ===
+                    "error"
+                  ? "bg-amber-500"
+                  : "animate-pulse bg-zinc-400"
+            }`}
+          />
+
+          <p
+            className={`text-[10px] font-black uppercase tracking-wide ${
+              realtimeStatus ===
+              "connected"
+                ? "text-[#0f3d2e]"
+                : realtimeStatus ===
+                    "error"
+                  ? "text-amber-700"
+                  : "text-zinc-500"
+            }`}
+          >
+            {realtimeStatus ===
+            "connected"
+              ? "Sincronizado en directo"
+              : realtimeStatus ===
+                  "error"
+                ? "Sincronización no disponible"
+                : "Conectando..."}
+          </p>
+        </div>
+
+        {realtimeStatus ===
+          "connected" && (
+          <span className="text-[9px] font-semibold text-[#557368]">
+            Multiusuario
+          </span>
+        )}
+      </div>
+
+      {/* MINUTOS AUTOMÁTICOS */}
+      <section className="rounded-[1.2rem] bg-[#e8f2ed] p-4">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#557368]">
+          Minutos automáticos
+        </p>
+
+        <div className="mt-2 flex items-end justify-between gap-4">
+          <div>
+            <p className="text-3xl font-black text-[#0f3d2e]">
+              {minutes}
+              <span className="ml-1 text-base">
+                &apos;
+              </span>
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-[#557368]">
+              Se calculan mediante el cronómetro y las sustituciones.
+            </p>
+          </div>
+
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f3d2e] text-white">
+            ⏱
+          </div>
+        </div>
+      </section>
+
+      {/* ESTADÍSTICAS RÁPIDAS */}
+      <section>
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+            En directo
+          </p>
+
+          <h3 className="mt-1 text-lg font-black text-zinc-950">
+            Estadísticas rápidas
+          </h3>
+
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            Los cambios se guardan automáticamente y aparecen en los demás dispositivos.
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <QuickStatControl
+            icon="⚽"
+            label="Goles"
+            value={
+              goalsValue
+            }
+            pending={
+              quickPendingField ===
+              "goals"
+            }
+            disabled={
+              quickPendingField !==
+              null
+            }
+            onMinus={() =>
+              changeQuickStat(
+                "goals",
+                -1,
+              )
+            }
+            onPlus={() =>
+              changeQuickStat(
+                "goals",
+                1,
+              )
+            }
+          />
+
+          <QuickStatControl
+            icon="👟"
+            label="Asistencias"
+            value={
+              assistsValue
+            }
+            pending={
+              quickPendingField ===
+              "assists"
+            }
+            disabled={
+              quickPendingField !==
+              null
+            }
+            onMinus={() =>
+              changeQuickStat(
+                "assists",
+                -1,
+              )
+            }
+            onPlus={() =>
+              changeQuickStat(
+                "assists",
+                1,
+              )
+            }
+          />
+
+          <QuickStatControl
+            icon="🟨"
+            label="Amarillas"
+            value={
+              yellowValue
+            }
+            pending={
+              quickPendingField ===
+              "yellow_cards"
+            }
+            disabled={
+              quickPendingField !==
+              null
+            }
+            onMinus={() =>
+              changeQuickStat(
+                "yellow_cards",
+                -1,
+              )
+            }
+            onPlus={() =>
+              changeQuickStat(
+                "yellow_cards",
+                1,
+              )
+            }
+          />
+
+          <QuickStatControl
+            icon="🟥"
+            label="Rojas"
+            value={
+              redValue
+            }
+            pending={
+              quickPendingField ===
+              "red_cards"
+            }
+            disabled={
+              quickPendingField !==
+              null
+            }
+            onMinus={() =>
+              changeQuickStat(
+                "red_cards",
+                -1,
+              )
+            }
+            onPlus={() =>
+              changeQuickStat(
+                "red_cards",
+                1,
+              )
+            }
+          />
+        </div>
+
+        {quickError && (
+          <p
+            role="alert"
+            className="mt-3 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700"
+          >
+            {quickError}
+          </p>
+        )}
+      </section>
+
+      {/* CLEAN SHEET SOLO INFORMATIVO */}
+      <section
+        className={`rounded-[1.2rem] p-4 ${
+          cleanSheetValue
+            ? "bg-emerald-50"
+            : "bg-zinc-50"
+        }`}
+      >
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
+          Equipo
+        </p>
+
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <div>
+            <p className="font-black text-zinc-950">
+              Portería a cero
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Se gestiona para todo el equipo desde la pantalla del partido.
+            </p>
+          </div>
+
+          <span
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-black ${
+              cleanSheetValue
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-200 text-zinc-500"
+            }`}
+          >
+            {cleanSheetValue
+              ? "SÍ"
+              : "NO"}
+          </span>
+        </div>
+      </section>
+
+      {/* MARCAR COMPLETADO */}
+      <form
+        action={
+          formAction
+        }
+        className="border-t border-zinc-100 pt-5"
+      >
+        {/*
+         * El parser de la action sigue esperando
+         * estos campos.
+         *
+         * updateMatchPlayerStats() ya no los
+         * sobrescribe; únicamente marca
+         * stats_completed=true.
+         */}
+
+        {starter && (
+          <input
+            type="hidden"
+            name="starter"
+            value="on"
+          />
+        )}
+
+        <input
+          type="hidden"
+          name="minutes_played"
+          value={
+            minutes
+          }
+        />
+
+        <input
+          type="hidden"
+          name="goals"
+          value={
+            goalsValue
+          }
+        />
+
+        <input
+          type="hidden"
+          name="assists"
+          value={
+            assistsValue
+          }
+        />
+
+        <input
+          type="hidden"
+          name="yellow_cards"
+          value={
+            yellowValue
+          }
+        />
+
+        <input
+          type="hidden"
+          name="red_cards"
+          value={
+            redValue
+          }
+        />
+
+        {cleanSheetValue && (
+          <input
+            type="hidden"
+            name="clean_sheet"
+            value="on"
+          />
+        )}
+
+        {state.status !==
+          "idle" && (
+          <p
+            role={
+              state.status ===
+              "error"
+                ? "alert"
+                : "status"
+            }
+            className={`mb-3 rounded-xl p-3 text-sm ${
+              state.status ===
+              "error"
+                ? "bg-red-50 text-red-700"
+                : "bg-green-50 text-green-700"
+            }`}
+          >
+            {state.message}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={
+            pending
+          }
+          className="flex min-h-14 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 font-semibold text-white disabled:opacity-50"
+        >
+          {pending
+            ? "Guardando..."
+            : "Marcar estadísticas como completadas"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function QuickStatControl({
+  icon,
+  label,
+  value,
+  pending,
+  disabled,
+  onMinus,
+  onPlus,
+}: {
+  icon: string;
+
+  label: string;
+
+  value: number;
+
+  pending: boolean;
+
+  disabled: boolean;
+
+  onMinus: () => void;
+
+  onPlus: () => void;
+}) {
+  return (
+    <div className="rounded-[1.2rem] bg-zinc-50 p-3 ring-1 ring-black/5">
+      <div className="flex items-center gap-2">
+        <span className="text-base">
+          {icon}
+        </span>
+
+        <p className="text-xs font-black text-zinc-700">
+          {label}
+        </p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-[38px_1fr_38px] items-center gap-2">
         <button
           type="button"
-          onClick={
-            decrease
+          disabled={
+            disabled ||
+            value <= 0
           }
-          className={`rounded-xl bg-white font-black text-zinc-950 shadow-sm ring-1 ring-black/5 active:scale-95 ${
-            large
-              ? "h-14 text-2xl"
-              : "h-11 text-xl"
-          }`}
+          onClick={
+            onMinus
+          }
+          className="flex h-9 items-center justify-center rounded-lg bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
           aria-label={`Restar ${label}`}
         >
           −
         </button>
 
-        <input
-          type="number"
-          name={
-            name
-          }
-          min={0}
-          max={
-            max
-          }
-          step={1}
-          required
-          value={
-            value
-          }
-          onChange={(
-            event,
-          ) =>
-            setSafeValue(
-              Number(
-                event.target
-                  .value,
-              ),
-            )
-          }
-          inputMode="numeric"
-          className={`w-full rounded-xl border-0 bg-white px-2 text-center font-black text-zinc-950 outline-none ring-1 ring-black/5 focus:ring-[#0f3d2e] ${
-            large
-              ? "h-14 text-2xl"
-              : "h-11 text-xl"
-          }`}
-        />
+        <p className="text-center text-2xl font-black text-zinc-950">
+          {pending
+            ? "…"
+            : value}
+        </p>
 
         <button
           type="button"
-          onClick={
-            increase
+          disabled={
+            disabled
           }
-          className={`rounded-xl bg-white font-black text-zinc-950 shadow-sm ring-1 ring-black/5 active:scale-95 ${
-            large
-              ? "h-14 text-2xl"
-              : "h-11 text-xl"
-          }`}
+          onClick={
+            onPlus
+          }
+          className="flex h-9 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
           aria-label={`Sumar ${label}`}
         >
           +
         </button>
       </div>
-
-      {quickValues && (
-        <div className="mt-3 grid grid-cols-4 gap-2">
-          {quickValues.map(
-            (
-              quickValue,
-            ) => (
-              <button
-                key={
-                  quickValue
-                }
-                type="button"
-                onClick={() =>
-                  setSafeValue(
-                    quickValue,
-                  )
-                }
-                className={`min-h-10 rounded-xl px-2 text-xs font-black ${
-                  value ===
-                  quickValue
-                    ? "bg-[#0f3d2e] text-white"
-                    : "bg-white text-zinc-500 ring-1 ring-black/5"
-                }`}
-              >
-                {
-                  quickValue
-                }
-                &apos;
-              </button>
-            ),
-          )}
-        </div>
-      )}
     </div>
   );
 }

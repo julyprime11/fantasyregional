@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { requireUser } from "@/lib/auth";
-
+import type {
+  PlayerPosition,
+} from "@regional-fantasy/shared";
 import {
   getFantasyLeagueById,
   getFantasyLeagueMembers,
@@ -384,8 +386,8 @@ export default async function FantasyLineupPage({
                 shirtNumber:
                   player.shirt_number,
 
-                position:
-                  player.position,
+               position:
+  player.position as PlayerPosition,
               }),
             )
           }

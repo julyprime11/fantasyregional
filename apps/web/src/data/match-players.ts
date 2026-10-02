@@ -1,17 +1,29 @@
 import "server-only";
 
-import { InputError } from "@regional-fantasy/shared";
+import {
+  InputError,
+} from "@regional-fantasy/shared";
 
-import type { Database } from "@/lib/supabase/database.types";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type {
+  Database,
+} from "@/lib/supabase/database.types";
+
+import {
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
 
 import {
   getMatchById,
   type MatchRow,
 } from "./matches";
 
-import type { PlayerRow } from "./players";
-import type { TeamRow } from "./teams";
+import type {
+  PlayerRow,
+} from "./players";
+
+import type {
+  TeamRow,
+} from "./teams";
 
 export type MatchPlayerRow =
   Database["public"]["Tables"]["match_players"]["Row"];
@@ -48,24 +60,45 @@ type Stats = Pick<
   | "clean_sheet"
 >;
 
+export type QuickStatField =
+  | "goals"
+  | "assists"
+  | "yellow_cards"
+  | "red_cards";
+
 async function getEligiblePlayers(
   match: MatchRow,
 ): Promise<PlayerRow[]> {
   const supabase =
     await createServerSupabaseClient();
 
-  const { data, error } =
+  const {
+    data,
+    error,
+  } =
     await supabase
       .from("players")
       .select("*")
-      .eq("active", true)
-      .in("team_id", [
-        match.home_team_id,
-        match.away_team_id,
-      ])
-      .order("first_name")
-      .order("last_name")
-      .order("id");
+      .eq(
+        "active",
+        true,
+      )
+      .in(
+        "team_id",
+        [
+          match.home_team_id,
+          match.away_team_id,
+        ],
+      )
+      .order(
+        "first_name",
+      )
+      .order(
+        "last_name",
+      )
+      .order(
+        "id",
+      );
 
   if (error) {
     throw error;
@@ -77,7 +110,9 @@ async function getEligiblePlayers(
 export async function getEligibleSquadPlayers(
   match: MatchRow,
 ): Promise<PlayerRow[]> {
-  return getEligiblePlayers(match);
+  return getEligiblePlayers(
+    match,
+  );
 }
 
 export async function getMatchPlayers(
@@ -86,9 +121,14 @@ export async function getMatchPlayers(
   const supabase =
     await createServerSupabaseClient();
 
-  const { data, error } =
+  const {
+    data,
+    error,
+  } =
     await supabase
-      .from("match_players")
+      .from(
+        "match_players",
+      )
       .select(
         `
           *,
@@ -105,9 +145,16 @@ export async function getMatchPlayers(
           )
         `,
       )
-      .eq("match_id", matchId)
-      .order("created_at")
-      .order("id");
+      .eq(
+        "match_id",
+        matchId,
+      )
+      .order(
+        "created_at",
+      )
+      .order(
+        "id",
+      );
 
   if (error) {
     throw error;
@@ -121,7 +168,9 @@ export async function addMatchPlayer(
   playerId: string,
 ): Promise<void> {
   const match =
-    await getMatchById(matchId);
+    await getMatchById(
+      matchId,
+    );
 
   if (!match) {
     throw new InputError(
@@ -137,14 +186,25 @@ export async function addMatchPlayer(
     error: playerError,
   } =
     await supabase
-      .from("players")
+      .from(
+        "players",
+      )
       .select("*")
-      .eq("active", true)
-      .in("team_id", [
-        match.home_team_id,
-        match.away_team_id,
-      ])
-      .eq("id", playerId)
+      .eq(
+        "active",
+        true,
+      )
+      .in(
+        "team_id",
+        [
+          match.home_team_id,
+          match.away_team_id,
+        ],
+      )
+      .eq(
+        "id",
+        playerId,
+      )
       .maybeSingle();
 
   if (playerError) {
@@ -157,16 +217,28 @@ export async function addMatchPlayer(
     );
   }
 
-  const { error } =
+  const {
+    error,
+  } =
     await supabase
-      .from("match_players")
+      .from(
+        "match_players",
+      )
       .insert({
-        match_id: match.id,
-        player_id: player.id,
-        team_id: player.team_id,
+        match_id:
+          match.id,
+
+        player_id:
+          player.id,
+
+        team_id:
+          player.team_id,
       });
 
-  if (error?.code === "23505") {
+  if (
+    error?.code ===
+    "23505"
+  ) {
     throw new InputError(
       "Este jugador ya está en la convocatoria del partido.",
     );
@@ -177,28 +249,216 @@ export async function addMatchPlayer(
   }
 }
 
+/*
+ * GUARDADO FINAL DEL JUGADOR
+ *
+ * Las estadísticas ya NO se escriben aquí.
+ *
+ * - minutos -> automáticos
+ * - goles -> quick stats
+ * - asistencias -> quick stats
+ * - tarjetas -> quick stats
+ * - clean sheet -> por equipo
+ * - starter -> gestión del XI
+ *
+ * Esta acción únicamente marca que el
+ * registro del jugador se ha revisado.
+ *
+ * Esto evita que un formulario antiguo
+ * sobrescriba datos introducidos por otro
+ * directivo.
+ */
 export async function updateMatchPlayerStats(
   matchId: string,
   entryId: string,
-  stats: Stats,
+  _stats: Stats,
 ): Promise<void> {
   const supabase =
     await createServerSupabaseClient();
 
-  const { error } =
+  const {
+    error,
+  } =
     await supabase
-      .from("match_players")
+      .from(
+        "match_players",
+      )
       .update({
-        ...stats,
-        stats_completed: true,
+        stats_completed:
+          true,
       })
-      .eq("match_id", matchId)
-      .eq("id", entryId)
-      .select("id")
+      .eq(
+        "match_id",
+        matchId,
+      )
+      .eq(
+        "id",
+        entryId,
+      )
+      .select(
+        "id",
+      )
       .single();
 
   if (error) {
     throw error;
+  }
+}
+
+/*
+ * ESTADÍSTICAS RÁPIDAS
+ *
+ * El incremento/reducción se ejecuta
+ * atómicamente en PostgreSQL.
+ *
+ * El RPC también genera/elimina
+ * match_events.
+ */
+export async function updateMatchPlayerQuickStat(
+  matchId: string,
+  entryId: string,
+  field: QuickStatField,
+  delta: 1 | -1,
+): Promise<number> {
+  const supabase =
+    await createServerSupabaseClient();
+
+  type RpcResult = {
+    data:
+      | number
+      | null;
+
+    error:
+      | {
+          message?: string;
+        }
+      | null;
+  };
+
+  const rpc =
+    supabase.rpc.bind(
+      supabase,
+    ) as unknown as (
+      functionName: string,
+      args: Record<
+        string,
+        unknown
+      >,
+    ) => Promise<RpcResult>;
+
+  const {
+    data,
+    error,
+  } =
+    await rpc(
+      "increment_match_player_stat",
+      {
+        p_match_id:
+          matchId,
+
+        p_entry_id:
+          entryId,
+
+        p_field:
+          field,
+
+        p_delta:
+          delta,
+      },
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    typeof data !==
+    "number"
+  ) {
+    throw new InputError(
+      "No se pudo actualizar la estadística del jugador.",
+    );
+  }
+
+  return data;
+}
+
+/*
+ * PORTERÍA A CERO POR EQUIPO
+ *
+ * Se replica sobre TODOS los jugadores
+ * del equipo convocados en este partido.
+ *
+ * Fantasy podrá después decidir qué
+ * posiciones reciben puntos.
+ */
+export async function updateTeamCleanSheet(
+  matchId: string,
+  teamId: string,
+  cleanSheet: boolean,
+): Promise<void> {
+  const match =
+    await getMatchById(
+      matchId,
+    );
+
+  if (!match) {
+    throw new InputError(
+      "El partido ya no está disponible.",
+    );
+  }
+
+  const validTeam =
+    teamId ===
+      match.home_team_id ||
+    teamId ===
+      match.away_team_id;
+
+  if (!validTeam) {
+    throw new InputError(
+      "El equipo seleccionado no pertenece a este partido.",
+    );
+  }
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from(
+        "match_players",
+      )
+      .update({
+        clean_sheet:
+          cleanSheet,
+      })
+      .eq(
+        "match_id",
+        matchId,
+      )
+      .eq(
+        "team_id",
+        teamId,
+      )
+      .select(
+        "id",
+      );
+
+  if (error) {
+    throw error;
+  }
+
+  if (
+    !data ||
+    data.length ===
+      0
+  ) {
+    throw new InputError(
+      "No hay jugadores de este equipo en la convocatoria.",
+    );
   }
 }
 
@@ -210,15 +470,27 @@ export async function updateMatchPlayerStarter(
   const supabase =
     await createServerSupabaseClient();
 
-  const { error } =
+  const {
+    error,
+  } =
     await supabase
-      .from("match_players")
+      .from(
+        "match_players",
+      )
       .update({
         starter,
       })
-      .eq("match_id", matchId)
-      .eq("id", entryId)
-      .select("id")
+      .eq(
+        "match_id",
+        matchId,
+      )
+      .eq(
+        "id",
+        entryId,
+      )
+      .select(
+        "id",
+      )
       .single();
 
   if (error) {
@@ -233,13 +505,25 @@ export async function removeMatchPlayer(
   const supabase =
     await createServerSupabaseClient();
 
-  const { error } =
+  const {
+    error,
+  } =
     await supabase
-      .from("match_players")
+      .from(
+        "match_players",
+      )
       .delete()
-      .eq("match_id", matchId)
-      .eq("id", entryId)
-      .select("id")
+      .eq(
+        "match_id",
+        matchId,
+      )
+      .eq(
+        "id",
+        entryId,
+      )
+      .select(
+        "id",
+      )
       .single();
 
   if (error) {
