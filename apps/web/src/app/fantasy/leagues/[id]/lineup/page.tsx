@@ -452,6 +452,8 @@ export default async function FantasyLineupPage({
 
               position:
                 player.position as PlayerPosition,
+              imageUrl:
+                player.image_url,
             }),
           )}
           initialSelectedIds={

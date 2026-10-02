@@ -310,6 +310,9 @@ export async function startLiveMatch(
   const supabase =
     await createServerSupabaseClient();
 
+  /*
+   * Iniciamos el reloj.
+   */
   const {
     error: matchError,
   } =
@@ -340,6 +343,11 @@ export async function startLiveMatch(
     throw matchError;
   }
 
+  /*
+   * Antes de colocar el XI inicial
+   * limpiamos cualquier estado de campo
+   * o expulsión anterior.
+   */
   const {
     error: resetFieldError,
   } =
@@ -351,6 +359,12 @@ export async function startLiveMatch(
 
         entered_minute:
           null,
+
+        card_dismissed:
+          false,
+
+        dismissal_minute:
+          null,
       } as never)
       .eq(
         "match_id",
@@ -361,6 +375,10 @@ export async function startLiveMatch(
     throw resetFieldError;
   }
 
+  /*
+   * Colocamos únicamente a los titulares
+   * en el campo desde el minuto 0.
+   */
   const {
     error: startersError,
   } =
@@ -643,6 +661,10 @@ export async function resetLiveMatch(
   const supabase =
     await createServerSupabaseClient();
 
+  /*
+   * Reiniciamos completamente
+   * el estado del partido.
+   */
   const {
     error: matchError,
   } =
@@ -683,8 +705,14 @@ export async function resetLiveMatch(
   }
 
   /*
-   * Borramos toda la cronología
-   * del intento anterior.
+   * Eliminamos toda la cronología
+   * del intento anterior:
+   *
+   * goles
+   * asistencias
+   * amarillas
+   * rojas
+   * sustituciones
    */
   const {
     error: eventsError,
@@ -702,9 +730,19 @@ export async function resetLiveMatch(
   }
 
   /*
-   * Restauramos los jugadores
-   * manteniendo quién estaba
-   * seleccionado como titular.
+   * Restauramos todos los jugadores.
+   *
+   * Conservamos:
+   * - convocatoria
+   * - titular / suplente
+   *
+   * Limpiamos:
+   * - minutos
+   * - estadísticas
+   * - estado en campo
+   * - expulsión automática
+   * - portería a cero
+   * - estado completado
    */
   const {
     error: playersError,
@@ -716,6 +754,12 @@ export async function resetLiveMatch(
           false,
 
         entered_minute:
+          null,
+
+        card_dismissed:
+          false,
+
+        dismissal_minute:
           null,
 
         minutes_played:

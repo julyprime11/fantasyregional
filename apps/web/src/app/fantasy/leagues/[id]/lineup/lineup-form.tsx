@@ -14,6 +14,7 @@ type Player = {
   lastName: string | null;
   shirtNumber: number | null;
   position: PlayerPosition;
+  imageUrl: string | null;
 };
 
 type Props = {
@@ -561,9 +562,18 @@ export default function LineupForm({
                     className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-white px-3 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
-                        {player.shirtNumber ?? "—"}
-                      </span>
+                      {player.imageUrl ? (
+  <div
+    className="h-11 min-w-11 rounded-xl bg-[#e8f2ed] bg-cover bg-center shadow-sm"
+    style={{
+      backgroundImage: `url("${player.imageUrl}")`,
+    }}
+  />
+) : (
+  <span className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
+    {player.shirtNumber ?? "—"}
+  </span>
+)}
 
                       <div>
                         <p className="text-sm font-black text-zinc-950">
@@ -676,9 +686,26 @@ function FieldRow({
             onClick={() => onRemove(player)}
             className="flex w-full max-w-[62px] flex-col items-center disabled:opacity-90"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[12px] font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-12 sm:w-12">
-              {player.shirtNumber ?? "•"}
-            </div>
+         <div className="relative">
+  {player.imageUrl ? (
+    <div
+      className="h-11 w-11 rounded-full bg-white bg-cover bg-center shadow-md ring-2 ring-white/70 sm:h-14 sm:w-14"
+      style={{
+        backgroundImage: `url("${player.imageUrl}")`,
+      }}
+    />
+  ) : (
+    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[12px] font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-14 sm:w-14">
+      {player.shirtNumber ?? "•"}
+    </div>
+  )}
+
+  {player.imageUrl && player.shirtNumber !== null && (
+    <span className="absolute -bottom-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0f3d2e] px-1 text-[6px] font-black text-white shadow ring-1 ring-white">
+      {player.shirtNumber}
+    </span>
+  )}
+</div>
 
             <span className="mt-0.5 max-w-full truncate rounded bg-zinc-950/85 px-1 py-[1px] text-[6px] font-black leading-3 text-white shadow-sm sm:text-[9px]">
               {name}
@@ -734,15 +761,28 @@ function PlayerSection({
               } disabled:opacity-60`}
             >
               <div className="flex items-center gap-3">
-                <span
-                  className={`flex h-10 min-w-10 items-center justify-center rounded-xl text-sm font-black ${
-                    selected
-                      ? "bg-white/15 text-white"
-                      : "bg-[#e8f2ed] text-[#0f3d2e]"
-                  }`}
-                >
-                  {player.shirtNumber ?? "—"}
-                </span>
+          {player.imageUrl ? (
+  <div
+    className={`h-11 min-w-11 rounded-xl bg-cover bg-center shadow-sm ${
+      selected
+        ? "ring-2 ring-white/30"
+        : "ring-1 ring-black/5"
+    }`}
+    style={{
+      backgroundImage: `url("${player.imageUrl}")`,
+    }}
+  />
+) : (
+  <span
+    className={`flex h-11 min-w-11 items-center justify-center rounded-xl text-sm font-black ${
+      selected
+        ? "bg-white/15 text-white"
+        : "bg-[#e8f2ed] text-[#0f3d2e]"
+    }`}
+  >
+    {player.shirtNumber ?? "—"}
+  </span>
+)}
 
                 <div>
                   <p className="text-sm font-black">

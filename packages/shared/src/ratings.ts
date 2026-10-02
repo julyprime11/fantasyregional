@@ -180,7 +180,8 @@ function getVoteGroup(
       .toLowerCase()
   ) {
     case "jugador":
-      return "players";
+case "player":
+  return "players";
 
     case "directiva":
       return "directors";

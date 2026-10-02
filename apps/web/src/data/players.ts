@@ -35,6 +35,8 @@ type PlayerUpdate = Pick<
   | "image_url"
   | "active"
   | "team_id"
+  | "ffcv_player_code"
+  | "ffcv_last_sync_at"
 >;
 
 export async function updatePlayer(
