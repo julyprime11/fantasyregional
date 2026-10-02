@@ -13,14 +13,40 @@
 
   --border: #e4e4e7;
   --muted: #71717a;
+
+  /*
+   * Safe areas.
+   *
+   * Especialmente importantes en:
+   * - iPhone con Dynamic Island
+   * - notch
+   * - Home Indicator
+   */
+  --safe-top:
+    env(safe-area-inset-top);
+
+  --safe-right:
+    env(safe-area-inset-right);
+
+  --safe-bottom:
+    env(safe-area-inset-bottom);
+
+  --safe-left:
+    env(safe-area-inset-left);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background:
+    var(--background);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-foreground:
+    var(--foreground);
+
+  --font-sans:
+    var(--font-geist-sans);
+
+  --font-mono:
+    var(--font-geist-mono);
 }
 
 * {
@@ -28,91 +54,306 @@
 }
 
 html {
-  background: var(--background);
+  min-height: 100%;
+  background:
+    var(--background);
+
+  /*
+   * Evita algunos comportamientos
+   * visuales extraños al hacer scroll
+   * en Safari móvil.
+   */
+  -webkit-text-size-adjust:
+    100%;
+
+  text-size-adjust:
+    100%;
 }
 
 body {
+  min-height: 100vh;
+  min-height: 100dvh;
+
   margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+
+  background:
+    var(--background);
+
+  color:
+    var(--foreground);
+
   font-family:
     var(--font-geist-sans),
     Arial,
     Helvetica,
     sans-serif;
+
+  overscroll-behavior-y:
+    none;
 }
 
 button,
 input,
 select,
 textarea {
-  font: inherit;
+  font:
+    inherit;
+}
+
+/*
+ * Evita el zoom automático de Safari
+ * al seleccionar inputs pequeños.
+ */
+input,
+select,
+textarea {
+  font-size: 16px;
 }
 
 button,
 a {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color:
+    transparent;
+
+  touch-action:
+    manipulation;
+}
+
+button {
+  user-select:
+    none;
+
+  -webkit-user-select:
+    none;
 }
 
 ::selection {
-  background: #cfe5da;
-  color: #0b2f23;
+  background:
+    #cfe5da;
+
+  color:
+    #0b2f23;
 }
 
 /*
- * Contenedor principal pensado para móvil.
- * En escritorio mantiene una anchura cómoda sin
- * convertirse en una web demasiado extendida.
+ * CONTENEDOR GLOBAL
+ *
+ * Pensado primero para móvil.
  */
 .app-shell {
   width: 100%;
+
   min-height: 100vh;
-  margin: 0 auto;
-  background: var(--background);
+  min-height: 100dvh;
+
+  margin:
+    0 auto;
+
+  background:
+    var(--background);
 }
 
 /*
- * Superficie estilo aplicación.
+ * SUPERFICIE TIPO APP
  */
 .app-card {
-  border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  background: var(--surface);
+  border:
+    1px solid
+    var(--border);
+
+  border-radius:
+    1.25rem;
+
+  background:
+    var(--surface);
+
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.03),
-    0 8px 24px rgb(0 0 0 / 0.04);
+    0 1px 2px
+      rgb(0 0 0 / 0.03),
+    0 8px 24px
+      rgb(0 0 0 / 0.04);
 }
 
 /*
- * Botón principal de la identidad visual.
+ * BOTÓN PRINCIPAL
  */
 .app-primary {
-  background: var(--football-green);
-  color: white;
+  background:
+    var(--football-green);
+
+  color:
+    white;
 }
 
-.app-primary:hover {
-  background: var(--football-green-strong);
+@media (hover: hover) {
+  .app-primary:hover {
+    background:
+      var(--football-green-strong);
+  }
+}
+
+.app-primary:active {
+  transform:
+    scale(0.99);
 }
 
 /*
- * Scroll más limpio en carruseles horizontales móviles.
+ * SCROLL HORIZONTAL LIMPIO
  */
 .hide-scrollbar {
-  scrollbar-width: none;
+  scrollbar-width:
+    none;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none;
+  display:
+    none;
 }
 
 /*
- * Respeta la zona inferior de iPhone con Home Indicator.
+ * SAFE AREAS
  */
+.safe-top {
+  padding-top:
+    max(
+      1rem,
+      var(--safe-top)
+    );
+}
+
 .safe-bottom {
   padding-bottom:
     max(
       1rem,
-      env(safe-area-inset-bottom)
+      var(--safe-bottom)
     );
+}
+
+.safe-left {
+  padding-left:
+    max(
+      1rem,
+      var(--safe-left)
+    );
+}
+
+.safe-right {
+  padding-right:
+    max(
+      1rem,
+      var(--safe-right)
+    );
+}
+
+.safe-x {
+  padding-left:
+    max(
+      1rem,
+      var(--safe-left)
+    );
+
+  padding-right:
+    max(
+      1rem,
+      var(--safe-right)
+    );
+}
+
+/*
+ * Para barras de navegación inferiores.
+ *
+ * Permite que el botón/Home Indicator
+ * del iPhone no tape la navegación.
+ */
+.app-bottom-nav {
+  padding-bottom:
+    max(
+      0.75rem,
+      var(--safe-bottom)
+    );
+}
+
+/*
+ * Altura mínima real de la aplicación.
+ *
+ * 100dvh es especialmente importante
+ * en Safari porque la barra del navegador
+ * cambia de tamaño.
+ */
+.app-screen {
+  min-height:
+    100vh;
+
+  min-height:
+    100dvh;
+}
+
+/*
+ * Cuando la web está instalada como PWA.
+ */
+@media (
+  display-mode:
+    standalone
+) {
+  html,
+  body {
+    min-height:
+      100dvh;
+  }
+
+  body {
+    /*
+     * Evitamos rebotes excesivos
+     * propios del navegador.
+     */
+    overscroll-behavior:
+      none;
+  }
+
+  .browser-only {
+    display:
+      none !important;
+  }
+
+  .standalone-only {
+    display:
+      block;
+  }
+}
+
+/*
+ * Cuando se abre como web normal.
+ */
+@media not (
+  display-mode:
+    standalone
+) {
+  .standalone-only {
+    display:
+      none;
+  }
+}
+
+/*
+ * ACCESIBILIDAD
+ */
+@media (
+  prefers-reduced-motion:
+    reduce
+) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior:
+      auto !important;
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+  }
 }
