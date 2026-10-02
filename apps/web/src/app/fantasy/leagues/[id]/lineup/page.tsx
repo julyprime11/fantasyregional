@@ -120,38 +120,38 @@ export default async function FantasyLineupPage({
   if (!nextMatch) {
     return (
       <main className="app-screen mx-auto max-w-xl bg-[#f2f4f2]">
-        <header className="relative overflow-hidden rounded-b-[1.75rem] bg-[#0f3d2e] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+0.7rem)] text-white shadow-lg">
+        <header className="relative overflow-hidden rounded-b-[1.6rem] bg-[#0f3d2e] px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.45rem)] text-white shadow-lg">
           <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
 
           <div className="relative z-10">
             <Link
               href={`/fantasy/leagues/${leagueId}`}
-              className="text-xs font-bold text-white/65"
+              className="text-[11px] font-bold text-white/65"
             >
               ← Volver a la liga
             </Link>
 
-            <p className="mt-4 text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
+            <p className="mt-3 text-[8px] font-black uppercase tracking-[0.18em] text-white/45">
               {league.name}
             </p>
 
-            <h1 className="mt-1 text-2xl font-black tracking-tight">
+            <h1 className="mt-0.5 text-2xl font-black tracking-tight">
               Mi XI
             </h1>
           </div>
         </header>
 
         <div className="px-4">
-          <section className="mt-4 rounded-[1.4rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg">
+          <section className="mt-3 rounded-[1.3rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg">
               ⚽
             </div>
 
-            <p className="mt-4 font-black text-zinc-950">
+            <p className="mt-3 font-black text-zinc-950">
               No hay próximo partido
             </p>
 
-            <p className="mt-2 text-sm leading-6 text-zinc-500">
+            <p className="mt-1.5 text-sm leading-6 text-zinc-500">
               Cuando haya un partido programado para este equipo podrás preparar tu XI.
             </p>
           </section>
@@ -294,55 +294,55 @@ export default async function FantasyLineupPage({
 
   return (
     <main className="app-screen mx-auto max-w-xl bg-[#f2f4f2]">
-      {/* CABECERA COMPACTA */}
-      <header className="relative overflow-hidden rounded-b-[1.8rem] bg-[#0f3d2e] px-4 pb-4 pt-[calc(env(safe-area-inset-top)+0.65rem)] text-white shadow-lg">
-        <div className="absolute -right-14 -top-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
+      {/* CABECERA MÁS COMPACTA */}
+      <header className="relative overflow-hidden rounded-b-[1.6rem] bg-[#0f3d2e] px-4 pb-3 pt-[calc(env(safe-area-inset-top)+0.45rem)] text-white shadow-lg">
+        <div className="absolute -right-14 -top-16 h-36 w-36 rounded-full border-[22px] border-white/5" />
 
-        <div className="absolute -left-14 bottom-[-60px] h-36 w-36 rounded-full border-[22px] border-white/5" />
+        <div className="absolute -left-14 bottom-[-64px] h-32 w-32 rounded-full border-[20px] border-white/5" />
 
         <div className="relative z-10">
           <div className="flex items-center justify-between gap-3">
             <Link
               href={`/fantasy/leagues/${leagueId}`}
-              className="text-xs font-bold text-white/65"
+              className="text-[11px] font-bold text-white/65"
             >
               ← Liga
             </Link>
 
             <div
-              className={`rounded-xl px-3 py-1.5 text-right ${
+              className={`rounded-[0.8rem] px-2.5 py-1 text-right ${
                 locked
                   ? "bg-red-500/15"
                   : "bg-white/10"
               }`}
             >
-              <p className="text-[8px] font-black uppercase tracking-wide text-white/45">
+              <p className="text-[7px] font-black uppercase tracking-wide text-white/45">
                 Cierre
               </p>
 
-              <p className="mt-0.5 text-sm font-black">
+              <p className="text-xs font-black">
                 {lockDateLabel}
               </p>
             </div>
           </div>
 
-          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.18em] text-white/45">
-            {league.name}
-          </p>
-
-          <div className="mt-1 flex items-end justify-between gap-3">
+          <div className="mt-2.5 flex items-end justify-between gap-3">
             <div>
-              <h1 className="text-[2rem] font-black tracking-tight">
+              <p className="text-[8px] font-black uppercase tracking-[0.18em] text-white/45">
+                {league.name}
+              </p>
+
+              <h1 className="mt-0.5 text-[1.8rem] font-black leading-none tracking-tight">
                 Mi XI
               </h1>
 
-              <p className="mt-0.5 text-xs text-white/55">
+              <p className="mt-1 text-[11px] text-white/55">
                 Alineación Fantasy
               </p>
             </div>
 
             <span
-              className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wide ${
+              className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-wide ${
                 locked
                   ? "bg-red-500/15 text-red-200"
                   : "bg-white/10 text-white/65"
@@ -357,41 +357,41 @@ export default async function FantasyLineupPage({
       </header>
 
       <div className="px-4 pb-8">
-        {/* PARTIDO COMPACTO */}
-        <section className="mt-3">
-          <div className="overflow-hidden rounded-[1.25rem] bg-white shadow-sm ring-1 ring-black/5">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3">
-              <p className="text-right text-[11px] font-black leading-4 text-zinc-950">
+        {/* PARTIDO */}
+        <section className="mt-2.5">
+          <div className="overflow-hidden rounded-[1.15rem] bg-white shadow-sm ring-1 ring-black/5">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2.5">
+              <p className="text-right text-[10px] font-black leading-3.5 text-zinc-950">
                 {homeTeam}
               </p>
 
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-950 text-[9px] font-black text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[0.7rem] bg-zinc-950 text-[8px] font-black text-white">
                 VS
               </div>
 
-              <p className="text-left text-[11px] font-black leading-4 text-zinc-950">
+              <p className="text-left text-[10px] font-black leading-3.5 text-zinc-950">
                 {awayTeam}
               </p>
             </div>
 
-            <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-2 text-center">
-              <p className="text-[10px] font-bold capitalize text-zinc-500">
+            <div className="border-t border-zinc-100 bg-zinc-50 px-3 py-1.5 text-center">
+              <p className="text-[9px] font-bold capitalize text-zinc-500">
                 {matchDateLabel}
               </p>
             </div>
           </div>
         </section>
 
-        {/* ESTADO COMPACTO */}
+        {/* ESTADO */}
         <section
-          className={`mt-2.5 flex items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ${
+          className={`mt-2 flex items-center gap-2.5 rounded-[1rem] px-3 py-2 ${
             locked
               ? "bg-red-50"
               : "bg-[#e8f2ed]"
           }`}
         >
           <div
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs ${
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] ${
               locked
                 ? "bg-red-600 text-white"
                 : "bg-[#0f3d2e] text-white"
@@ -404,7 +404,7 @@ export default async function FantasyLineupPage({
 
           <div className="min-w-0">
             <p
-              className={`text-xs font-black ${
+              className={`text-[11px] font-black ${
                 locked
                   ? "text-red-800"
                   : "text-[#0b2f23]"
@@ -416,7 +416,7 @@ export default async function FantasyLineupPage({
             </p>
 
             <p
-              className={`mt-0.5 truncate text-[10px] ${
+              className={`truncate text-[9px] ${
                 locked
                   ? "text-red-600"
                   : "text-[#557368]"
@@ -424,7 +424,7 @@ export default async function FantasyLineupPage({
             >
               {locked
                 ? "Ya no se pueden realizar cambios."
-                : `Cambios disponibles hasta las ${lockDateLabel}.`}
+                : `Cambios hasta las ${lockDateLabel}.`}
             </p>
           </div>
         </section>

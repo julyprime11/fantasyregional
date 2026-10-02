@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useMemo,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import {
   getFantasyLine,
@@ -34,11 +31,7 @@ type Formation = {
   forwards: number;
 };
 
-type FieldLine =
-  | "GK"
-  | "DEF"
-  | "MID"
-  | "FWD";
+type FieldLine = "GK" | "DEF" | "MID" | "FWD";
 
 const FORMATIONS: Formation[] = [
   {
@@ -92,224 +85,107 @@ export default function LineupForm({
   initialSelectedIds,
   locked,
 }: Props) {
-  const initialPlayers =
-    players.filter(
-      (player) =>
-        initialSelectedIds.includes(
-          player.id,
-        ),
-    );
+  const initialPlayers = players.filter((player) =>
+    initialSelectedIds.includes(player.id),
+  );
 
-  const initialValidation =
-    validateFantasyLineup(
-      initialPlayers.map(
-        (player) => ({
-          id:
-            player.id,
-
-          position:
-            player.position,
-        }),
-      ),
-    );
+  const initialValidation = validateFantasyLineup(
+    initialPlayers.map((player) => ({
+      id: player.id,
+      position: player.position,
+    })),
+  );
 
   const inferredFormation =
-    initialValidation.counts
-      .total === 11 &&
-    initialValidation.counts
-      .goalkeepers === 1
+    initialValidation.counts.total === 11 &&
+    initialValidation.counts.goalkeepers === 1
       ? FORMATIONS.find(
           (formation) =>
-            formation.defenders ===
-              initialValidation
-                .counts
-                .defenders &&
-            formation.midfielders ===
-              initialValidation
-                .counts
-                .midfielders &&
-            formation.forwards ===
-              initialValidation
-                .counts
-                .forwards,
+            formation.defenders === initialValidation.counts.defenders &&
+            formation.midfielders === initialValidation.counts.midfielders &&
+            formation.forwards === initialValidation.counts.forwards,
         )
       : undefined;
 
-  const [
-    selectedFormation,
-    setSelectedFormation,
-  ] =
-    useState<Formation>(
-      inferredFormation ??
-        FORMATIONS[0],
-    );
+  const [selectedFormation, setSelectedFormation] = useState<Formation>(
+    inferredFormation ?? FORMATIONS[0],
+  );
 
-  const [
-    selectedIds,
-    setSelectedIds,
-  ] =
-    useState<string[]>(
-      initialSelectedIds,
-    );
+  const [selectedIds, setSelectedIds] =
+    useState<string[]>(initialSelectedIds);
 
-  const [
-    openSlot,
-    setOpenSlot,
-  ] =
-    useState<FieldLine | null>(
-      null,
-    );
+  const [openSlot, setOpenSlot] = useState<FieldLine | null>(null);
+  const [showSquad, setShowSquad] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [
-    showSquad,
-    setShowSquad,
-  ] =
-    useState(false);
+  const selectedPlayers = useMemo(
+    () => players.filter((player) => selectedIds.includes(player.id)),
+    [players, selectedIds],
+  );
 
-  const [
-    pending,
-    setPending,
-  ] =
-    useState(false);
+  const validation = validateFantasyLineup(
+    selectedPlayers.map((player) => ({
+      id: player.id,
+      position: player.position,
+    })),
+  );
 
-  const [
-    message,
-    setMessage,
-  ] =
-    useState("");
+  const selectedByLine = useMemo(() => {
+    const result = {
+      GK: [] as Player[],
+      DEF: [] as Player[],
+      MID: [] as Player[],
+      FWD: [] as Player[],
+    };
 
-  const [
-    errorMessage,
-    setErrorMessage,
-  ] =
-    useState("");
+    for (const player of selectedPlayers) {
+      const line = getFantasyLine(player.position);
+      result[line].push(player);
+    }
 
-  const selectedPlayers =
-    useMemo(
-      () =>
-        players.filter(
-          (player) =>
-            selectedIds.includes(
-              player.id,
-            ),
-        ),
-      [
-        players,
-        selectedIds,
-      ],
-    );
+    return result;
+  }, [selectedPlayers]);
 
-  const validation =
-    validateFantasyLineup(
-      selectedPlayers.map(
-        (player) => ({
-          id:
-            player.id,
+  const groupedPlayers = useMemo(() => {
+    const result = {
+      GK: [] as Player[],
+      DEF: [] as Player[],
+      MID: [] as Player[],
+      FWD: [] as Player[],
+    };
 
-          position:
-            player.position,
-        }),
-      ),
-    );
+    for (const player of players) {
+      const line = getFantasyLine(player.position);
+      result[line].push(player);
+    }
 
-  const selectedByLine =
-    useMemo(() => {
-      const result = {
-        GK: [] as Player[],
-        DEF: [] as Player[],
-        MID: [] as Player[],
-        FWD: [] as Player[],
-      };
-
-      for (
-        const player of
-        selectedPlayers
-      ) {
-        const line =
-          getFantasyLine(
-            player.position,
-          );
-
-        result[line].push(
-          player,
-        );
-      }
-
-      return result;
-    }, [
-      selectedPlayers,
-    ]);
-
-  const groupedPlayers =
-    useMemo(() => {
-      const result = {
-        GK: [] as Player[],
-        DEF: [] as Player[],
-        MID: [] as Player[],
-        FWD: [] as Player[],
-      };
-
-      for (
-        const player of
-        players
-      ) {
-        const line =
-          getFantasyLine(
-            player.position,
-          );
-
-        result[line].push(
-          player,
-        );
-      }
-
-      return result;
-    }, [
-      players,
-    ]);
+    return result;
+  }, [players]);
 
   const availableForSlot =
     openSlot === null
       ? []
-      : groupedPlayers[
-          openSlot
-        ].filter(
-          (player) =>
-            !selectedIds.includes(
-              player.id,
-            ),
+      : groupedPlayers[openSlot].filter(
+          (player) => !selectedIds.includes(player.id),
         );
 
-  function canUseFormation(
-    formation: Formation,
-  ) {
+  function canUseFormation(formation: Formation) {
     return (
-      selectedByLine.GK
-        .length <= 1 &&
-      selectedByLine.DEF
-        .length <=
-        formation.defenders &&
-      selectedByLine.MID
-        .length <=
-        formation.midfielders &&
-      selectedByLine.FWD
-        .length <=
-        formation.forwards
+      selectedByLine.GK.length <= 1 &&
+      selectedByLine.DEF.length <= formation.defenders &&
+      selectedByLine.MID.length <= formation.midfielders &&
+      selectedByLine.FWD.length <= formation.forwards
     );
   }
 
-  function changeFormation(
-    formation: Formation,
-  ) {
+  function changeFormation(formation: Formation) {
     if (locked) {
       return;
     }
 
-    if (
-      !canUseFormation(
-        formation,
-      )
-    ) {
+    if (!canUseFormation(formation)) {
       setErrorMessage(
         "La alineación actual tiene más jugadores de los permitidos para esa formación. Quita algún jugador antes de cambiar.",
       );
@@ -317,34 +193,21 @@ export default function LineupForm({
       return;
     }
 
-    setSelectedFormation(
-      formation,
-    );
-
+    setSelectedFormation(formation);
     setErrorMessage("");
     setMessage("");
   }
 
-  function togglePlayer(
-    player: Player,
-  ) {
+  function togglePlayer(player: Player) {
     if (locked) {
       return;
     }
 
-    const alreadySelected =
-      selectedIds.includes(
-        player.id,
-      );
+    const alreadySelected = selectedIds.includes(player.id);
 
     if (alreadySelected) {
-      setSelectedIds(
-        (current) =>
-          current.filter(
-            (id) =>
-              id !==
-              player.id,
-          ),
+      setSelectedIds((current) =>
+        current.filter((id) => id !== player.id),
       );
 
       setMessage("");
@@ -353,40 +216,21 @@ export default function LineupForm({
       return;
     }
 
-    if (
-      selectedIds.length >=
-      11
-    ) {
-      setErrorMessage(
-        "Ya tienes 11 jugadores seleccionados.",
-      );
-
+    if (selectedIds.length >= 11) {
+      setErrorMessage("Ya tienes 11 jugadores seleccionados.");
       return;
     }
 
-    const line =
-      getFantasyLine(
-        player.position,
-      );
+    const line = getFantasyLine(player.position);
 
     const limits = {
       GK: 1,
-
-      DEF:
-        selectedFormation.defenders,
-
-      MID:
-        selectedFormation.midfielders,
-
-      FWD:
-        selectedFormation.forwards,
+      DEF: selectedFormation.defenders,
+      MID: selectedFormation.midfielders,
+      FWD: selectedFormation.forwards,
     };
 
-    if (
-      selectedByLine[line]
-        .length >=
-      limits[line]
-    ) {
+    if (selectedByLine[line].length >= limits[line]) {
       setErrorMessage(
         `Ya has completado los puestos de ${
           line === "GK"
@@ -402,12 +246,7 @@ export default function LineupForm({
       return;
     }
 
-    setSelectedIds(
-      (current) => [
-        ...current,
-        player.id,
-      ],
-    );
+    setSelectedIds((current) => [...current, player.id]);
 
     setMessage("");
     setErrorMessage("");
@@ -419,275 +258,185 @@ export default function LineupForm({
     setErrorMessage("");
 
     try {
-      const response =
-        await fetch(
-          "/api/fantasy/lineups/save",
-          {
-            method:
-              "POST",
+      const response = await fetch("/api/fantasy/lineups/save", {
+        method: "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-            body:
-              JSON.stringify({
-                leagueId,
-                matchId,
+        body: JSON.stringify({
+          leagueId,
+          matchId,
+          playerIds: selectedIds,
+        }),
+      });
 
-                playerIds:
-                  selectedIds,
-              }),
-          },
-        );
-
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         setErrorMessage(
-          result.message ??
-            "No se pudo guardar la alineación.",
+          result.message ?? "No se pudo guardar la alineación.",
         );
 
         setPending(false);
-
         return;
       }
 
-      setMessage(
-        "Alineación guardada correctamente.",
-      );
+      setMessage("Alineación guardada correctamente.");
     } catch {
-      setErrorMessage(
-        "No se pudo guardar la alineación.",
-      );
+      setErrorMessage("No se pudo guardar la alineación.");
     }
 
     setPending(false);
   }
 
   return (
-    <section className="mt-4">
-      {/* FORMACIÓN COMPACTA */}
-      <div className="flex items-center justify-between gap-3 px-1">
-        <div className="flex items-center gap-2">
-          <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#0f3d2e]">
-              Táctica
-            </p>
+    <section className="mt-2.5">
+      {/* FORMACIÓN */}
+      <div className="flex items-center justify-between gap-3 px-0.5">
+        <div>
+          <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#0f3d2e]">
+            Táctica
+          </p>
 
-            <h2 className="mt-0.5 text-lg font-black tracking-tight text-zinc-950">
-              Formación
-            </h2>
-          </div>
+          <h2 className="text-[15px] font-black leading-5 tracking-tight text-zinc-950">
+            Formación
+          </h2>
         </div>
 
-        <span className="rounded-full bg-[#0f3d2e] px-3 py-1.5 text-xs font-black text-white">
+        <span className="rounded-full bg-[#0f3d2e] px-2.5 py-1 text-[10px] font-black text-white">
           {selectedFormation.name}
         </span>
       </div>
 
-      {/* SELECTOR FORMACIÓN */}
-      <div className="hide-scrollbar mt-2.5 flex gap-2 overflow-x-auto pb-1.5">
-        {FORMATIONS.map(
-          (formation) => (
-            <button
-              key={
-                formation.name
-              }
-              type="button"
-              disabled={
-                locked
-              }
-              onClick={() =>
-                changeFormation(
-                  formation,
-                )
-              }
-              className={`shrink-0 rounded-full px-3.5 py-2 text-[11px] font-black transition ${
-                selectedFormation.name ===
-                formation.name
-                  ? "bg-zinc-950 text-white shadow-sm"
-                  : "bg-white text-zinc-600 ring-1 ring-black/5"
-              } disabled:opacity-40`}
-            >
-              {formation.name}
-            </button>
-          ),
-        )}
+      {/* SELECTOR DE FORMACIÓN */}
+      <div className="hide-scrollbar mt-1.5 flex gap-1.5 overflow-x-auto pb-1">
+        {FORMATIONS.map((formation) => (
+          <button
+            key={formation.name}
+            type="button"
+            disabled={locked}
+            onClick={() => changeFormation(formation)}
+            className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-black transition ${
+              selectedFormation.name === formation.name
+                ? "bg-zinc-950 text-white shadow-sm"
+                : "bg-white text-zinc-600 ring-1 ring-black/5"
+            } disabled:opacity-40`}
+          >
+            {formation.name}
+          </button>
+        ))}
       </div>
 
-      {/* CAMPO COMPACTO */}
-      <div className="mt-2.5 overflow-hidden rounded-[1.45rem] bg-[#087443] p-2 shadow-xl ring-1 ring-black/10">
+      {/* CAMPO */}
+      <div className="mt-1.5 overflow-hidden rounded-[1.3rem] bg-[#087443] p-1.5 shadow-lg ring-1 ring-black/10">
         <div
-          className="relative min-h-[430px] overflow-hidden rounded-[1.15rem] border-2 border-white/70 sm:min-h-[520px]"
+          className="relative h-[382px] overflow-hidden rounded-[1rem] border-2 border-white/70 sm:h-[500px]"
           style={{
             background:
               "linear-gradient(90deg, rgba(255,255,255,0.045) 50%, transparent 50%)",
-
-            backgroundSize:
-              "54px 54px",
+            backgroundSize: "48px 48px",
           }}
         >
-          {/* MEDIO CAMPO */}
+          {/* LÍNEA DE MEDIO CAMPO */}
           <div className="absolute left-0 right-0 top-1/2 border-t-2 border-white/60" />
 
-          <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
+          {/* CÍRCULO CENTRAL */}
+          <div className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/60" />
 
-          {/* ÁREAS */}
-          <div className="absolute left-1/2 top-0 h-12 w-32 -translate-x-1/2 border-x-2 border-b-2 border-white/60" />
+          <div className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70" />
 
-          <div className="absolute bottom-0 left-1/2 h-12 w-32 -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
+          {/* ÁREA SUPERIOR */}
+          <div className="absolute left-1/2 top-0 h-10 w-28 -translate-x-1/2 border-x-2 border-b-2 border-white/60" />
+
+          <div className="absolute left-1/2 top-0 h-5 w-14 -translate-x-1/2 border-x-2 border-b-2 border-white/50" />
+
+          {/* ÁREA INFERIOR */}
+          <div className="absolute bottom-0 left-1/2 h-10 w-28 -translate-x-1/2 border-x-2 border-t-2 border-white/60" />
+
+          <div className="absolute bottom-0 left-1/2 h-5 w-14 -translate-x-1/2 border-x-2 border-t-2 border-white/50" />
 
           {/* JUGADORES */}
-          <div className="relative z-10 flex min-h-[430px] flex-col justify-between px-1.5 py-3 sm:min-h-[520px] sm:py-5">
+          <div className="relative z-10 flex h-full flex-col justify-between px-1 py-2.5 sm:py-5">
             <FieldRow
-              players={
-                selectedByLine.FWD
-              }
-              slots={
-                selectedFormation.forwards
-              }
+              players={selectedByLine.FWD}
+              slots={selectedFormation.forwards}
               label="FWD"
-              onRemove={
-                togglePlayer
-              }
-              onAdd={() =>
-                setOpenSlot(
-                  "FWD",
-                )
-              }
-              locked={
-                locked
-              }
+              onRemove={togglePlayer}
+              onAdd={() => setOpenSlot("FWD")}
+              locked={locked}
             />
 
             <FieldRow
-              players={
-                selectedByLine.MID
-              }
-              slots={
-                selectedFormation.midfielders
-              }
+              players={selectedByLine.MID}
+              slots={selectedFormation.midfielders}
               label="MID"
-              onRemove={
-                togglePlayer
-              }
-              onAdd={() =>
-                setOpenSlot(
-                  "MID",
-                )
-              }
-              locked={
-                locked
-              }
+              onRemove={togglePlayer}
+              onAdd={() => setOpenSlot("MID")}
+              locked={locked}
             />
 
             <FieldRow
-              players={
-                selectedByLine.DEF
-              }
-              slots={
-                selectedFormation.defenders
-              }
+              players={selectedByLine.DEF}
+              slots={selectedFormation.defenders}
               label="DEF"
-              onRemove={
-                togglePlayer
-              }
-              onAdd={() =>
-                setOpenSlot(
-                  "DEF",
-                )
-              }
-              locked={
-                locked
-              }
+              onRemove={togglePlayer}
+              onAdd={() => setOpenSlot("DEF")}
+              locked={locked}
             />
 
             <FieldRow
-              players={
-                selectedByLine.GK
-              }
+              players={selectedByLine.GK}
               slots={1}
               label="GK"
-              onRemove={
-                togglePlayer
-              }
-              onAdd={() =>
-                setOpenSlot(
-                  "GK",
-                )
-              }
-              locked={
-                locked
-              }
+              onRemove={togglePlayer}
+              onAdd={() => setOpenSlot("GK")}
+              locked={locked}
             />
           </div>
         </div>
       </div>
 
-      {/* RESUMEN COMPACTO */}
-      <div className="mt-2.5 grid grid-cols-5 gap-1.5">
+      {/* RESUMEN */}
+      <div className="mt-2 grid grid-cols-5 gap-1">
         <Counter
           label="POR"
-          value={
-            selectedByLine.GK
-              .length
-          }
+          value={selectedByLine.GK.length}
           target={1}
         />
 
         <Counter
           label="DEF"
-          value={
-            selectedByLine.DEF
-              .length
-          }
-          target={
-            selectedFormation.defenders
-          }
+          value={selectedByLine.DEF.length}
+          target={selectedFormation.defenders}
         />
 
         <Counter
           label="MED"
-          value={
-            selectedByLine.MID
-              .length
-          }
-          target={
-            selectedFormation.midfielders
-          }
+          value={selectedByLine.MID.length}
+          target={selectedFormation.midfielders}
         />
 
         <Counter
           label="DEL"
-          value={
-            selectedByLine.FWD
-              .length
-          }
-          target={
-            selectedFormation.forwards
-          }
+          value={selectedByLine.FWD.length}
+          target={selectedFormation.forwards}
         />
 
         <div
-          className={`rounded-xl px-1 py-2 text-center ring-1 ${
-            selectedIds.length ===
-            11
+          className={`rounded-lg px-1 py-1.5 text-center ring-1 ${
+            selectedIds.length === 11
               ? "bg-[#0f3d2e] text-white ring-[#0f3d2e]"
               : "bg-zinc-950 text-white ring-zinc-950"
           }`}
         >
-          <p className="text-sm font-black">
+          <p className="text-xs font-black leading-4">
             {selectedIds.length}
-            <span className="text-[8px] opacity-60">
-              /11
-            </span>
+            <span className="text-[7px] opacity-60">/11</span>
           </p>
 
-          <p className="mt-0.5 text-[7px] font-black uppercase tracking-wide opacity-60">
+          <p className="text-[6px] font-black uppercase tracking-wide opacity-60">
             XI
           </p>
         </div>
@@ -695,13 +444,13 @@ export default function LineupForm({
 
       {/* MENSAJES */}
       {errorMessage && (
-        <p className="mt-3 rounded-[1rem] bg-red-50 p-3 text-xs font-medium text-red-700">
+        <p className="mt-2 rounded-[0.9rem] bg-red-50 p-2.5 text-xs font-medium text-red-700">
           {errorMessage}
         </p>
       )}
 
       {message && (
-        <p className="mt-3 rounded-[1rem] bg-green-50 p-3 text-xs font-medium text-green-700">
+        <p className="mt-2 rounded-[0.9rem] bg-green-50 p-2.5 text-xs font-medium text-green-700">
           {message}
         </p>
       )}
@@ -709,24 +458,15 @@ export default function LineupForm({
       {/* PLANTILLA COMPLETA */}
       <button
         type="button"
-        onClick={() =>
-          setShowSquad(
-            (current) =>
-              !current,
-          )
-        }
-        className="mt-3 flex min-h-12 w-full items-center justify-between rounded-[1.1rem] bg-white px-4 text-sm font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
+        onClick={() => setShowSquad((current) => !current)}
+        className="mt-2 flex min-h-10 w-full items-center justify-between rounded-[1rem] bg-white px-3 text-xs font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
       >
         <span>
-          {showSquad
-            ? "Ocultar plantilla"
-            : "Ver todos los jugadores"}
+          {showSquad ? "Ocultar plantilla" : "Ver todos los jugadores"}
         </span>
 
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-100 text-xs">
-          {showSquad
-            ? "↑"
-            : "↓"}
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px]">
+          {showSquad ? "↑" : "↓"}
         </span>
       </button>
 
@@ -734,87 +474,47 @@ export default function LineupForm({
         <div>
           <PlayerSection
             title="Porteros"
-            players={
-              groupedPlayers.GK
-            }
-            selectedIds={
-              selectedIds
-            }
-            onToggle={
-              togglePlayer
-            }
-            locked={
-              locked
-            }
+            players={groupedPlayers.GK}
+            selectedIds={selectedIds}
+            onToggle={togglePlayer}
+            locked={locked}
           />
 
           <PlayerSection
             title="Defensas"
-            players={
-              groupedPlayers.DEF
-            }
-            selectedIds={
-              selectedIds
-            }
-            onToggle={
-              togglePlayer
-            }
-            locked={
-              locked
-            }
+            players={groupedPlayers.DEF}
+            selectedIds={selectedIds}
+            onToggle={togglePlayer}
+            locked={locked}
           />
 
           <PlayerSection
             title="Centrocampistas"
-            players={
-              groupedPlayers.MID
-            }
-            selectedIds={
-              selectedIds
-            }
-            onToggle={
-              togglePlayer
-            }
-            locked={
-              locked
-            }
+            players={groupedPlayers.MID}
+            selectedIds={selectedIds}
+            onToggle={togglePlayer}
+            locked={locked}
           />
 
           <PlayerSection
             title="Delanteros"
-            players={
-              groupedPlayers.FWD
-            }
-            selectedIds={
-              selectedIds
-            }
-            onToggle={
-              togglePlayer
-            }
-            locked={
-              locked
-            }
+            players={groupedPlayers.FWD}
+            selectedIds={selectedIds}
+            onToggle={togglePlayer}
+            locked={locked}
           />
         </div>
       )}
 
-      {/* POPUP SELECCIÓN */}
+      {/* POPUP DE SELECCIÓN */}
       {openSlot && (
         <div
           className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 backdrop-blur-[2px] sm:items-center"
-          onClick={() =>
-            setOpenSlot(
-              null,
-            )
-          }
+          onClick={() => setOpenSlot(null)}
         >
           <div
             className="max-h-[78vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-[#f5f6f4] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[2rem]"
-            onClick={(
-              event,
-            ) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -827,31 +527,16 @@ export default function LineupForm({
                 </h2>
 
                 <p className="mt-1 text-xs text-zinc-500">
-                  {openSlot ===
-                    "GK" &&
-                    "Porteros disponibles"}
-
-                  {openSlot ===
-                    "DEF" &&
-                    "Defensas disponibles"}
-
-                  {openSlot ===
-                    "MID" &&
-                    "Centrocampistas disponibles"}
-
-                  {openSlot ===
-                    "FWD" &&
-                    "Delanteros disponibles"}
+                  {openSlot === "GK" && "Porteros disponibles"}
+                  {openSlot === "DEF" && "Defensas disponibles"}
+                  {openSlot === "MID" && "Centrocampistas disponibles"}
+                  {openSlot === "FWD" && "Delanteros disponibles"}
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setOpenSlot(
-                    null,
-                  )
-                }
+                onClick={() => setOpenSlot(null)}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5"
               >
                 ×
@@ -859,85 +544,65 @@ export default function LineupForm({
             </div>
 
             <div className="mt-4 space-y-2">
-              {availableForSlot.length ===
-              0 ? (
+              {availableForSlot.length === 0 ? (
                 <p className="rounded-[1.2rem] bg-white p-4 text-sm text-zinc-500 ring-1 ring-black/5">
                   No hay más jugadores disponibles para esta posición.
                 </p>
               ) : (
-                availableForSlot.map(
-                  (
-                    player,
-                  ) => (
-                    <button
-                      key={
-                        player.id
-                      }
-                      type="button"
-                      disabled={
-                        locked
-                      }
-                      onClick={() => {
-                        togglePlayer(
-                          player,
-                        );
-
-                        setOpenSlot(
-                          null,
-                        );
-                      }}
-                      className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-white px-3 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
-                          {player.shirtNumber ??
-                            "—"}
-                        </span>
-
-                        <div>
-                          <p className="text-sm font-black text-zinc-950">
-                            {player.firstName}{" "}
-                            {player.lastName ??
-                              ""}
-                          </p>
-
-                          <p className="mt-0.5 text-[10px] font-medium text-zinc-400">
-                            {player.position}
-                          </p>
-                        </div>
-                      </div>
-
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-lg font-black text-white">
-                        +
+                availableForSlot.map((player) => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    disabled={locked}
+                    onClick={() => {
+                      togglePlayer(player);
+                      setOpenSlot(null);
+                    }}
+                    className="flex min-h-14 w-full items-center justify-between rounded-2xl bg-white px-3 text-left shadow-sm ring-1 ring-black/5 disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
+                        {player.shirtNumber ?? "—"}
                       </span>
-                    </button>
-                  ),
-                )
+
+                      <div>
+                        <p className="text-sm font-black text-zinc-950">
+                          {player.firstName} {player.lastName ?? ""}
+                        </p>
+
+                        <p className="mt-0.5 text-[10px] font-medium text-zinc-400">
+                          {player.position}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-950 text-lg font-black text-white">
+                      +
+                    </span>
+                  </button>
+                ))
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* GUARDADO STICKY */}
-      <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 -mx-4 mt-4 border-t border-zinc-200 bg-[#f5f6f4]/95 px-4 py-2.5 backdrop-blur">
+      {/* GUARDAR */}
+      <div className="sticky bottom-[calc(72px+env(safe-area-inset-bottom))] z-30 -mx-4 mt-3 border-t border-zinc-200 bg-[#f5f6f4]/95 px-4 py-2 backdrop-blur">
         {locked ? (
-          <div className="flex min-h-12 items-center justify-center rounded-[1rem] bg-zinc-200 px-4 text-center text-sm font-black text-zinc-600">
+          <div className="flex min-h-11 items-center justify-center rounded-[0.95rem] bg-zinc-200 px-4 text-center text-xs font-black text-zinc-600">
             🔒 Alineación bloqueada
           </div>
         ) : (
           <button
             type="button"
-            onClick={
-              saveLineup
-            }
+            onClick={saveLineup}
             disabled={
               pending ||
               !validation.valid ||
-              selectedIds.length !==
-                11
+              selectedIds.length !== 11
             }
-            className="min-h-12 w-full rounded-[1rem] bg-[#0f3d2e] px-4 text-sm font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-40"
+            className="min-h-11 w-full rounded-[0.95rem] bg-[#0f3d2e] px-4 text-xs font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-40"
           >
             {pending
               ? "Guardando..."
@@ -959,17 +624,9 @@ function FieldRow({
 }: {
   players: Player[];
   slots: number;
-
-  label:
-    FieldLine;
-
-  onRemove: (
-    player: Player,
-  ) => void;
-
-  onAdd:
-    () => void;
-
+  label: FieldLine;
+  onRemove: (player: Player) => void;
+  onAdd: () => void;
   locked: boolean;
 }) {
   const labels = {
@@ -981,87 +638,58 @@ function FieldRow({
 
   return (
     <div
-      className="grid items-start justify-items-center gap-0.5"
+      className="grid items-start justify-items-center gap-0"
       style={{
-        gridTemplateColumns:
-          `repeat(${slots}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${slots}, minmax(0, 1fr))`,
       }}
     >
-      {Array.from({
-        length:
-          slots,
-      }).map(
-        (
-          _,
-          index,
-        ) => {
-          const player =
-            players[
-              index
-            ];
+      {Array.from({ length: slots }).map((_, index) => {
+        const player = players[index];
 
-          if (!player) {
-            return (
-              <button
-                key={`empty-${label}-${index}`}
-                type="button"
-                disabled={
-                  locked
-                }
-                onClick={
-                  onAdd
-                }
-                className="flex w-full max-w-[64px] flex-col items-center disabled:opacity-60"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-lg font-black text-white backdrop-blur-sm">
-                  +
-                </div>
-
-                <span className="mt-0.5 text-[7px] font-black text-white/70">
-                  {labels[
-                    label
-                  ]}
-                </span>
-              </button>
-            );
-          }
-
-          const name =
-            player.lastName ??
-            player.firstName;
-
+        if (!player) {
           return (
             <button
-              key={
-                player.id
-              }
+              key={`empty-${label}-${index}`}
               type="button"
-              disabled={
-                locked
-              }
-              onClick={() =>
-                onRemove(
-                  player,
-                )
-              }
-              className="flex w-full max-w-[66px] flex-col items-center disabled:opacity-90"
+              disabled={locked}
+              onClick={onAdd}
+              className="flex w-full max-w-[58px] flex-col items-center disabled:opacity-60"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-12 sm:w-12">
-                {player.shirtNumber ??
-                  "•"}
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-base font-black text-white backdrop-blur-sm">
+                +
               </div>
 
-              <span className="mt-0.5 max-w-full truncate rounded bg-zinc-950/85 px-1.5 py-0.5 text-[7px] font-black text-white shadow-sm sm:text-[9px]">
-                {name}
-              </span>
-
-              <span className="mt-0.5 text-[7px] font-bold text-white/70">
-                {player.position}
+              <span className="mt-0.5 text-[6px] font-black text-white/70">
+                {labels[label]}
               </span>
             </button>
           );
-        },
-      )}
+        }
+
+        const name = player.lastName ?? player.firstName;
+
+        return (
+          <button
+            key={player.id}
+            type="button"
+            disabled={locked}
+            onClick={() => onRemove(player)}
+            className="flex w-full max-w-[62px] flex-col items-center disabled:opacity-90"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[12px] font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-12 sm:w-12">
+              {player.shirtNumber ?? "•"}
+            </div>
+
+            <span className="mt-0.5 max-w-full truncate rounded bg-zinc-950/85 px-1 py-[1px] text-[6px] font-black leading-3 text-white shadow-sm sm:text-[9px]">
+              {name}
+            </span>
+
+            <span className="text-[6px] font-bold leading-3 text-white/70">
+              {player.position}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1074,26 +702,15 @@ function PlayerSection({
   locked,
 }: {
   title: string;
-
-  players:
-    Player[];
-
-  selectedIds:
-    string[];
-
-  onToggle: (
-    player: Player,
-  ) => void;
-
-  locked:
-    boolean;
+  players: Player[];
+  selectedIds: string[];
+  onToggle: (player: Player) => void;
+  locked: boolean;
 }) {
   return (
     <section className="mt-5">
       <div className="mb-2 flex items-center justify-between px-1">
-        <h3 className="text-base font-black text-zinc-950">
-          {title}
-        </h3>
+        <h3 className="text-base font-black text-zinc-950">{title}</h3>
 
         <span className="text-[10px] font-bold text-zinc-400">
           {players.length}
@@ -1101,81 +718,59 @@ function PlayerSection({
       </div>
 
       <div className="space-y-2">
-        {players.map(
-          (
-            player,
-          ) => {
-            const selected =
-              selectedIds.includes(
-                player.id,
-              );
+        {players.map((player) => {
+          const selected = selectedIds.includes(player.id);
 
-            return (
-              <button
-                key={
-                  player.id
-                }
-                type="button"
-                disabled={
-                  locked
-                }
-                onClick={() =>
-                  onToggle(
-                    player,
-                  )
-                }
-                className={`flex min-h-14 w-full items-center justify-between rounded-[1rem] px-3 text-left shadow-sm ring-1 transition ${
-                  selected
-                    ? "bg-[#0f3d2e] text-white ring-[#0f3d2e]"
-                    : "bg-white text-zinc-950 ring-black/5"
-                } disabled:opacity-60`}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex h-10 min-w-10 items-center justify-center rounded-xl text-sm font-black ${
-                      selected
-                        ? "bg-white/15 text-white"
-                        : "bg-[#e8f2ed] text-[#0f3d2e]"
-                    }`}
-                  >
-                    {player.shirtNumber ??
-                      "—"}
-                  </span>
-
-                  <div>
-                    <p className="text-sm font-black">
-                      {player.firstName}{" "}
-                      {player.lastName ??
-                        ""}
-                    </p>
-
-                    <p
-                      className={`mt-0.5 text-[10px] font-medium ${
-                        selected
-                          ? "text-white/60"
-                          : "text-zinc-400"
-                      }`}
-                    >
-                      {player.position}
-                    </p>
-                  </div>
-                </div>
-
+          return (
+            <button
+              key={player.id}
+              type="button"
+              disabled={locked}
+              onClick={() => onToggle(player)}
+              className={`flex min-h-14 w-full items-center justify-between rounded-[1rem] px-3 text-left shadow-sm ring-1 transition ${
+                selected
+                  ? "bg-[#0f3d2e] text-white ring-[#0f3d2e]"
+                  : "bg-white text-zinc-950 ring-black/5"
+              } disabled:opacity-60`}
+            >
+              <div className="flex items-center gap-3">
                 <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
+                  className={`flex h-10 min-w-10 items-center justify-center rounded-xl text-sm font-black ${
                     selected
-                      ? "bg-white text-[#0f3d2e]"
-                      : "bg-zinc-100 text-zinc-500"
+                      ? "bg-white/15 text-white"
+                      : "bg-[#e8f2ed] text-[#0f3d2e]"
                   }`}
                 >
-                  {selected
-                    ? "✓"
-                    : "+"}
+                  {player.shirtNumber ?? "—"}
                 </span>
-              </button>
-            );
-          },
-        )}
+
+                <div>
+                  <p className="text-sm font-black">
+                    {player.firstName} {player.lastName ?? ""}
+                  </p>
+
+                  <p
+                    className={`mt-0.5 text-[10px] font-medium ${
+                      selected ? "text-white/60" : "text-zinc-400"
+                    }`}
+                  >
+                    {player.position}
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
+                  selected
+                    ? "bg-white text-[#0f3d2e]"
+                    : "bg-zinc-100 text-zinc-500"
+                }`}
+              >
+                {selected ? "✓" : "+"}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -1190,26 +785,23 @@ function Counter({
   value: number;
   target: number;
 }) {
-  const complete =
-    value === target;
+  const complete = value === target;
 
   return (
     <div
-      className={`rounded-xl px-1 py-2 text-center ring-1 ${
+      className={`rounded-lg px-1 py-1.5 text-center ring-1 ${
         complete
           ? "bg-[#e8f2ed] text-[#0f3d2e] ring-[#d7e8df]"
           : "bg-white text-zinc-950 ring-black/5"
       }`}
     >
-      <p className="text-sm font-black">
+      <p className="text-xs font-black leading-4">
         {value}/{target}
       </p>
 
       <p
-        className={`mt-0.5 text-[7px] font-black uppercase tracking-wide ${
-          complete
-            ? "text-[#557368]"
-            : "text-zinc-400"
+        className={`text-[6px] font-black uppercase tracking-wide ${
+          complete ? "text-[#557368]" : "text-zinc-400"
         }`}
       >
         {label}
