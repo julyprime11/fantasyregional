@@ -2,7 +2,9 @@
 
 import {
   useActionState,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -12,18 +14,11 @@ import type {
 
 export type MobileVotingPlayer = {
   id: string;
-
   name: string;
-
-  shirtNumber:
-    number | null;
-
+  shirtNumber: number | null;
   position: string;
-
   team: string;
-
-  existingScore:
-    number | null;
+  existingScore: number | null;
 };
 
 type Props = {
@@ -32,8 +27,7 @@ type Props = {
     form: FormData,
   ) => Promise<VoteState>;
 
-  players:
-    MobileVotingPlayer[];
+  players: MobileVotingPlayer[];
 
   disabled?: boolean;
 };
@@ -60,11 +54,7 @@ export function MobileVoteForm({
     );
 
   /*
-   * Las notas existentes se cargan
-   * directamente en el estado.
-   *
-   * De esta manera el usuario ve
-   * exactamente lo que votó anteriormente.
+   * Estado inicial recibido desde la BD.
    */
   const initialScores =
     useMemo(() => {
@@ -88,6 +78,10 @@ export function MobileVoteForm({
       players,
     ]);
 
+  /*
+   * Notas que actualmente aparecen
+   * seleccionadas en pantalla.
+   */
   const [
     scores,
     setScores,
@@ -101,10 +95,87 @@ export function MobileVoteForm({
       initialScores,
     );
 
+  /*
+   * Último estado realmente guardado.
+   *
+   * Es distinto de scores porque scores
+   * puede contener cambios todavía no
+   * enviados al servidor.
+   */
+  const [
+    savedScores,
+    setSavedScores,
+  ] =
+    useState<
+      Record<
+        string,
+        number | null
+      >
+    >(
+      initialScores,
+    );
+
+  /*
+   * Guardamos una fotografía de las notas
+   * justo en el momento de enviar.
+   *
+   * Cuando el servidor confirme que el
+   * guardado fue correcto, esta fotografía
+   * pasa a ser el nuevo estado guardado.
+   */
+  const submittedScoresRef =
+    useRef<
+      Record<
+        string,
+        number | null
+      >
+    >(
+      initialScores,
+    );
+
+  /*
+   * Cuando el Server Action responde con
+   * éxito, consideramos guardados los
+   * valores que se enviaron.
+   *
+   * De esta manera:
+   *
+   * 7 -> 9 -> Guardar
+   *
+   * hace que 9 deje inmediatamente de
+   * aparecer como "Modificado".
+   *
+   * También funciona con eliminaciones:
+   *
+   * 9 -> Quitar voto -> Guardar
+   *
+   * convierte null en el nuevo estado
+   * guardado.
+   */
+  useEffect(() => {
+    if (
+      state.status ===
+      "success"
+    ) {
+      setSavedScores({
+        ...submittedScoresRef.current,
+      });
+    }
+  }, [
+    state,
+  ]);
+
   function setScore(
     playerId: string,
     score: number,
   ) {
+    if (
+      disabled ||
+      pending
+    ) {
+      return;
+    }
+
     setScores(
       (
         current,
@@ -117,34 +188,22 @@ export function MobileVoteForm({
     );
   }
 
-  function clearNewScore(
+  /*
+   * Quita completamente la valoración.
+   *
+   * Si era un voto ya guardado,
+   * al guardar se enviará delete:UUID.
+   *
+   * Si todavía no se había guardado,
+   * simplemente vuelve a quedar sin nota.
+   */
+  function clearScore(
     playerId: string,
   ) {
-    /*
-     * Los votos ya guardados no se
-     * eliminan desde esta pantalla.
-     *
-     * Solo permitimos cancelar una
-     * selección todavía no guardada.
-     */
     if (
-      initialScores[
-        playerId
-      ] !== null
+      disabled ||
+      pending
     ) {
-      setScores(
-        (
-          current,
-        ) => ({
-          ...current,
-
-          [playerId]:
-            initialScores[
-              playerId
-            ],
-        }),
-      );
-
       return;
     }
 
@@ -175,8 +234,14 @@ export function MobileVoteForm({
     ).length;
 
   /*
-   * Solo enviamos votos nuevos o
-   * modificaciones.
+   * Jugadores cuyo estado actual es
+   * diferente al último estado guardado.
+   *
+   * Esto incluye:
+   *
+   * - votos nuevos
+   * - modificaciones
+   * - eliminaciones
    */
   const changedPlayers =
     players.filter(
@@ -186,7 +251,7 @@ export function MobileVoteForm({
         scores[
           player.id
         ] !==
-        initialScores[
+        savedScores[
           player.id
         ],
     );
@@ -217,6 +282,19 @@ export function MobileVoteForm({
       action={
         formAction
       }
+      onSubmit={() => {
+        /*
+         * Conservamos exactamente lo que
+         * estamos enviando.
+         *
+         * Solo lo convertiremos en estado
+         * guardado si el servidor responde
+         * correctamente.
+         */
+        submittedScoresRef.current = {
+          ...scores,
+        };
+      }}
       className="mt-4"
     >
       {/* CABECERA */}
@@ -231,7 +309,7 @@ export function MobileVoteForm({
           </h2>
 
           <p className="mt-1 text-[11px] text-zinc-500">
-            Nota del 0 al 10. Puedes modificarla mientras la votación esté abierta.
+            Nota del 0 al 10. Puedes modificarla o quitarla mientras la votación esté abierta.
           </p>
         </div>
 
@@ -277,7 +355,7 @@ export function MobileVoteForm({
             </p>
 
             <p className="mt-0.5 text-[10px] text-[#557368]">
-              Puedes seguir modificando tus notas hasta que se cierre la votación.
+              Puedes seguir modificando o eliminando tus notas hasta que se cierre la votación.
             </p>
           </div>
         </div>
@@ -294,18 +372,35 @@ export function MobileVoteForm({
                 player.id
               ];
 
-            const initial =
-              initialScores[
+            /*
+             * IMPORTANTE:
+             *
+             * Ya no usamos initialScores.
+             *
+             * Utilizamos savedScores porque
+             * puede haber habido guardados
+             * posteriores durante esta misma
+             * sesión.
+             */
+            const saved =
+              savedScores[
                 player.id
               ];
 
             const wasSaved =
-              initial !==
+              saved !==
               null;
 
             const modified =
               selected !==
-              initial;
+              saved;
+
+            const pendingDelete =
+              modified &&
+              selected ===
+                null &&
+              saved !==
+                null;
 
             return (
               <article
@@ -313,9 +408,11 @@ export function MobileVoteForm({
                   player.id
                 }
                 className={`overflow-hidden rounded-[1.2rem] shadow-sm ring-1 ${
-                  wasSaved
-                    ? "bg-[#f0f6f3] ring-[#d7e8df]"
-                    : "bg-white ring-black/5"
+                  pendingDelete
+                    ? "bg-red-50/50 ring-red-200"
+                    : wasSaved
+                      ? "bg-[#f0f6f3] ring-[#d7e8df]"
+                      : "bg-white ring-black/5"
                 }`}
               >
                 <div className="p-3">
@@ -323,9 +420,11 @@ export function MobileVoteForm({
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black ${
-                        wasSaved
-                          ? "bg-[#0f3d2e] text-white"
-                          : "bg-zinc-950 text-white"
+                        pendingDelete
+                          ? "bg-red-100 text-red-700"
+                          : wasSaved
+                            ? "bg-[#0f3d2e] text-white"
+                            : "bg-zinc-950 text-white"
                       }`}
                     >
                       {player.shirtNumber ??
@@ -352,8 +451,12 @@ export function MobileVoteForm({
                           </p>
                         </div>
 
-                        {selected !==
-                          null && (
+                        {pendingDelete ? (
+                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-red-700">
+                            Se eliminará
+                          </span>
+                        ) : selected !==
+                          null ? (
                           <div className="flex items-center gap-1.5">
                             {wasSaved && (
                               <span className="hidden text-[8px] font-black uppercase tracking-wide text-[#557368] min-[380px]:inline">
@@ -375,11 +478,14 @@ export function MobileVoteForm({
                               }
                             </span>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>
 
+                  {/*
+                   * VOTO NUEVO O MODIFICADO
+                   */}
                   {modified &&
                     selected !==
                       null && (
@@ -389,6 +495,21 @@ export function MobileVoteForm({
                         value={
                           selected
                         }
+                      />
+                    )}
+
+                  {/*
+                   * VOTO QUE DEBE ELIMINARSE
+                   */}
+                  {modified &&
+                    selected ===
+                      null &&
+                    saved !==
+                      null && (
+                      <input
+                        type="hidden"
+                        name={`delete:${player.id}`}
+                        value="1"
                       />
                     )}
 
@@ -459,17 +580,41 @@ export function MobileVoteForm({
                       </span>
                     </div>
 
-                    {modified && (
+                    {selected !==
+                      null && (
                       <button
                         type="button"
+                        disabled={
+                          disabled ||
+                          pending
+                        }
                         onClick={() =>
-                          clearNewScore(
+                          clearScore(
                             player.id,
                           )
                         }
-                        className="shrink-0 text-[9px] font-bold text-zinc-400 underline"
+                        className="shrink-0 text-[9px] font-bold text-zinc-400 underline disabled:opacity-40"
                       >
-                        Deshacer
+                        Quitar voto
+                      </button>
+                    )}
+
+                    {pendingDelete && (
+                      <button
+                        type="button"
+                        disabled={
+                          disabled ||
+                          pending
+                        }
+                        onClick={() =>
+                          setScore(
+                            player.id,
+                            saved,
+                          )
+                        }
+                        className="shrink-0 text-[9px] font-bold text-red-600 underline disabled:opacity-40"
+                      >
+                        Cancelar
                       </button>
                     )}
                   </div>

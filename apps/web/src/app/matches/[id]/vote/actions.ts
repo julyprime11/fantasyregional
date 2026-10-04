@@ -49,6 +49,16 @@ export async function submitVotesAction(
     string
   > = {};
 
+  const deletePlayerIds:
+    string[] = [];
+
+  /*
+   * score:UUID
+   *   -> voto nuevo/modificado
+   *
+   * delete:UUID
+   *   -> voto existente eliminado
+   */
   for (
     const [
       key,
@@ -64,6 +74,20 @@ export async function submitVotesAction(
     ) {
       values[key] =
         value;
+    }
+
+    if (
+      key.startsWith(
+        "delete:",
+      ) &&
+      value ===
+        "1"
+    ) {
+      deletePlayerIds.push(
+        key.slice(
+          "delete:".length,
+        ),
+      );
     }
   }
 
@@ -131,6 +155,13 @@ export async function submitVotesAction(
       };
     }
 
+    /*
+     * Comprobación temprana para mostrar
+     * mensajes amigables en pantalla.
+     *
+     * ratings.ts vuelve a comprobarlo antes
+     * de modificar la base de datos.
+     */
     const {
       data: match,
       error:
@@ -236,11 +267,11 @@ export async function submitVotesAction(
           status:
             "error",
 
-          message:
-            "El plazo de votación ha finalizado.",
+        message:
+          "El plazo de votación ha finalizado.",
 
-          values,
-        };
+        values,
+      };
       }
     }
 
@@ -259,10 +290,11 @@ export async function submitVotesAction(
         profile.voter_role,
     };
 
-    const count =
+    const result =
       await submitMatchRatings(
         parsedMatchId,
         raw,
+        deletePlayerIds,
       );
 
     revalidatePath(
@@ -281,14 +313,54 @@ export async function submitVotesAction(
       `/match-admin/${parsedMatchId}`,
     );
 
+    const totalChanges =
+      result.saved +
+      result.deleted;
+
+    let message =
+      "Cambios guardados correctamente.";
+
+    if (
+      result.saved >
+        0 &&
+      result.deleted ===
+        0
+    ) {
+      message =
+        result.saved ===
+        1
+          ? "Valoración guardada correctamente."
+          : `${result.saved} valoraciones guardadas correctamente.`;
+    }
+
+    if (
+      result.saved ===
+        0 &&
+      result.deleted >
+        0
+    ) {
+      message =
+        result.deleted ===
+        1
+          ? "Valoración eliminada correctamente."
+          : `${result.deleted} valoraciones eliminadas correctamente.`;
+    }
+
+    if (
+      result.saved >
+        0 &&
+      result.deleted >
+        0
+    ) {
+      message =
+        `${totalChanges} cambios guardados correctamente.`;
+    }
+
     return {
       status:
         "success",
 
-      message:
-        count === 1
-          ? "Valoración guardada correctamente."
-          : `${count} valoraciones guardadas correctamente.`,
+      message,
     };
   } catch (error) {
     console.error(

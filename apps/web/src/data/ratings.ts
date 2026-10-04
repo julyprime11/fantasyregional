@@ -27,6 +27,11 @@ export type ExistingUserVote = {
   score: number;
 };
 
+export type SubmitMatchRatingsResult = {
+  saved: number;
+  deleted: number;
+};
+
 export async function getUserMatchVotes(
   matchId: string,
   userId: string,
@@ -73,65 +78,16 @@ export async function getUserMatchVotes(
   return data;
 }
 
-export async function submitMatchRatings(
+/*
+ * Comprueba que la votación continúa abierta
+ * en el momento exacto de modificar los votos.
+ */
+async function assertVotingOpen(
   matchId: string,
-  raw: Record<string, unknown>,
-): Promise<number> {
-  const id =
-    parseMatchId(
-      matchId,
-    );
-
-  const input =
-    parseRatingInput(
-      raw,
-    );
-
-  /*
-   * Verificamos que los jugadores
-   * pertenecen a la convocatoria actual.
-   */
-  const squad =
-    await getMatchPlayers(
-      id,
-    );
-
-  const playerIds =
-    new Set(
-      squad.map(
-        (
-          entry,
-        ) =>
-          entry.player_id,
-      ),
-    );
-
-  if (
-    input.votes.some(
-      (
-        vote,
-      ) =>
-        !playerIds.has(
-          vote.player_id,
-        ),
-    )
-  ) {
-    throw new InputError(
-      "Solo puedes votar a jugadores de la convocatoria actual. Recarga la página.",
-    );
-  }
-
-  /*
-   * Comprobamos el estado real del partido
-   * en el momento exacto de guardar.
-   *
-   * Esto evita que alguien mantenga una
-   * pantalla abierta y vote después de
-   * haberse cerrado la votación.
-   */
+): Promise<void> {
   const match =
     await getMatchById(
-      id,
+      matchId,
     );
 
   if (
@@ -144,80 +100,307 @@ export async function submitMatchRatings(
     );
   }
 
-  const supabase =
-    await createServerSupabaseClient();
+  const now =
+    Date.now();
+
+  if (
+    match.voting_opens_at
+  ) {
+    const opensAt =
+      new Date(
+        match.voting_opens_at,
+      ).getTime();
+
+    if (
+      Number.isFinite(
+        opensAt,
+      ) &&
+      now <
+        opensAt
+    ) {
+      throw new InputError(
+        "El plazo de votación todavía no ha comenzado.",
+      );
+    }
+  }
+
+  if (
+    match.voting_closes_at
+  ) {
+    const closesAt =
+      new Date(
+        match.voting_closes_at,
+      ).getTime();
+
+    if (
+      Number.isFinite(
+        closesAt,
+      ) &&
+      now >
+        closesAt
+    ) {
+      throw new InputError(
+        "El plazo de votación ha finalizado.",
+      );
+    }
+  }
+}
+
+export async function submitMatchRatings(
+  matchId: string,
+  raw: Record<string, unknown>,
+  deletePlayerIds: readonly string[] = [],
+): Promise<SubmitMatchRatingsResult> {
+  const id =
+    parseMatchId(
+      matchId,
+    );
 
   /*
-   * Un único voto por:
+   * Extraemos los score:* existentes.
    *
-   * match_id
-   * + player_id
-   * + voter_id
-   *
-   * Si todavía no existe:
-   * INSERT
-   *
-   * Si ya existe:
-   * UPDATE
-   *
-   * Esto permite modificar la nota
-   * mientras la votación permanezca abierta,
-   * sin generar votos duplicados.
+   * parseRatingInput exige al menos un voto,
+   * por lo que solo lo utilizamos si realmente
+   * existen notas para guardar.
    */
-  const rows: Database["public"]["Tables"]["ratings"]["Insert"][] =
-    input.votes.map(
-      (
-        vote,
-      ) => ({
-        match_id:
-          id,
+  const hasScores =
+    Object.keys(
+      raw,
+    ).some(
+      (key) =>
+        key.startsWith(
+          "score:",
+        ),
+    );
 
-        player_id:
-          vote.player_id,
+  const input =
+    hasScores
+      ? parseRatingInput(
+          raw,
+        )
+      : null;
 
-        voter_id:
-          input.voter_id,
+  const voterIdRaw =
+    raw.voter_id;
 
-        voter_role:
-          input.voter_role,
+  const voterRoleRaw =
+    raw.voter_role;
 
-        score:
-          vote.score,
-      }),
+  if (
+    typeof voterIdRaw !==
+      "string" ||
+    !voterIdRaw
+  ) {
+    throw new InputError(
+      "Votante no válido.",
+    );
+  }
+
+  if (
+    typeof voterRoleRaw !==
+      "string" ||
+    !voterRoleRaw
+  ) {
+    throw new InputError(
+      "Rol de votación no válido.",
+    );
+  }
+
+  const voterId =
+    voterIdRaw.toLowerCase();
+
+  /*
+   * No permitimos una petición vacía.
+   */
+  if (
+    !input &&
+    deletePlayerIds.length ===
+      0
+  ) {
+    throw new InputError(
+      "No hay cambios que guardar.",
+    );
+  }
+
+  /*
+   * Validamos la convocatoria.
+   */
+  const squad =
+    await getMatchPlayers(
+      id,
+    );
+
+  const squadPlayerIds =
+    new Set(
+      squad.map(
+        (
+          entry,
+        ) =>
+          entry.player_id,
+      ),
     );
 
   if (
-    rows.length ===
-    0
+    input?.votes.some(
+      (
+        vote,
+      ) =>
+        !squadPlayerIds.has(
+          vote.player_id,
+        ),
+    )
   ) {
     throw new InputError(
-      "Introduce al menos una puntuación.",
+      "Solo puedes votar a jugadores de la convocatoria actual. Recarga la página.",
     );
   }
 
-  const {
-    error,
-  } =
-    await supabase
-      .from("ratings")
-      .upsert(
-        rows,
-        {
-          onConflict:
-            "match_id,player_id,voter_id",
-        },
-      );
-
-  if (error) {
-    /*
-     * Si aquí aparece 42P10 o un error
-     * relacionado con ON CONFLICT,
-     * significará que todavía falta
-     * la restricción UNIQUE correcta
-     * en PostgreSQL.
-     */
-    throw error;
+  if (
+    deletePlayerIds.some(
+      (
+        playerId,
+      ) =>
+        !squadPlayerIds.has(
+          playerId,
+        ),
+    )
+  ) {
+    throw new InputError(
+      "Solo puedes modificar votos de jugadores de la convocatoria actual. Recarga la página.",
+    );
   }
 
-  return rows.length;
+  /*
+   * Última comprobación antes de escribir.
+   */
+  await assertVotingOpen(
+    id,
+  );
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  let deleted =
+    0;
+
+  /*
+   * Primero eliminamos los votos que el
+   * usuario haya marcado como borrados.
+   *
+   * Siempre filtramos también por voter_id:
+   * nadie puede borrar votos de otro usuario.
+   */
+  const uniqueDeleteIds = [
+    ...new Set(
+      deletePlayerIds,
+    ),
+  ];
+
+  if (
+    uniqueDeleteIds.length >
+    0
+  ) {
+    const {
+      data:
+        deletedRows,
+      error:
+        deleteError,
+    } =
+      await supabase
+        .from("ratings")
+        .delete()
+        .eq(
+          "match_id",
+          id,
+        )
+        .eq(
+          "voter_id",
+          voterId,
+        )
+        .in(
+          "player_id",
+          uniqueDeleteIds,
+        )
+        .select(
+          "id",
+        );
+
+    if (
+      deleteError
+    ) {
+      throw deleteError;
+    }
+
+    deleted =
+      deletedRows?.length ??
+      0;
+  }
+
+  let saved =
+    0;
+
+  /*
+   * Los votos nuevos o modificados se
+   * guardan mediante UPSERT.
+   *
+   * La restricción UNIQUE:
+   * match_id + player_id + voter_id
+   *
+   * garantiza un único voto por usuario.
+   */
+  if (
+    input &&
+    input.votes.length >
+      0
+  ) {
+    const rows: Database["public"]["Tables"]["ratings"]["Insert"][] =
+      input.votes.map(
+        (
+          vote,
+        ) => ({
+          match_id:
+            id,
+
+          player_id:
+            vote.player_id,
+
+          voter_id:
+            voterId,
+
+          voter_role:
+            voterRoleRaw,
+
+          score:
+            vote.score,
+        }),
+      );
+
+    const {
+      error:
+        upsertError,
+    } =
+      await supabase
+        .from("ratings")
+        .upsert(
+          rows,
+          {
+            onConflict:
+              "match_id,player_id,voter_id",
+          },
+        );
+
+    if (
+      upsertError
+    ) {
+      throw upsertError;
+    }
+
+    saved =
+      rows.length;
+  }
+
+  return {
+    saved,
+    deleted,
+  };
 }
