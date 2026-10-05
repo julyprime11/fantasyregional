@@ -267,28 +267,27 @@ export async function submitVotesAction(
           status:
             "error",
 
-        message:
-          "El plazo de votación ha finalizado.",
+          message:
+            "El plazo de votación ha finalizado.",
 
-        values,
-      };
+          values,
+        };
       }
     }
 
+    /*
+     * Solo enviamos los datos reales del formulario.
+     *
+     * El usuario y su rol se resuelven de nuevo
+     * dentro de submitMatchRatings().
+     */
     const raw: Record<
       string,
       unknown
-    > = {
-      ...Object.fromEntries(
+    > =
+      Object.fromEntries(
         form,
-      ),
-
-      voter_id:
-        user.id,
-
-      voter_role:
-        profile.voter_role,
-    };
+      );
 
     const result =
       await submitMatchRatings(

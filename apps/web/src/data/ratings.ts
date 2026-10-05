@@ -15,6 +15,14 @@ import {
 } from "@/lib/supabase/server";
 
 import {
+  requireUser,
+} from "@/lib/auth";
+
+import {
+  canVote,
+} from "@/lib/roles";
+
+import {
   getMatchById,
 } from "./matches";
 
@@ -180,34 +188,66 @@ export async function submitMatchRatings(
         )
       : null;
 
-  const voterIdRaw =
-    raw.voter_id;
+  /*
+   * SEGURIDAD:
+   *
+   * El usuario y su rol nunca se aceptan
+   * desde el formulario.
+   *
+   * Se obtienen directamente desde la
+   * sesión autenticada y la tabla profiles.
+   */
+  const user =
+    await requireUser();
 
-  const voterRoleRaw =
-    raw.voter_role;
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data: profile,
+    error:
+      profileError,
+  } =
+    await supabase
+      .from(
+        "profiles",
+      )
+      .select(
+        "voter_role",
+      )
+      .eq(
+        "id",
+        user.id,
+      )
+      .maybeSingle();
 
   if (
-    typeof voterIdRaw !==
-      "string" ||
-    !voterIdRaw
+    profileError
   ) {
+    throw profileError;
+  }
+
+  if (!profile) {
     throw new InputError(
-      "Votante no válido.",
+      "No se ha encontrado el perfil del usuario.",
     );
   }
 
   if (
-    typeof voterRoleRaw !==
-      "string" ||
-    !voterRoleRaw
+    !canVote(
+      profile.voter_role,
+    )
   ) {
     throw new InputError(
-      "Rol de votación no válido.",
+      "Tu usuario no tiene permisos para votar.",
     );
   }
 
   const voterId =
-    voterIdRaw.toLowerCase();
+    user.id.toLowerCase();
+
+  const voterRole =
+    profile.voter_role;
 
   /*
    * No permitimos una petición vacía.
@@ -276,9 +316,6 @@ export async function submitMatchRatings(
   await assertVotingOpen(
     id,
   );
-
-  const supabase =
-    await createServerSupabaseClient();
 
   let deleted =
     0;
@@ -368,7 +405,7 @@ export async function submitMatchRatings(
             voterId,
 
           voter_role:
-            voterRoleRaw,
+            voterRole,
 
           score:
             vote.score,
