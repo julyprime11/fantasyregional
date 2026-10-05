@@ -3,6 +3,10 @@ import type {
 } from "react";
 
 import {
+  redirect,
+} from "next/navigation";
+
+import {
   requireUser,
 } from "@/lib/auth";
 
@@ -10,6 +14,15 @@ import {
   getFantasyLeagueById,
   getUserFantasyLeagues,
 } from "@/data/fantasy-leagues";
+
+import {
+  createServerSupabaseClient,
+} from "@/lib/supabase/server";
+
+import {
+  canPlayFantasy,
+  canVote,
+} from "@/lib/roles";
 
 import FantasyBottomNav from "./fantasy-bottom-nav";
 
@@ -20,6 +33,44 @@ export default async function FantasyLayout({
 }) {
   const user =
     await requireUser();
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data: profile,
+    error:
+      profileError,
+  } =
+    await supabase
+      .from(
+        "profiles",
+      )
+      .select(
+        "voter_role",
+      )
+      .eq(
+        "id",
+        user.id,
+      )
+      .maybeSingle();
+
+  if (
+    profileError ||
+    !profile
+  ) {
+    redirect("/");
+  }
+
+  if (
+    !canPlayFantasy(
+      profile.voter_role,
+    )
+  ) {
+    redirect(
+      "/post-login",
+    );
+  }
 
   const memberships =
     await getUserFantasyLeagues(
@@ -61,6 +112,11 @@ export default async function FantasyLayout({
       <FantasyBottomNav
         defaultLeagueId={
           defaultLeagueId
+        }
+        showVoting={
+          canVote(
+            profile.voter_role,
+          )
         }
       />
     </div>

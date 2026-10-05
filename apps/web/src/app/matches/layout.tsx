@@ -15,10 +15,10 @@ import {
 } from "@/lib/supabase/server";
 
 import {
-  canAccessAdmin,
+  canVote,
 } from "@/lib/roles";
 
-export default async function AdminLayout({
+export default async function MatchesLayout({
   children,
 }: {
   children: ReactNode;
@@ -49,7 +49,7 @@ export default async function AdminLayout({
   if (
     error ||
     !profile ||
-    !canAccessAdmin(
+    !canVote(
       profile.voter_role,
     )
   ) {

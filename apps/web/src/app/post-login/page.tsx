@@ -1,7 +1,3 @@
-import type {
-  ReactNode,
-} from "react";
-
 import {
   redirect,
 } from "next/navigation";
@@ -15,14 +11,10 @@ import {
 } from "@/lib/supabase/server";
 
 import {
-  canAccessAdmin,
+  getRolePermissions,
 } from "@/lib/roles";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function PostLoginPage() {
   const user =
     await requireUser();
 
@@ -48,15 +40,48 @@ export default async function AdminLayout({
 
   if (
     error ||
-    !profile ||
-    !canAccessAdmin(
-      profile.voter_role,
-    )
+    !profile
   ) {
     redirect(
-      "/post-login",
+      "/access-pending",
     );
   }
 
-  return children;
+  const permissions =
+    getRolePermissions(
+      profile.voter_role,
+    );
+
+  /*
+   * Jugador Fantasy
+   * Jugador equipo
+   * Directiva
+   */
+  if (
+    permissions.canPlayFantasy
+  ) {
+    redirect(
+      "/fantasy",
+    );
+  }
+
+  /*
+   * Entrenador
+   * Cuerpo técnico
+   */
+  if (
+    permissions.canVote
+  ) {
+    redirect(
+      "/matches",
+    );
+  }
+
+  /*
+   * Usuario autenticado pero
+   * todavía sin rol válido.
+   */
+  redirect(
+    "/access-pending",
+  );
 }

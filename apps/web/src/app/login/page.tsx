@@ -76,10 +76,9 @@ export default function LoginPage() {
       return;
     }
 
-    router.push(
-      "/fantasy",
-    );
-
+ router.push(
+  "/post-login",
+);
     router.refresh();
   }
 

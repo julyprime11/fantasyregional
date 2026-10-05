@@ -85,19 +85,45 @@ export default function UserRoleForm({
         </select>
       </label>
 
-      <div className="rounded-xl bg-zinc-50 p-3 text-xs leading-5 text-zinc-500">
+      <div className="space-y-2 rounded-xl bg-zinc-50 p-3 text-xs leading-5 text-zinc-500">
         <p>
           <strong className="text-zinc-700">
             Jugador Fantasy:
           </strong>{" "}
-          puede jugar al Fantasy, pero no votar.
+          puede crear y unirse a ligas, preparar su XI y consultar sus puntos.
+          No puede votar.
         </p>
 
-        <p className="mt-1">
+        <p>
           <strong className="text-zinc-700">
             Jugador equipo:
           </strong>{" "}
-          puede jugar al Fantasy y votar cuando el plazo esté abierto.
+          tiene todas las funciones Fantasy y además puede votar los partidos.
+        </p>
+
+        <p>
+          <strong className="text-zinc-700">
+            Entrenador:
+          </strong>{" "}
+          puede votar los partidos, pero no participa en el Fantasy ni tiene
+          acceso administrativo.
+        </p>
+
+        <p>
+          <strong className="text-zinc-700">
+            Cuerpo técnico:
+          </strong>{" "}
+          puede votar los partidos, pero no participa en el Fantasy ni tiene
+          acceso administrativo.
+        </p>
+
+        <p>
+          <strong className="text-zinc-700">
+            Directiva:
+          </strong>{" "}
+          tiene acceso completo al Fantasy, votaciones, Match Admin y
+          administración de clubs, equipos, jugadores, partidos, usuarios y
+          sincronización FFCV.
         </p>
       </div>
 

@@ -4772,135 +4772,66 @@ export default async function FantasyPage({
 
 
 
-          {/* MATCH ADMIN */}
-
-
-
-          {canAccessMatchAdmin && (
-
-
-
-            <section className="mt-7">
-
-
-
-              <p className="mb-2 px-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
-
-
-
-                Equipo
-
-
-
-              </p>
-
-
-
-
-
-
-
-              <Link
-
-
-
-                href="/match-admin"
-
-
-
-                className="flex items-center justify-between rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5"
-
-
-
-              >
-
-
-
-                <div className="flex items-center gap-3">
-
-
-
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f3d2e] text-lg text-white">
-
-
-
-                    ⚽
-
-
-
-                  </div>
-
-
-
-
-
-
-
-                  <div>
-
-
-
-                    <p className="font-black text-zinc-950">
-
-
-
-                      Match Admin
-
-
-
-                    </p>
-
-
-
-
-
-
-
-                    <p className="mt-0.5 text-[10px] text-zinc-500">
-
-
-
-                      Convocatoria, estadísticas y resultados
-
-
-
-                    </p>
-
-
-
-                  </div>
-
-
-
-                </div>
-
-
-
-
-
-
-
-                <span className="font-black text-zinc-300">
-
-
-
-                  →
-
-
-
-                </span>
-
-
-
-              </Link>
-
-
-
-            </section>
-
-
-
-          )}
+{/* DIRECTIVA / ADMINISTRACIÓN */}
+{canAccessMatchAdmin && (
+  <section className="mt-7">
+    <p className="mb-2 px-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+      Gestión
+    </p>
+
+    <div className="space-y-3">
+      <Link
+        href="/match-admin"
+        className="flex items-center justify-between rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0f3d2e] text-lg text-white">
+            ⚽
+          </div>
+
+          <div>
+            <p className="font-black text-zinc-950">
+              Match Admin
+            </p>
+
+            <p className="mt-0.5 text-[10px] leading-4 text-zinc-500">
+              Convocatorias, estadísticas, votos y resultados
+            </p>
+          </div>
+        </div>
+
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8f2ed] font-black text-[#0f3d2e]">
+          →
+        </span>
+      </Link>
+
+      <Link
+        href="/admin"
+        className="flex items-center justify-between rounded-[1.3rem] bg-[#e8f2ed] p-4 shadow-sm ring-1 ring-[#d7e8df] transition active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-lg shadow-sm">
+            ⚙️
+          </div>
+
+          <div>
+            <p className="font-black text-[#0b2f23]">
+              Administración
+            </p>
+
+            <p className="mt-0.5 text-[10px] leading-4 text-[#557368]">
+              Clubs, equipos, jugadores, partidos y usuarios
+            </p>
+          </div>
+        </div>
+
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0f3d2e] font-black text-white">
+          →
+        </span>
+      </Link>
+    </div>
+  </section>
+)}
 
 
 

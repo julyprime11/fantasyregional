@@ -7,13 +7,18 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-export default function FantasyBottomNav({
-  defaultLeagueId,
-}: {
+type Props = {
   defaultLeagueId:
     | string
     | null;
-}) {
+
+  showVoting?: boolean;
+};
+
+export default function FantasyBottomNav({
+  defaultLeagueId,
+  showVoting = false,
+}: Props) {
   const pathname =
     usePathname();
 
@@ -25,8 +30,29 @@ export default function FantasyBottomNav({
       "league",
     );
 
+  /*
+   * Si estamos dentro de una ruta de una liga,
+   * obtenemos también el ID directamente
+   * desde el pathname.
+   *
+   * Ejemplo:
+   * /fantasy/leagues/UUID/lineup
+   */
+  const leaguePathMatch =
+    pathname.match(
+      /^\/fantasy\/leagues\/([^/]+)/,
+    );
+
+  const pathLeagueId =
+    leaguePathMatch?.[1]
+      ? decodeURIComponent(
+          leaguePathMatch[1],
+        )
+      : null;
+
   const activeLeagueId =
     queryLeagueId ??
+    pathLeagueId ??
     defaultLeagueId;
 
   const homeHref =
@@ -43,14 +69,24 @@ export default function FantasyBottomNav({
         )}/lineup`
       : "/fantasy/leagues";
 
+  const pointsHref =
+    activeLeagueId
+      ? `/fantasy/leagues/${encodeURIComponent(
+          activeLeagueId,
+        )}/points`
+      : "/fantasy/leagues";
+
   const items = [
     {
       href:
         homeHref,
+
       label:
         "Inicio",
+
       icon:
         "⌂",
+
       active:
         pathname ===
         "/fantasy",
@@ -59,10 +95,13 @@ export default function FantasyBottomNav({
     {
       href:
         "/fantasy/leagues",
+
       label:
         "Ligas",
+
       icon:
         "🏆",
+
       active:
         pathname ===
           "/fantasy/leagues" ||
@@ -75,20 +114,70 @@ export default function FantasyBottomNav({
     {
       href:
         lineupHref,
+
       label:
         "Mi XI",
+
       icon:
         "⚽",
+
       active:
         pathname.endsWith(
           "/lineup",
         ),
     },
+
+    {
+      href:
+        pointsHref,
+
+      label:
+        "Puntos",
+
+      icon:
+        "★",
+
+      active:
+        pathname.endsWith(
+          "/points",
+        ) ||
+        pathname.includes(
+          "/matches/",
+        ),
+    },
+
+    ...(showVoting
+      ? [
+          {
+            href:
+              "/matches",
+
+            label:
+              "Votar",
+
+            icon:
+              "✓",
+
+            active:
+              pathname ===
+                "/matches" ||
+              pathname.startsWith(
+                "/matches/",
+              ),
+          },
+        ]
+      : []),
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 border-t border-zinc-200 bg-white/95 px-5 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-      <div className="grid grid-cols-3">
+    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 border-t border-zinc-200 bg-white/95 px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <div
+        className={
+          showVoting
+            ? "grid grid-cols-5"
+            : "grid grid-cols-4"
+        }
+      >
         {items.map(
           (item) => (
             <Link
@@ -104,13 +193,13 @@ export default function FantasyBottomNav({
                   : "text-zinc-400"
               }`}
             >
-              <span className="text-xl">
+              <span className="text-lg">
                 {
                   item.icon
                 }
               </span>
 
-              <span className="text-[10px] font-black">
+              <span className="text-[9px] font-black">
                 {
                   item.label
                 }

@@ -33,6 +33,7 @@ import {
 } from "@/lib/supabase/server";
 
 import {
+  canPlayFantasy,
   canVote,
   formatRole,
 } from "@/lib/roles";
@@ -159,11 +160,25 @@ export default async function MatchVotePage({
         user.id,
       )
       .maybeSingle();
+      const userCanVote =
+  canVote(
+    profile?.voter_role,
+  );
 
-  const userCanVote =
-    canVote(
-      profile?.voter_role,
-    );
+const userCanPlayFantasy =
+  canPlayFantasy(
+    profile?.voter_role,
+  );
+
+const backHref =
+  userCanPlayFantasy
+    ? "/fantasy"
+    : "/matches";
+
+const backLabel =
+  userCanPlayFantasy
+    ? "← Fantasy"
+    : "← Partidos";
 
   /*
    * Solo se votan jugadores
@@ -309,12 +324,12 @@ export default async function MatchVotePage({
 
         <div className="relative z-10">
           <div className="flex items-center justify-between gap-3">
-            <Link
-              href="/fantasy"
-              className="text-xs font-bold text-white/65"
-            >
-              ← Fantasy
-            </Link>
+          <Link
+  href={backHref}
+  className="text-xs font-bold text-white/65"
+>
+  {backLabel}
+</Link>
 
             {profile && (
               <div className="rounded-xl bg-white/10 px-2.5 py-1.5 text-right">
