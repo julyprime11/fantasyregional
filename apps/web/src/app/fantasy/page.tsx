@@ -6,7 +6,9 @@ import Link from "next/link";
 
 
 
-
+import {
+  DeleteLeagueButton,
+} from "@/app/fantasy/leagues/delete-league-button";
 
 import {
 
@@ -626,7 +628,7 @@ export default async function FantasyPage({
 
   if (!activeLeague) {
 
-
+    
 
     return (
 

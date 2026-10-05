@@ -24,6 +24,7 @@ import {
 
 import {
   createClub,
+  deleteClub,
 } from "@/data/clubs";
 
 import {
@@ -33,6 +34,7 @@ import {
 import {
   createPlayer,
   updatePlayer,
+  deletePlayer,
 } from "@/data/players";
 
 import {
@@ -43,6 +45,7 @@ import {
 import {
   createMatch,
   updateMatch,
+  deleteMatch,
 } from "@/data/matches";
 
 import {
@@ -214,6 +217,55 @@ export async function createClubAction(
     parseClubInput,
     createClub,
   );
+}
+export async function deleteClubAction(
+  clubId: string,
+  _previous: FormState,
+  _form: FormData,
+): Promise<FormState> {
+  const forbidden =
+    await requireAdminAction();
+
+  if (forbidden) {
+    return forbidden;
+  }
+
+  try {
+    await deleteClub(
+      clubId,
+    );
+
+    revalidatePath(
+      "/admin/clubs",
+    );
+
+    revalidatePath(
+      "/admin",
+    );
+
+    revalidatePath(
+      "/",
+    );
+
+    return {
+      status:
+        "success",
+
+      message:
+        "Club eliminado correctamente.",
+    };
+  } catch (error) {
+    return {
+      status:
+        "error",
+
+      message:
+        error instanceof
+        InputError
+          ? error.message
+          : "No se pudo eliminar el club.",
+    };
+  }
 }
 
 export async function addMatchPlayerAction(
@@ -471,7 +523,65 @@ export async function updateMatchAction(
 
   return result;
 }
+export async function deleteMatchAction(
+  matchId: string,
+  _previous: FormState,
+  _form: FormData,
+): Promise<FormState> {
+  const forbidden =
+    await requireAdminAction();
 
+  if (forbidden) {
+    return forbidden;
+  }
+
+  try {
+    const parsedMatchId =
+      parseMatchId(
+        matchId,
+      );
+
+    await deleteMatch(
+      parsedMatchId,
+    );
+
+    revalidatePath(
+      "/admin/matches",
+    );
+
+    revalidatePath(
+      "/match-admin",
+    );
+
+    revalidatePath(
+      "/fantasy",
+      "layout",
+    );
+
+    revalidatePath(
+      "/",
+    );
+
+    return {
+      status:
+        "success",
+
+      message:
+        "Partido eliminado correctamente.",
+    };
+  } catch (error) {
+    return {
+      status:
+        "error",
+
+      message:
+        error instanceof
+        InputError
+          ? error.message
+          : "No se pudo eliminar el partido.",
+    };
+  }
+}
 export async function createTeamAction(
   _previous: FormState,
   form: FormData,
@@ -559,7 +669,65 @@ export async function updatePlayerAction(
 
   return result;
 }
+export async function deletePlayerAction(
+  playerId: string,
+  _previous: FormState,
+  _form: FormData,
+): Promise<FormState> {
+  const forbidden =
+    await requireAdminAction();
 
+  if (forbidden) {
+    return forbidden;
+  }
+
+  try {
+    const parsedPlayerId =
+      parsePlayerId(
+        playerId,
+      );
+
+    await deletePlayer(
+      parsedPlayerId,
+    );
+
+    revalidatePath(
+      "/admin/players",
+    );
+
+    revalidatePath(
+      "/admin",
+    );
+
+    revalidatePath(
+      "/fantasy",
+      "layout",
+    );
+
+    revalidatePath(
+      "/",
+    );
+
+    return {
+      status:
+        "success",
+
+      message:
+        "Jugador eliminado correctamente.",
+    };
+  } catch (error) {
+    return {
+      status:
+        "error",
+
+      message:
+        error instanceof
+        InputError
+          ? error.message
+          : "No se pudo eliminar el jugador.",
+    };
+  }
+}
 export async function createStaffAction(
   _previous: FormState,
   form: FormData,

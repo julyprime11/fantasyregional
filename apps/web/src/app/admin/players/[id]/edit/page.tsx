@@ -17,8 +17,13 @@ import {
 } from "@/data/teams";
 
 import {
+  deletePlayerAction,
   updatePlayerAction,
 } from "../../../actions";
+
+import {
+  DangerActionForm,
+} from "../../../danger-action-form";
 
 import {
   CreateForm,
@@ -226,6 +231,47 @@ export default async function EditPlayerPage({
                 player.team_id,
             }}
           />
+        </section>
+
+        <section className="mt-4 overflow-hidden rounded-[1.4rem] bg-white shadow-sm ring-1 ring-red-100">
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg">
+                ⚠
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-red-500">
+                  Zona peligrosa
+                </p>
+
+                <h2 className="mt-1 text-base font-black text-zinc-950">
+                  Eliminar jugador
+                </h2>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Si el jugador todavía no tiene histórico, se eliminará
+                  definitivamente.
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Si ya aparece en partidos, votaciones o alineaciones Fantasy,
+                  no perderemos esos datos: el jugador quedará desactivado.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <DangerActionForm
+                action={deletePlayerAction.bind(
+                  null,
+                  player.id,
+                )}
+                label="Eliminar jugador"
+                confirmation={`¿Seguro que quieres eliminar a "${fullName}"? Si no tiene histórico, esta acción será definitiva.`}
+              />
+            </div>
+          </div>
         </section>
 
         <Link

@@ -655,6 +655,7 @@ export async function finishLiveMatch(
  * Así el partido vuelve realmente
  * a su estado previo al inicio.
  */
+
 export async function resetLiveMatch(
   matchId: string,
 ): Promise<void> {
@@ -790,5 +791,159 @@ export async function resetLiveMatch(
 
   if (playersError) {
     throw playersError;
+  }
+}
+export async function deleteMatch(
+  matchId: string,
+): Promise<void> {
+  if (!matchId) {
+    throw new InputError(
+      "Partido no válido.",
+    );
+  }
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data: match,
+    error: matchError,
+  } =
+    await supabase
+      .from("matches")
+      .select("id")
+      .eq(
+        "id",
+        matchId,
+      )
+      .maybeSingle();
+
+  if (matchError) {
+    throw matchError;
+  }
+
+  if (!match) {
+    throw new InputError(
+      "El partido ya no existe.",
+    );
+  }
+
+  const [
+    ratingsRefs,
+    fantasyRefs,
+  ] =
+    await Promise.all([
+      supabase
+        .from("ratings")
+        .select("id")
+        .eq(
+          "match_id",
+          matchId,
+        )
+        .limit(1),
+
+      supabase
+        .from("fantasy_lineups")
+        .select("id")
+        .eq(
+          "match_id",
+          matchId,
+        )
+        .limit(1),
+    ]);
+
+  if (ratingsRefs.error) {
+    throw ratingsRefs.error;
+  }
+
+  if (fantasyRefs.error) {
+    throw fantasyRefs.error;
+  }
+
+  const hasVotes =
+    (
+      ratingsRefs.data
+        ?.length ??
+      0
+    ) >
+    0;
+
+  const hasFantasyHistory =
+    (
+      fantasyRefs.data
+        ?.length ??
+      0
+    ) >
+    0;
+
+  if (
+    hasVotes ||
+    hasFantasyHistory
+  ) {
+    throw new InputError(
+      "No puedes eliminar este partido porque ya tiene votos o histórico Fantasy.",
+    );
+  }
+
+  /*
+   * Si no hay histórico relevante,
+   * limpiamos datos operativos del partido.
+   */
+  const {
+    error:
+      eventsError,
+  } =
+    await supabase
+      .from("match_events")
+      .delete()
+      .eq(
+        "match_id",
+        matchId,
+      );
+
+  if (eventsError) {
+    throw eventsError;
+  }
+
+  const {
+    error:
+      playersError,
+  } =
+    await supabase
+      .from("match_players")
+      .delete()
+      .eq(
+        "match_id",
+        matchId,
+      );
+
+  if (playersError) {
+    throw playersError;
+  }
+
+  const {
+    data:
+      deletedMatch,
+    error:
+      deleteError,
+  } =
+    await supabase
+      .from("matches")
+      .delete()
+      .eq(
+        "id",
+        matchId,
+      )
+      .select("id")
+      .maybeSingle();
+
+  if (deleteError) {
+    throw deleteError;
+  }
+
+  if (!deletedMatch) {
+    throw new InputError(
+      "El partido no se pudo eliminar porque ya no está disponible.",
+    );
   }
 }

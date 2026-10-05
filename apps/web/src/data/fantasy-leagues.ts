@@ -258,3 +258,173 @@ export async function getUserFantasyLeagues(
 
   return data;
 }
+
+export async function deleteFantasyLeague(
+  leagueId: string,
+): Promise<void> {
+  if (!leagueId) {
+    throw new Error(
+      "Liga no válida.",
+    );
+  }
+
+  const supabase =
+    await createServerSupabaseClient();
+
+  const {
+    data: league,
+    error: leagueError,
+  } =
+    await supabase
+      .from("fantasy_leagues")
+      .select(
+        "id, name",
+      )
+      .eq(
+        "id",
+        leagueId,
+      )
+      .maybeSingle();
+
+  if (leagueError) {
+    throw leagueError;
+  }
+
+  if (!league) {
+    throw new Error(
+      "La liga ya no existe.",
+    );
+  }
+
+  /*
+   * Recuperamos las alineaciones de esta liga
+   * porque fantasy_lineup_players depende de ellas.
+   */
+  const {
+    data: lineups,
+    error: lineupsError,
+  } =
+    await supabase
+      .from("fantasy_lineups")
+      .select("id")
+      .eq(
+        "league_id",
+        leagueId,
+      );
+
+  if (lineupsError) {
+    throw lineupsError;
+  }
+
+  const lineupIds =
+    lineups.map(
+      (lineup) =>
+        lineup.id,
+    );
+
+  /*
+   * Primero eliminamos los jugadores de
+   * las alineaciones.
+   */
+  if (
+    lineupIds.length >
+    0
+  ) {
+    const {
+      error:
+        lineupPlayersError,
+    } =
+      await supabase
+        .from(
+          "fantasy_lineup_players",
+        )
+        .delete()
+        .in(
+          "lineup_id",
+          lineupIds,
+        );
+
+    if (
+      lineupPlayersError
+    ) {
+      throw lineupPlayersError;
+    }
+  }
+
+  /*
+   * Después las alineaciones de la liga.
+   */
+  const {
+    error:
+      deleteLineupsError,
+  } =
+    await supabase
+      .from(
+        "fantasy_lineups",
+      )
+      .delete()
+      .eq(
+        "league_id",
+        leagueId,
+      );
+
+  if (
+    deleteLineupsError
+  ) {
+    throw deleteLineupsError;
+  }
+
+  /*
+   * Eliminamos todos los miembros.
+   */
+  const {
+    error:
+      membersError,
+  } =
+    await supabase
+      .from(
+        "fantasy_league_members",
+      )
+      .delete()
+      .eq(
+        "league_id",
+        leagueId,
+      );
+
+  if (membersError) {
+    throw membersError;
+  }
+
+  /*
+   * Por último eliminamos la propia liga.
+   */
+  const {
+    data:
+      deletedLeague,
+    error:
+      deleteLeagueError,
+  } =
+    await supabase
+      .from(
+        "fantasy_leagues",
+      )
+      .delete()
+      .eq(
+        "id",
+        leagueId,
+      )
+      .select("id")
+      .maybeSingle();
+
+  if (
+    deleteLeagueError
+  ) {
+    throw deleteLeagueError;
+  }
+
+  if (!deletedLeague) {
+    throw new Error(
+      "La liga no se pudo eliminar.",
+    );
+  }
+}

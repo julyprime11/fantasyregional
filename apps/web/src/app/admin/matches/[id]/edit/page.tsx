@@ -18,8 +18,13 @@ import {
 } from "@/data/competitions";
 
 import {
+  deleteMatchAction,
   updateMatchAction,
 } from "../../../actions";
+
+import {
+  DangerActionForm,
+} from "../../../danger-action-form";
 
 import {
   CreateForm,
@@ -511,6 +516,48 @@ export default async function EditMatchPage({
                   match.status,
                 )}
               </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ZONA PELIGROSA */}
+        <section className="mt-5 overflow-hidden rounded-[1.4rem] bg-white shadow-sm ring-1 ring-red-100">
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-lg">
+                ⚠
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-[8px] font-black uppercase tracking-[0.16em] text-red-500">
+                  Zona peligrosa
+                </p>
+
+                <h2 className="mt-1 text-base font-black text-zinc-950">
+                  Eliminar partido
+                </h2>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Si el partido todavía no tiene votos ni histórico Fantasy,
+                  se eliminarán también su convocatoria y sus eventos.
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-zinc-500">
+                  Si ya tiene votaciones o alineaciones Fantasy, no se
+                  permitirá eliminarlo para proteger el histórico.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <DangerActionForm
+                action={deleteMatchAction.bind(
+                  null,
+                  match.id,
+                )}
+                label="Eliminar partido"
+                confirmation={`¿Seguro que quieres eliminar ${homeTeam} - ${awayTeam}? Si no tiene histórico, esta acción será definitiva.`}
+              />
             </div>
           </div>
         </section>

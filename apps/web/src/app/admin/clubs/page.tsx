@@ -11,7 +11,13 @@ import {
 import {
   createClubAction,
 } from "../actions";
+import {
+  deleteClubAction,
+} from "../actions";
 
+import {
+  DangerActionForm,
+} from "../danger-action-form";
 import {
   CreateForm,
 } from "../create-form";
@@ -171,42 +177,55 @@ export default async function ClubsPage() {
             <div className="mt-3 space-y-2">
               {clubs.map(
                 (club) => (
-                  <article
-                    key={
-                      club.id
-                    }
-                    className="flex items-center gap-3 rounded-[1.2rem] bg-white p-3 shadow-sm ring-1 ring-black/5"
-                  >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
-                      {(
-                        club.short_name ??
-                        club.name
-                      )
-                        .slice(
-                          0,
-                          3,
-                        )
-                        .toUpperCase()}
-                    </div>
+<article
+  key={
+    club.id
+  }
+  className="overflow-hidden rounded-[1.2rem] bg-white shadow-sm ring-1 ring-black/5"
+>
+  <div className="flex items-center gap-3 p-3">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8f2ed] text-sm font-black text-[#0f3d2e]">
+      {(
+        club.short_name ??
+        club.name
+      )
+        .slice(
+          0,
+          3,
+        )
+        .toUpperCase()}
+    </div>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-black text-zinc-950">
-                        {
-                          club.name
-                        }
-                      </p>
+    <div className="min-w-0 flex-1">
+      <p className="truncate text-sm font-black text-zinc-950">
+        {
+          club.name
+        }
+      </p>
 
-                      <p className="mt-0.5 text-[10px] font-semibold text-zinc-500">
-                        {club.short_name
-                          ? club.short_name
-                          : "Sin nombre corto"}
-                      </p>
-                    </div>
+      <p className="mt-0.5 text-[10px] font-semibold text-zinc-500">
+        {club.short_name
+          ? club.short_name
+          : "Sin nombre corto"}
+      </p>
+    </div>
 
-                    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[8px] font-black uppercase text-zinc-400">
-                      Club
-                    </span>
-                  </article>
+    <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[8px] font-black uppercase text-zinc-400">
+      Club
+    </span>
+  </div>
+
+  <div className="border-t border-zinc-100 bg-zinc-50/60 p-3">
+    <DangerActionForm
+      action={deleteClubAction.bind(
+        null,
+        club.id,
+      )}
+      label="Eliminar club"
+      confirmation={`¿Seguro que quieres eliminar "${club.name}"? Esta acción no se puede deshacer.`}
+    />
+  </div>
+</article>
                 ),
               )}
             </div>
