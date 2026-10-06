@@ -4,69 +4,316 @@ import assert from "node:assert/strict";
 import {
   calculateFantasyPlayerPoints,
   calculateFantasyLineupPoints,
+  getRatingFantasyPoints,
 } from "../src/fantasy-points.ts";
 
-test("player rating is rounded to integer fantasy points", () => {
-  const result =
-    calculateFantasyPlayerPoints({
-      player_id: "player-a",
-      final_rating: 7.4,
-    });
+function createPlayerInput(
+  overrides = {},
+) {
+  return {
+    player_id:
+      "player-a",
 
-  assert.equal(result.player_id, "player-a");
-  assert.equal(result.points, 7);
-  assert.equal(result.rateable, true);
-});
+    position:
+      "CM",
 
-test("player rating rounds up from .5", () => {
-  const result =
-    calculateFantasyPlayerPoints({
-      player_id: "player-a",
-      final_rating: 7.5,
-    });
+    minutes_played:
+      0,
 
-  assert.equal(result.points, 8);
-});
+    goals:
+      0,
 
-test("player without final rating scores zero", () => {
-  const result =
-    calculateFantasyPlayerPoints({
-      player_id: "player-a",
-      final_rating: null,
-    });
+    assists:
+      0,
 
-  assert.equal(result.points, 0);
-  assert.equal(result.rateable, false);
-});
+    yellow_cards:
+      0,
 
-test("lineup total is the sum of rounded player points", () => {
-  const result =
-    calculateFantasyLineupPoints([
-      {
-        player_id: "1",
-        final_rating: 7.4,
-      },
-      {
-        player_id: "2",
-        final_rating: 6.8,
-      },
-      {
-        player_id: "3",
-        final_rating: 8.1,
-      },
-      {
-        player_id: "4",
-        final_rating: null,
-      },
-    ]);
+    red_cards:
+      0,
 
-  assert.equal(result.players[0].points, 7);
-  assert.equal(result.players[1].points, 7);
-  assert.equal(result.players[2].points, 8);
-  assert.equal(result.players[3].points, 0);
+    clean_sheet:
+      false,
 
-  assert.equal(
-    result.total_points,
-    22,
-  );
-});
+    starter:
+      false,
+
+    match_minutes:
+      90,
+
+    panel_rating:
+      null,
+
+    ...overrides,
+  };
+}
+
+test(
+  "rating fantasy points follow the configured score table",
+  () => {
+    const cases = [
+      [0, -2],
+      [1, -2],
+      [2, -1],
+      [3, -1],
+      [4, 0],
+      [5, 0],
+      [6, 2],
+      [7, 3],
+      [8, 4],
+      [9, 4],
+      [10, 5],
+    ];
+
+    for (
+      const [
+        rating,
+        expectedPoints,
+      ] of cases
+    ) {
+      const result =
+        getRatingFantasyPoints(
+          rating,
+        );
+
+      assert.equal(
+        result.points,
+        expectedPoints,
+        `La nota ${rating} debería dar ${expectedPoints} puntos`,
+      );
+
+      assert.equal(
+        result.rounded_rating,
+        rating,
+      );
+
+      assert.equal(
+        result.rateable,
+        true,
+      );
+    }
+  },
+);
+
+test(
+  "rating uses standard rounding before applying fantasy points",
+  () => {
+    const cases = [
+      [5.4, 5, 0],
+      [5.5, 6, 2],
+      [6.4, 6, 2],
+      [6.5, 7, 3],
+      [7.4, 7, 3],
+      [7.5, 8, 4],
+      [8.4, 8, 4],
+      [8.5, 9, 4],
+      [9.4, 9, 4],
+      [9.5, 10, 5],
+    ];
+
+    for (
+      const [
+        panelRating,
+        expectedRounded,
+        expectedPoints,
+      ] of cases
+    ) {
+      const result =
+        getRatingFantasyPoints(
+          panelRating,
+        );
+
+      assert.equal(
+        result.rounded_rating,
+        expectedRounded,
+        `${panelRating} debería redondearse a ${expectedRounded}`,
+      );
+
+      assert.equal(
+        result.points,
+        expectedPoints,
+        `${panelRating} debería dar ${expectedPoints} puntos`,
+      );
+    }
+  },
+);
+
+test(
+  "rating is limited to the 0 to 10 range",
+  () => {
+    const belowZero =
+      getRatingFantasyPoints(
+        -4,
+      );
+
+    assert.equal(
+      belowZero.rounded_rating,
+      0,
+    );
+
+    assert.equal(
+      belowZero.points,
+      -2,
+    );
+
+    const aboveTen =
+      getRatingFantasyPoints(
+        15,
+      );
+
+    assert.equal(
+      aboveTen.rounded_rating,
+      10,
+    );
+
+    assert.equal(
+      aboveTen.points,
+      5,
+    );
+  },
+);
+
+test(
+  "player without panel rating gets no rating points",
+  () => {
+    const result =
+      getRatingFantasyPoints(
+        null,
+      );
+
+    assert.equal(
+      result.points,
+      0,
+    );
+
+    assert.equal(
+      result.rounded_rating,
+      null,
+    );
+
+    assert.equal(
+      result.rateable,
+      false,
+    );
+  },
+);
+
+test(
+  "player total includes rating points",
+  () => {
+    const result =
+      calculateFantasyPlayerPoints(
+        createPlayerInput({
+          minutes_played:
+            90,
+
+          starter:
+            true,
+
+          panel_rating:
+            6.5,
+        }),
+      );
+
+    /*
+     * 90 minutos = 3 puntos
+     * 6.5 -> 7 = 3 puntos
+     *
+     * Total = 6
+     */
+    assert.equal(
+      result.player_id,
+      "player-a",
+    );
+
+    assert.equal(
+      result.breakdown.minutes,
+      3,
+    );
+
+    assert.equal(
+      result.breakdown.rating,
+      3,
+    );
+
+    assert.equal(
+      result.rounded_rating,
+      7,
+    );
+
+    assert.equal(
+      result.points,
+      6,
+    );
+
+    assert.equal(
+      result.rateable,
+      true,
+    );
+  },
+);
+
+test(
+  "lineup total is the sum of every player fantasy score",
+  () => {
+    const result =
+      calculateFantasyLineupPoints([
+        createPlayerInput({
+          player_id:
+            "1",
+
+          panel_rating:
+            6,
+        }),
+
+        createPlayerInput({
+          player_id:
+            "2",
+
+          panel_rating:
+            7,
+        }),
+
+        createPlayerInput({
+          player_id:
+            "3",
+
+          panel_rating:
+            8,
+        }),
+
+        createPlayerInput({
+          player_id:
+            "4",
+
+          panel_rating:
+            null,
+        }),
+      ]);
+
+    assert.equal(
+      result.players[0].points,
+      2,
+    );
+
+    assert.equal(
+      result.players[1].points,
+      3,
+    );
+
+    assert.equal(
+      result.players[2].points,
+      4,
+    );
+
+    assert.equal(
+      result.players[3].points,
+      0,
+    );
+
+    assert.equal(
+      result.total_points,
+      9,
+    );
+  },
+);

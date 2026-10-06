@@ -50,6 +50,18 @@ export async function getFantasyLeagueStandings(
            *
            * - XI presentado → puntos reales
            * - XI no presentado → 0 puntos
+           *
+           * Los puntos ya incluyen todo el
+           * cálculo Fantasy realizado para
+           * cada jornada:
+           *
+           * - minutos
+           * - goles
+           * - asistencias
+           * - portería a cero
+           * - tarjetas
+           * - valoración
+           * - bonus MVP
            */
           const readyMatchdays =
             matchdays.filter(

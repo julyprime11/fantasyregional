@@ -351,6 +351,8 @@ export async function getMatchResults(
                  */
                 panel_rating:
                   rating.final_rating,
+                   is_mvp:
+    false,
               })
             : null;
 

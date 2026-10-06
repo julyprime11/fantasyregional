@@ -70,6 +70,9 @@ export type FantasyMatchPlayerPoints = {
 
     rating:
       number;
+
+    mvp:
+      number;
   };
 };
 
@@ -205,6 +208,23 @@ export async function getFantasyMatchPoints(
       ),
     );
 
+  /*
+   * El MVP se obtiene del mismo resultado
+   * oficial calculado para el partido.
+   *
+   * Si existe MVP compartido, todos los
+   * jugadores incluidos reciben el bonus.
+   */
+  const mvpPlayerIds =
+    new Set(
+      results.mvp.players.map(
+        (
+          player,
+        ) =>
+          player.player_id,
+      ),
+    );
+
   const fantasyInputs =
     lineupPlayers
       .map(
@@ -244,10 +264,12 @@ export async function getFantasyMatchPoints(
                 .minutes_played,
 
             goals:
-              result.entry.goals,
+              result.entry
+                .goals,
 
             assists:
-              result.entry.assists,
+              result.entry
+                .assists,
 
             yellow_cards:
               result.entry
@@ -262,7 +284,8 @@ export async function getFantasyMatchPoints(
                 .clean_sheet,
 
             starter:
-              result.entry.starter,
+              result.entry
+                .starter,
 
             match_minutes:
               matchMinutes,
@@ -270,6 +293,11 @@ export async function getFantasyMatchPoints(
             panel_rating:
               result.rating
                 .final_rating,
+
+            is_mvp:
+              mvpPlayerIds.has(
+                lineupEntry.player_id,
+              ),
           };
         },
       )
@@ -391,6 +419,9 @@ export async function getFantasyMatchPoints(
                 0,
 
               rating:
+                0,
+
+              mvp:
                 0,
             },
         };

@@ -14,9 +14,10 @@
     "typecheck": "tsc --noEmit",
     "test:ratings": "node --experimental-strip-types --test tests/ratings.test.mjs",
     "test:fantasy": "node --experimental-strip-types --test tests/fantasy-lineup.test.mjs",
-    "test:fantasy-points": "node --experimental-strip-types --test tests/fantasy-points.test.mjs"
+    "test:fantasy-points": "tsx --test tests/fantasy-points.test.mjs"
   },
   "devDependencies": {
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

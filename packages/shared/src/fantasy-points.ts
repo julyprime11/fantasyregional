@@ -28,6 +28,8 @@ export type FantasyPlayerPointsInput = {
   match_minutes: number;
 
   panel_rating: number | null;
+
+  is_mvp: boolean;
 };
 
 export type FantasyPlayerPointsBreakdown = {
@@ -42,6 +44,8 @@ export type FantasyPlayerPointsBreakdown = {
   cards: number;
 
   rating: number;
+
+  mvp: number;
 };
 
 export type FantasyPlayerPointsResult = {
@@ -212,18 +216,20 @@ export function getRatingFantasyPoints(
 
   let points: number;
 
-  if (rounded <= 2) {
+  if (rounded <= 1) {
     points = -2;
-  } else if (rounded <= 4) {
+  } else if (rounded <= 3) {
     points = -1;
-  } else if (rounded === 5) {
-    points = 4;
-  } else if (rounded <= 7) {
-    points = 5;
+  } else if (rounded <= 5) {
+    points = 0;
+  } else if (rounded === 6) {
+    points = 2;
+  } else if (rounded === 7) {
+    points = 3;
   } else if (rounded <= 9) {
-    points = 6;
+    points = 4;
   } else {
-    points = 7;
+    points = 5;
   }
 
   return {
@@ -295,6 +301,11 @@ export function calculateFantasyPlayerPoints(
       input.panel_rating,
     );
 
+  const mvpPoints =
+    input.is_mvp
+      ? 3
+      : 0;
+
   const breakdown: FantasyPlayerPointsBreakdown = {
     minutes:
       minutesPoints,
@@ -313,6 +324,9 @@ export function calculateFantasyPlayerPoints(
 
     rating:
       rating.points,
+
+    mvp:
+      mvpPoints,
   };
 
   const points =
@@ -321,7 +335,8 @@ export function calculateFantasyPlayerPoints(
     breakdown.assists +
     breakdown.clean_sheet +
     breakdown.cards +
-    breakdown.rating;
+    breakdown.rating +
+    breakdown.mvp;
 
   return {
     player_id:
