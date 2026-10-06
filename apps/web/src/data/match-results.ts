@@ -259,6 +259,15 @@ export async function getMatchResults(
       ),
     );
 
+  /*
+   * Primer paso:
+   *
+   * Calculamos valoración y puntos Fantasy
+   * base SIN bonus MVP.
+   *
+   * El MVP se decide después, utilizando
+   * únicamente las valoraciones finales.
+   */
   const rows: ResultRow[] =
     squad.map(
       (
@@ -351,8 +360,15 @@ export async function getMatchResults(
                  */
                 panel_rating:
                   rating.final_rating,
-                   is_mvp:
-    false,
+
+                /*
+                 * El MVP todavía no se conoce.
+                 *
+                 * El bonus se aplica en un
+                 * segundo paso.
+                 */
+                is_mvp:
+                  false,
               })
             : null;
 
@@ -360,6 +376,83 @@ export async function getMatchResults(
           entry,
           rating,
           fantasy,
+        };
+      },
+    );
+
+  /*
+   * Segundo paso:
+   *
+   * Seleccionamos el MVP exclusivamente
+   * a partir de las valoraciones humanas.
+   */
+  const mvp =
+    selectMatchMvp(
+      rows.map(
+        (
+          row,
+        ) =>
+          row.rating,
+      ),
+    );
+
+  /*
+   * Guardamos los IDs para poder aplicar
+   * el bonus rápidamente.
+   *
+   * Si el MVP es compartido, habrá más de
+   * un jugador dentro del Set.
+   */
+  const mvpPlayerIds =
+    new Set(
+      mvp.players.map(
+        (
+          player,
+        ) =>
+          player.player_id,
+      ),
+    );
+
+  /*
+   * Tercer paso:
+   *
+   * Aplicamos +3 puntos Fantasy al MVP.
+   *
+   * Importante:
+   * el bonus MVP NO interviene en la
+   * selección del propio MVP.
+   */
+  const rowsWithMvp: ResultRow[] =
+    rows.map(
+      (
+        row,
+      ) => {
+        if (
+          !row.fantasy ||
+          !mvpPlayerIds.has(
+            row.entry.player_id,
+          )
+        ) {
+          return row;
+        }
+
+        return {
+          ...row,
+
+          fantasy: {
+            ...row.fantasy,
+
+            points:
+              row.fantasy.points +
+              3,
+
+            breakdown: {
+              ...row.fantasy.breakdown,
+
+              mvp:
+                3,
+            },
+          },
         };
       },
     );
@@ -378,16 +471,9 @@ export async function getMatchResults(
 
     matchMinutes,
 
-    rows,
+    rows:
+      rowsWithMvp,
 
-    mvp:
-      selectMatchMvp(
-        rows.map(
-          (
-            row,
-          ) =>
-            row.rating,
-        ),
-      ),
+    mvp,
   };
 }
