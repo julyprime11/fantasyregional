@@ -8,6 +8,8 @@ import {
   getPlayerProfile,
 } from "@/data/player-profile";
 
+import BackButton from "./back-button";
+
 function formatPosition(
   position: string,
 ): string {
@@ -141,7 +143,9 @@ export default async function PlayerProfilePage({
     );
   }
 
-  if (!profile) {
+  if (
+    !profile
+  ) {
     notFound();
   }
 
@@ -174,14 +178,9 @@ export default async function PlayerProfilePage({
         <div className="absolute -bottom-24 -left-20 h-52 w-52 rounded-full border-[32px] border-white/5" />
 
         <div className="relative z-10">
-          <Link
-            href="/fantasy"
-            className="text-[11px] font-bold text-white/65"
-          >
-            ← Fantasy
-          </Link>
+          <BackButton />
 
-          <div className="mt-7 flex items-center gap-4">
+          <div className="mt-5 flex items-center gap-4">
             <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[1.6rem] bg-white/10 ring-1 ring-white/15">
               {player.image_url ? (
                 <img
@@ -537,6 +536,13 @@ export default async function PlayerProfilePage({
             </div>
           )}
         </section>
+
+        {/* VOLVER */}
+        <div className="mt-7 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <BackButton
+            variant="footer"
+          />
+        </div>
       </div>
     </main>
   );
@@ -569,11 +575,15 @@ function StatCard({
             : "text-zinc-950"
         }`}
       >
-        {value}
+        {
+          value
+        }
       </p>
 
       <p className="mt-1 text-[8px] font-black uppercase tracking-wide text-zinc-400">
-        {label}
+        {
+          label
+        }
       </p>
     </div>
   );
@@ -586,16 +596,21 @@ function SmallStat({
   value:
     string | number;
 
-  label: string;
+  label:
+    string;
 }) {
   return (
     <div className="flex items-center justify-between rounded-[1.1rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
       <p className="text-xs font-bold text-zinc-500">
-        {label}
+        {
+          label
+        }
       </p>
 
       <p className="text-lg font-black text-zinc-950">
-        {value}
+        {
+          value
+        }
       </p>
     </div>
   );
@@ -609,7 +624,9 @@ function MatchTag({
 }) {
   return (
     <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[9px] font-black text-zinc-600">
-      {children}
+      {
+        children
+      }
     </span>
   );
 }
