@@ -239,7 +239,7 @@ export async function saveFantasyLineup(
   /*
    * Bloqueo automático:
    * el XI ya no se puede modificar desde
-   * una hora antes del comienzo del partido.
+   * dos horas antes del comienzo del partido.
    */
   const matchTime =
     new Date(
@@ -248,11 +248,11 @@ export async function saveFantasyLineup(
 
   const lockTime =
     matchTime -
-    60 * 60 * 1000;
+    2 * 60 * 60 * 1000;
 
   if (Date.now() >= lockTime) {
     throw new InputError(
-      "El plazo para modificar tu XI ha terminado. La alineación se bloquea una hora antes del partido.",
+      "El plazo para modificar tu XI ha terminado. La alineación se bloquea dos horas antes del partido.",
     );
   }
 

@@ -1889,7 +1889,11 @@ export default async function FantasyPage({
 
 
 
-        60 *
+        2 *
+
+
+
+          60 *
 
 
 

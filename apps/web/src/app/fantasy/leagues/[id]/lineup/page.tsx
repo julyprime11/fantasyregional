@@ -167,7 +167,8 @@ export default async function FantasyLineupPage({
 
   const lineupLockTime =
     matchTime -
-    60 *
+    2 *
+      60 *
       60 *
       1000;
 
