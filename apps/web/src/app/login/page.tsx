@@ -76,9 +76,9 @@ export default function LoginPage() {
       return;
     }
 
- router.push(
-  "/post-login",
-);
+    router.push(
+      "/post-login",
+    );
     router.refresh();
   }
 
@@ -197,6 +197,15 @@ export default function LoginPage() {
                     placeholder="Tu contraseña"
                     className="h-14 w-full rounded-[1rem] border-0 bg-zinc-100 pl-11 pr-4 text-base font-semibold text-zinc-950 outline-none ring-1 ring-transparent placeholder:font-normal placeholder:text-zinc-400 focus:bg-white focus:ring-[#0f3d2e]"
                   />
+                </div>
+
+                <div className="mt-2 flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-black text-[#0f3d2e] underline-offset-4 hover:underline"
+                  >
+                    ¿Has olvidado tu contraseña?
+                  </Link>
                 </div>
               </label>
 
