@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
         email.trim(),
         {
           redirectTo:
-            `${window.location.origin}/auth/callback`,
+            `${window.location.origin}/reset-password`,
         },
       );
     } catch {

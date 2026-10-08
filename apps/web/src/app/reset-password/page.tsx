@@ -17,20 +17,106 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     let active = true;
 
-    const supabase =
-      createBrowserSupabaseClient();
+    async function prepareRecoverySession() {
+      const currentUrl =
+        new URL(
+          window.location.href,
+        );
 
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
+      const hashParams =
+        new URLSearchParams(
+          currentUrl.hash.slice(1),
+        );
+
+      const accessToken =
+        hashParams.get(
+          "access_token",
+        );
+
+      const refreshToken =
+        hashParams.get(
+          "refresh_token",
+        );
+
+      const hashType =
+        hashParams.get(
+          "type",
+        );
+
+      const code =
+        currentUrl.searchParams.get(
+          "code",
+        );
+
+      const hasRecoveryHash =
+        hashType === "recovery" &&
+        Boolean(
+          accessToken &&
+          refreshToken,
+        );
+
+      const hasRecoveryCode =
+        Boolean(
+          code,
+        );
+
+      if (
+        !hasRecoveryHash &&
+        !hasRecoveryCode
+      ) {
         if (active) {
           setSessionReady(
-            Boolean(
-              data.session,
-            ),
+            false,
           );
         }
-      });
+
+        return;
+      }
+
+      const supabase =
+        createBrowserSupabaseClient();
+
+      if (
+        hasRecoveryHash &&
+        accessToken &&
+        refreshToken
+      ) {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+      } else if (code) {
+        await supabase.auth.exchangeCodeForSession(
+          code,
+        );
+      }
+
+      const { data } =
+        await supabase.auth.getSession();
+
+      if (!active) {
+        return;
+      }
+
+      const ready =
+        Boolean(
+          data.session,
+        );
+
+      setSessionReady(
+        ready,
+      );
+
+      if (ready) {
+        window.history.replaceState(
+          null,
+          "",
+          "/reset-password",
+        );
+      }
+    }
+
+    void prepareRecoverySession();
 
     return () => {
       active = false;
