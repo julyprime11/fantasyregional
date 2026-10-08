@@ -15,6 +15,16 @@ export async function GET(
       "code",
     );
 
+  const tokenHash =
+    requestUrl.searchParams.get(
+      "token_hash",
+    );
+
+  const type =
+    requestUrl.searchParams.get(
+      "type",
+    );
+
   const next =
     requestUrl.searchParams.get(
       "next",
@@ -27,35 +37,48 @@ export async function GET(
       ? next
       : "/reset-password";
 
-  if (!code) {
-    return NextResponse.redirect(
-      new URL(
-        "/forgot-password?reason=invalid-recovery-link",
-        requestUrl.origin,
-      ),
-    );
-  }
-
   const supabase =
     await createServerSupabaseClient();
 
-  const { error } =
-    await supabase.auth.exchangeCodeForSession(
-      code,
-    );
+  if (
+    tokenHash &&
+    type === "recovery"
+  ) {
+    const { error } =
+      await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
 
-  if (error) {
-    return NextResponse.redirect(
-      new URL(
-        "/forgot-password?reason=invalid-recovery-link",
-        requestUrl.origin,
-      ),
-    );
+    if (!error) {
+      return NextResponse.redirect(
+        new URL(
+          safeNext,
+          requestUrl.origin,
+        ),
+      );
+    }
+  }
+
+  if (code) {
+    const { error } =
+      await supabase.auth.exchangeCodeForSession(
+        code,
+      );
+
+    if (!error) {
+      return NextResponse.redirect(
+        new URL(
+          safeNext,
+          requestUrl.origin,
+        ),
+      );
+    }
   }
 
   return NextResponse.redirect(
     new URL(
-      safeNext,
+      "/forgot-password?reason=invalid-recovery-link",
       requestUrl.origin,
     ),
   );
