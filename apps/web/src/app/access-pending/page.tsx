@@ -48,7 +48,7 @@ export default async function AccessPendingPage() {
           </h1>
 
           <p className="mt-2 text-sm leading-5 text-white/65">
-            Tu cuenta todavía no tiene un rol asignado.
+            Tu cuenta todavía no tiene acceso habilitado.
           </p>
         </div>
       </header>
@@ -70,9 +70,10 @@ export default async function AccessPendingPage() {
               </p>
 
               <p className="mt-2 text-sm leading-6 text-zinc-500">
-                Tu acceso está creado correctamente, pero la Directiva debe
-                asignarte un tipo de usuario antes de que puedas entrar en la
-                aplicación.
+                Tu acceso está creado correctamente, pero necesitas un rol válido
+                para utilizar la aplicación. Si has recibido una invitación a una liga,
+                pide a la Directiva que revise tu usuario y, si procede, te asigne
+                el rol «Jugador Fantasy». Después, vuelve a abrir el enlace de invitación.
               </p>
             </div>
           </div>

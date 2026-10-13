@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import {
   connection,
@@ -19,6 +20,7 @@ import {
   canPlayFantasy,
   canVote,
   formatRole,
+  getRolePermissions,
 } from "@/lib/roles";
 
 export default async function Home() {
@@ -32,6 +34,7 @@ export default async function Home() {
 
   const {
     data: profile,
+    error: profileError,
   } =
     await supabase
       .from("profiles")
@@ -44,9 +47,25 @@ export default async function Home() {
       )
       .maybeSingle();
 
+  if (profileError) {
+    throw profileError;
+  }
+
   const role =
     profile?.voter_role ??
     null;
+
+  const permissions =
+    getRolePermissions(role);
+
+  if (
+    !permissions.canPlayFantasy &&
+    !permissions.canVote &&
+    !permissions.canAccessMatchAdmin &&
+    !permissions.canAccessAdmin
+  ) {
+    redirect("/access-pending");
+  }
 
   const displayName =
     profile?.display_name ??

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { getSafeLeagueInvitePath } from "@/lib/invite-redirect";
 
 import JoinLeagueForm from "./join-league-form";
 
@@ -11,8 +13,6 @@ export default async function JoinFantasyLeaguePage({
     code?: string | string[];
   }>;
 }) {
-  await requireUser();
-
   const query =
     await searchParams;
 
@@ -30,6 +30,26 @@ export default async function JoinFantasyLeaguePage({
             12,
           )
       : "";
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) {
+    const invitePath =
+      getSafeLeagueInvitePath(
+        `/fantasy/leagues/join?code=${encodeURIComponent(
+          initialCode,
+        )}`,
+      );
+
+    redirect(
+      invitePath
+        ? `/login?next=${encodeURIComponent(
+            invitePath,
+          )}`
+        : "/login",
+    );
+  }
 
   return (
     <main className="mx-auto min-h-screen max-w-xl">

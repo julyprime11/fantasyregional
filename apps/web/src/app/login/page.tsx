@@ -3,13 +3,30 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { getSafeLeagueInvitePath } from "@/lib/invite-redirect";
 
 export default function LoginPage() {
   const router =
     useRouter();
+
+  const [
+    invitePath,
+    setInvitePath,
+  ] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    setInvitePath(
+      getSafeLeagueInvitePath(
+        new URLSearchParams(
+          window.location.search,
+        ).get("next"),
+      ),
+    );
+  }, []);
 
   const [
     email,
@@ -77,7 +94,11 @@ export default function LoginPage() {
     }
 
     router.push(
-      "/post-login",
+      invitePath
+        ? `/post-login?next=${encodeURIComponent(
+            invitePath,
+          )}`
+        : "/post-login",
     );
     router.refresh();
   }
@@ -247,7 +268,13 @@ export default function LoginPage() {
               </p>
 
               <Link
-                href="/register"
+                href={
+                  invitePath
+                    ? `/register?next=${encodeURIComponent(
+                        invitePath,
+                      )}`
+                    : "/register"
+                }
                 className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[1rem] bg-zinc-100 px-4 text-sm font-black text-zinc-950 transition active:scale-[0.99]"
               >
                 Crear una cuenta

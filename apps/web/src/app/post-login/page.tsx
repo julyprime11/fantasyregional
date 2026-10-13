@@ -14,7 +14,17 @@ import {
   getRolePermissions,
 } from "@/lib/roles";
 
-export default async function PostLoginPage() {
+import {
+  getSafeLeagueInvitePath,
+} from "@/lib/invite-redirect";
+
+export default async function PostLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    next?: string | string[];
+  }>;
+}) {
   const user =
     await requireUser();
 
@@ -51,6 +61,23 @@ export default async function PostLoginPage() {
     getRolePermissions(
       profile.voter_role,
     );
+
+  const query =
+    await searchParams;
+
+  const invitePath =
+    getSafeLeagueInvitePath(
+      typeof query.next === "string"
+        ? query.next
+        : null,
+    );
+
+  if (
+    invitePath &&
+    permissions.canJoinLeague
+  ) {
+    redirect(invitePath);
+  }
 
   /*
    * Jugador Fantasy

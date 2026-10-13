@@ -1,11 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { getSafeLeagueInvitePath } from "@/lib/invite-redirect";
 
 export default function RegisterPage() {
+  const [invitePath, setInvitePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setInvitePath(
+      getSafeLeagueInvitePath(
+        new URLSearchParams(
+          window.location.search,
+        ).get("next"),
+      ),
+    );
+  }, []);
+
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -295,7 +308,13 @@ export default function RegisterPage() {
               </p>
 
               <Link
-                href="/login"
+                href={
+                  invitePath
+                    ? `/login?next=${encodeURIComponent(
+                        invitePath,
+                      )}`
+                    : "/login"
+                }
                 className="mt-3 flex min-h-12 w-full items-center justify-center rounded-[1rem] bg-zinc-100 px-4 text-sm font-black text-zinc-950 transition active:scale-[0.99]"
               >
                 Iniciar sesión
