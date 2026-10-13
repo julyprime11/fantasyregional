@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  randomBytes,
+} from "node:crypto";
+
 import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -27,6 +31,47 @@ export type FantasyLeagueMemberDetails =
       display_name: string;
     } | null;
   };
+
+const LEAGUE_CODE_ALPHABET =
+  "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+const LEAGUE_CODE_LENGTH =
+  8;
+
+const MAX_LEAGUE_CODE_ATTEMPTS =
+  5;
+
+function generateFantasyLeagueCode(): string {
+  const bytes =
+    randomBytes(
+      LEAGUE_CODE_LENGTH,
+    );
+
+  return Array.from(
+    bytes,
+    (byte) =>
+      LEAGUE_CODE_ALPHABET[
+        byte %
+          LEAGUE_CODE_ALPHABET.length
+      ],
+  ).join("");
+}
+
+function getDatabaseErrorCode(
+  error: unknown,
+): string {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error
+  ) {
+    return String(
+      error.code,
+    );
+  }
+
+  return "";
+}
 
 export async function getFantasyLeagues(): Promise<
   FantasyLeagueDetails[]
@@ -142,15 +187,11 @@ export async function createFantasyLeague(
   input: {
     teamId: string;
     name: string;
-    code: string;
     createdBy: string;
   },
 ): Promise<FantasyLeagueRow> {
   const name =
     input.name.trim();
-
-  const code =
-    input.code.trim().toUpperCase();
 
   if (!name) {
     throw new Error(
@@ -158,32 +199,70 @@ export async function createFantasyLeague(
     );
   }
 
-  if (code.length < 4) {
-    throw new Error(
-      "El código de la liga debe tener al menos 4 caracteres.",
-    );
-  }
-
   const supabase =
     await createServerSupabaseClient();
 
-  const {
-    data: league,
-    error: leagueError,
-  } =
-    await supabase
-      .from("fantasy_leagues")
-      .insert({
-        team_id: input.teamId,
-        name,
-        code,
-        created_by: input.createdBy,
-      })
-      .select("*")
-      .single();
+  let league:
+    FantasyLeagueRow | null =
+    null;
 
-  if (leagueError) {
-    throw leagueError;
+  /*
+   * El código se genera exclusivamente
+   * en servidor.
+   *
+   * La restricción UNIQUE de PostgreSQL es
+   * la garantía definitiva frente a dos
+   * peticiones concurrentes que generasen
+   * el mismo valor.
+   */
+  for (
+    let attempt = 0;
+    attempt <
+    MAX_LEAGUE_CODE_ATTEMPTS;
+    attempt += 1
+  ) {
+    const code =
+      generateFantasyLeagueCode();
+
+    const {
+      data,
+      error,
+    } =
+      await supabase
+        .from("fantasy_leagues")
+        .insert({
+          team_id:
+            input.teamId,
+          name,
+          code,
+          created_by:
+            input.createdBy,
+        })
+        .select("*")
+        .single();
+
+    if (!error) {
+      league =
+        data;
+
+      break;
+    }
+
+    if (
+      getDatabaseErrorCode(
+        error,
+      ) === "23505"
+    ) {
+      continue;
+    }
+
+    throw error;
+  }
+
+  if (!league) {
+    throw new Error(
+      "No se pudo generar un código único para la liga.",
+    );
   }
 
   const { error: memberError } =

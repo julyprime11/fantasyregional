@@ -15,10 +15,8 @@ type TeamOption = {
 
 export default function CreateLeagueForm({
   teams,
-  userId,
 }: {
   teams: TeamOption[];
-  userId: string;
 }) {
   const router =
     useRouter();
@@ -37,12 +35,6 @@ export default function CreateLeagueForm({
       teams[0]?.id ??
         "",
     );
-
-  const [
-    code,
-    setCode,
-  ] =
-    useState("");
 
   const [
     pending,
@@ -80,9 +72,7 @@ export default function CreateLeagueForm({
             body:
               JSON.stringify({
                 name,
-                code,
                 teamId,
-                userId,
               }),
           },
         );
@@ -216,7 +206,7 @@ export default function CreateLeagueForm({
         </div>
       </section>
 
-      {/* CÓDIGO */}
+      {/* CÓDIGO AUTOMÁTICO */}
       <section className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
@@ -225,53 +215,29 @@ export default function CreateLeagueForm({
 
           <div className="flex-1">
             <p className="font-black text-zinc-950">
-              Código de invitación
+              Código automático
             </p>
 
             <p className="mt-1 text-xs leading-5 text-zinc-500">
-              Tus amigos utilizarán este código para entrar en la liga.
+              Al crear la liga generaremos un código único para compartir con los participantes.
             </p>
           </div>
         </div>
 
-        <div className="relative mt-4">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-black text-[#0f3d2e]">
-            #
-          </span>
+        <div className="mt-4 flex items-center justify-between rounded-[1rem] bg-[#f0f6f3] px-4 py-4">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#557368]">
+              Invitación
+            </p>
 
-          <input
-            type="text"
-            value={
-              code
-            }
-            onChange={(
-              event,
-            ) =>
-              setCode(
-                event.target.value
-                  .toUpperCase()
-                  .replace(
-                    /\s/g,
-                    "",
-                  ),
-              )
-            }
-            required
-            minLength={4}
-            maxLength={12}
-            placeholder="CASTELLO26"
-            className="h-14 w-full rounded-[1rem] border-0 bg-zinc-100 pl-10 pr-4 font-black uppercase tracking-[0.12em] text-zinc-950 outline-none ring-1 ring-transparent placeholder:font-semibold placeholder:tracking-normal placeholder:text-zinc-400 focus:bg-white focus:ring-[#0f3d2e]"
-          />
-        </div>
+            <p className="mt-1 text-sm font-black text-[#0b2f23]">
+              Código único generado por Fantasy Regional
+            </p>
+          </div>
 
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#f0f6f3] px-3 py-3">
-          <span className="text-sm">
-            ✓
-          </span>
-
-          <p className="text-xs leading-5 text-[#557368]">
-            Usa un código fácil de recordar. Después podrás compartirlo directamente desde la liga.
-          </p>
+          <div className="flex h-10 shrink-0 items-center justify-center rounded-xl bg-[#0f3d2e] px-3 text-[10px] font-black uppercase tracking-wide text-white">
+            Auto
+          </div>
         </div>
       </section>
 
@@ -317,9 +283,8 @@ export default function CreateLeagueForm({
               Código
             </p>
 
-            <p className="mt-1 font-black tracking-wider text-[#0f3d2e]">
-              {code ||
-                "—"}
+            <p className="mt-1 text-xs font-black text-[#0f3d2e]">
+              Automático
             </p>
           </div>
         </div>

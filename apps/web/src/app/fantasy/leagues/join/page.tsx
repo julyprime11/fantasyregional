@@ -4,8 +4,32 @@ import { requireUser } from "@/lib/auth";
 
 import JoinLeagueForm from "./join-league-form";
 
-export default async function JoinFantasyLeaguePage() {
+export default async function JoinFantasyLeaguePage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    code?: string | string[];
+  }>;
+}) {
   await requireUser();
+
+  const query =
+    await searchParams;
+
+  const initialCode =
+    typeof query.code === "string"
+      ? query.code
+          .trim()
+          .toUpperCase()
+          .replace(
+            /\s/g,
+            "",
+          )
+          .slice(
+            0,
+            12,
+          )
+      : "";
 
   return (
     <main className="mx-auto min-h-screen max-w-xl">
@@ -55,7 +79,9 @@ export default async function JoinFantasyLeaguePage() {
           </div>
         </section>
 
-        <JoinLeagueForm />
+        <JoinLeagueForm
+          initialCode={initialCode}
+        />
 
         <section className="mt-5 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">

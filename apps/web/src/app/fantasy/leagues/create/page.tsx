@@ -6,8 +6,7 @@ import { getTeams } from "@/data/teams";
 import CreateLeagueForm from "./create-league-form";
 
 export default async function CreateFantasyLeaguePage() {
-  const user =
-    await requireUser();
+  await requireUser();
 
   const teams =
     await getTeams();
@@ -72,7 +71,7 @@ export default async function CreateFantasyLeaguePage() {
 
               <Step
                 number="3"
-                label="Código"
+                label="Compartir"
               />
             </section>
 
@@ -83,7 +82,6 @@ export default async function CreateFantasyLeaguePage() {
                   name: team.name,
                 }),
               )}
-              userId={user.id}
             />
           </>
         )}

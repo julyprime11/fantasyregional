@@ -16,13 +16,6 @@ export async function POST(
         ? body.name.trim()
         : "";
 
-    const code =
-      typeof body.code === "string"
-        ? body.code
-            .trim()
-            .toUpperCase()
-        : "";
-
     const teamId =
       typeof body.teamId === "string"
         ? body.teamId
@@ -48,20 +41,9 @@ export async function POST(
       );
     }
 
-    if (code.length < 4) {
-      return NextResponse.json(
-        {
-          message:
-            "El código debe tener al menos 4 caracteres.",
-        },
-        { status: 400 },
-      );
-    }
-
     const league =
       await createFantasyLeague({
         name,
-        code,
         teamId,
         createdBy: user.id,
       });
@@ -69,29 +51,7 @@ export async function POST(
     return NextResponse.json({
       id: league.id,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo crear la liga.";
-
-    if (
-      message.includes(
-        "fantasy_leagues_code_key",
-      ) ||
-      message.includes(
-        "duplicate key",
-      )
-    ) {
-      return NextResponse.json(
-        {
-          message:
-            "Ese código ya está siendo utilizado por otra liga.",
-        },
-        { status: 409 },
-      );
-    }
-
+  } catch {
     return NextResponse.json(
       {
         message:
