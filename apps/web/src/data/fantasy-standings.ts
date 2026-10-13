@@ -95,7 +95,7 @@ export async function getFantasyLeagueStandings(
 
   const standings =
     sortStandings(
-      histories.map((history) => {
+      histories.map((history): FantasyStandingEntry => {
         const last =
           lastMatchId
             ? history.ready.find(
