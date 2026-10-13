@@ -17,10 +17,11 @@ import {
 
 
 import {
-
   getFantasyMatchPoints,
-
+  type FantasyMatchPlayerPoints,
 } from "@/data/fantasy-match-points";
+
+import PlayerPointsTrigger from "./player-points-trigger";
 
 
 
@@ -52,31 +53,7 @@ type FantasyLine =
 
 
 
-type FantasyPlayer = {
-
-  player_id: string;
-
-  player_name: string;
-
-  shirt_number: number | null;
-
-  position: string | null;
-
-
-
-  starter: boolean;
-
-  minutes_played: number;
-
-
-
-  final_rating: number | null;
-
-  points: number;
-
-  rateable: boolean;
-
-};
+type FantasyPlayer = FantasyMatchPlayerPoints;
 
 
 
@@ -1287,7 +1264,7 @@ export default async function FantasyMatchPointsPage({
 
               : `La alineación de ${selectedName} para esta jornada.`}{" "}
 
-            Los jugadores que no participaron suman 0 puntos.
+            Pulsa un jugador del campo para ver de dónde salen sus puntos.
 
           </p>
 
@@ -1443,7 +1420,9 @@ export default async function FantasyMatchPointsPage({
 
           </div>
 
-
+          <p className="mt-1.5 px-1 text-[11px] text-zinc-500">
+            Toca cualquier jugador para consultar sus puntos.
+          </p>
 
           <div className="mt-3 overflow-hidden rounded-[1.3rem] bg-white shadow-sm ring-1 ring-black/5">
 
@@ -1475,7 +1454,7 @@ export default async function FantasyMatchPointsPage({
 
                 ) => (
 
-                  <PlayerPointsRow
+                  <PlayerPointsTrigger
 
                     key={
 
@@ -1488,6 +1467,8 @@ export default async function FantasyMatchPointsPage({
                       player
 
                     }
+
+                    variant="list"
 
                     position={
 
@@ -1706,372 +1687,29 @@ function LineupSelector({
 
 
 function ResultFieldRow({
-
   players,
-
 }: {
-
   players: FantasyPlayer[];
-
 }) {
-
-  if (
-
-    players.length ===
-
-    0
-
-  ) {
-
-    return (
-
-      <div className="h-16" />
-
-    );
-
+  if (players.length === 0) {
+    return <div className="h-16" />;
   }
 
-
-
   return (
-
     <div
-
       className="grid items-start justify-items-center gap-1"
-
       style={{
-
         gridTemplateColumns:
-
           `repeat(${players.length}, minmax(0, 1fr))`,
-
       }}
-
     >
-
-      {players.map(
-
-        (
-
-          player,
-
-        ) => {
-
-          const played =
-
-            player.minutes_played >
-
-            0;
-
-
-
-          return (
-
-            <Link
-              key={player.player_id}
-              href={`/players/${player.player_id}`}
-              className={`flex w-full max-w-[92px] flex-col items-center text-center transition active:scale-95 ${
-                !played
-                  ? "opacity-70"
-                  : ""
-              }`}
-            >
-
-              <div className="relative">
-
-                <div
-
-                  className={`flex h-12 w-12 items-center justify-center rounded-full font-black shadow-md ring-2 ${
-
-                    played
-
-                      ? "bg-white text-[#0f5e3d] ring-white/30"
-
-                      : "bg-zinc-200 text-zinc-500 ring-white/20"
-
-                  }`}
-
-                >
-
-                  {player.shirt_number ??
-
-                    "—"}
-
-                </div>
-
-
-
-                <div
-
-                  className={`absolute -right-2 -top-2 flex min-h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[9px] font-black shadow ${
-
-                    player.points >
-
-                    0
-
-                      ? "bg-zinc-950 text-white"
-
-                      : "bg-zinc-600 text-white"
-
-                  }`}
-
-                >
-
-                  {player.points}
-
-                </div>
-
-              </div>
-
-
-
-              <span className="mt-1 max-w-full truncate rounded-md bg-zinc-950/85 px-2 py-1 text-[9px] font-black text-white">
-
-                {player.player_name}
-
-              </span>
-
-
-
-              {played ? (
-
-                <span className="mt-1 text-[8px] font-bold text-white/75">
-
-                  {player.minutes_played} min
-
-                </span>
-
-              ) : (
-
-                <span className="mt-1 rounded-full bg-white/20 px-2 py-0.5 text-[8px] font-black uppercase text-white">
-
-                  No jugó
-
-                </span>
-
-              )}
-
-            </Link>
-
-          );
-
-        },
-
-      )}
-
+      {players.map((player) => (
+        <PlayerPointsTrigger
+          key={player.player_id}
+          player={player}
+          variant="pitch"
+        />
+      ))}
     </div>
-
   );
-
-}
-
-
-
-function PlayerPointsRow({
-
-  player,
-
-  position,
-
-}: {
-
-  player: FantasyPlayer;
-
-  position?: number;
-
-}) {
-
-  const played =
-
-    player.minutes_played >
-
-    0;
-
-
-
-  return (
-
-    <div
-
-      className={`flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0 ${
-
-        !played
-
-          ? "bg-zinc-50/70"
-
-          : ""
-
-      }`}
-
-    >
-
-      <Link
-        href={`/players/${player.player_id}`}
-        className="flex min-w-0 items-center gap-3 transition active:opacity-70"
-      >
-
-        {position ? (
-
-          <span
-
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-
-              position === 1
-
-                ? "bg-[#0f3d2e] text-white"
-
-                : "bg-zinc-100 text-zinc-500"
-
-            }`}
-
-          >
-
-            {position}
-
-          </span>
-
-        ) : (
-
-          <span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl bg-[#e8f2ed] font-black text-[#0f3d2e]">
-
-            {player.shirt_number ??
-
-              "—"}
-
-          </span>
-
-        )}
-
-
-
-        <div className="min-w-0">
-
-          <p className="truncate text-xs font-black text-zinc-950">
-
-            {player.player_name}
-
-          </p>
-
-
-
-          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[9px] font-semibold text-zinc-400">
-
-            <span>
-
-              {player.position ??
-
-                "—"}
-
-            </span>
-
-
-
-            <span>
-
-              •
-
-            </span>
-
-
-
-            {played ? (
-
-              <span>
-
-                {player.minutes_played} min
-
-              </span>
-
-            ) : (
-
-              <span className="font-black uppercase text-zinc-500">
-
-                No jugó
-
-              </span>
-
-            )}
-
-
-
-            {player.final_rating !==
-
-              null && (
-
-              <>
-
-                <span>
-
-                  •
-
-                </span>
-
-
-
-                <span>
-
-                  Nota{" "}
-
-                  {player.final_rating.toFixed(
-
-                    2,
-
-                  )}
-
-                </span>
-
-              </>
-
-            )}
-
-          </div>
-
-        </div>
-
-      </Link>
-
-
-
-      <div className="shrink-0 text-right">
-
-        <p
-
-          className={`text-lg font-black ${
-
-            player.points >
-
-            0
-
-              ? "text-[#0f3d2e]"
-
-              : player.points <
-
-                  0
-
-                ? "text-red-600"
-
-                : "text-zinc-400"
-
-          }`}
-
-        >
-
-          {player.points}
-
-
-
-          <span className="ml-1 text-[8px] font-black uppercase text-zinc-400">
-
-            pts
-
-          </span>
-
-        </p>
-
-      </div>
-
-    </div>
-
-  );
-
 }
