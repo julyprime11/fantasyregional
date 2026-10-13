@@ -464,22 +464,16 @@ export default function LineupForm({
 
 
   const [
-
     selectedIds,
-
     setSelectedIds,
-
   ] =
-
-    useState<
-
-      string[]
-
-    >(
-
+    useState<string[]>(
       initialSelectedIds,
-
     );
+
+  // Separar el XI guardado del borrador de la sesión.
+  const [savedIds, setSavedIds] =
+    useState<string[]>(initialSelectedIds);
 
 
 
@@ -851,8 +845,14 @@ export default function LineupForm({
   );
 
 
-  const selectedPlayers =
+  const hasUnsavedChanges =
+    selectedIds.length !== savedIds.length ||
+    selectedIds.some((id) => !savedIds.includes(id));
 
+  const remainingPlayers =
+    Math.max(0, 11 - selectedIds.length);
+
+  const selectedPlayers =
     useMemo(
 
       () =>
@@ -1559,18 +1559,9 @@ export default function LineupForm({
 
 
 
-      sessionStorage.removeItem(
-
-        draftKey,
-
-      );
-
-
-      setMessage(
-
-        "Alineación guardada correctamente.",
-
-      );
+      sessionStorage.removeItem(draftKey);
+      setSavedIds([...selectedIds]);
+      setMessage("Alineación guardada correctamente.");
 
     } catch {
 
@@ -1704,13 +1695,71 @@ export default function LineupForm({
 
 
 
+      {/* PROGRESO DEL XI */}
+      <div className="mt-3 rounded-[1.25rem] bg-white p-3.5 shadow-sm ring-1 ring-black/5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.15em] text-[#557368]">
+              Tu alineación
+            </p>
+            <p className="mt-0.5 text-sm font-black text-zinc-950">
+              {selectedIds.length === 11
+                ? "XI completo"
+                : `Faltan ${remainingPlayers} ${remainingPlayers === 1 ? "jugador" : "jugadores"}`}
+            </p>
+            <p className="mt-1 text-[10px] font-semibold text-zinc-500">
+              {locked
+                ? "Plazo cerrado · solo lectura"
+                : selectedIds.length === 11 && !hasUnsavedChanges
+                  ? "Alineación guardada"
+                  : hasUnsavedChanges
+                    ? "Cambios pendientes de guardar"
+                    : "Añade jugadores pulsando los huecos del campo"}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-2xl font-black leading-none text-[#0f3d2e]">
+              {selectedIds.length}
+              <span className="text-sm text-zinc-400">/11</span>
+            </p>
+            <p className="mt-1 text-[8px] font-black uppercase text-zinc-400">
+              Seleccionados
+            </p>
+          </div>
+        </div>
+        <div
+          role="progressbar"
+          aria-label="Jugadores del XI seleccionados"
+          aria-valuemin={0}
+          aria-valuemax={11}
+          aria-valuenow={selectedIds.length}
+          className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100"
+        >
+          <div
+            className={`h-full rounded-full transition-[width] duration-200 ${
+              selectedIds.length === 11
+                ? "bg-[#0f3d2e]"
+                : "bg-amber-500"
+            }`}
+            style={{
+              width: `${(selectedIds.length / 11) * 100}%`,
+            }}
+          />
+        </div>
+      </div>
+      <p className="mt-3 px-1 text-[10px] font-semibold leading-4 text-zinc-500">
+        {locked
+          ? "Esta alineación ya no se puede modificar."
+          : "Pulsa + para añadir, × para quitar y la foto para consultar la ficha del jugador."}
+      </p>
+
       {/* CAMPO */}
 
       <div className="mt-1.5 overflow-hidden rounded-[1.3rem] bg-[#087443] p-1.5 shadow-lg ring-1 ring-black/10">
 
         <div
 
-          className="relative h-[382px] overflow-hidden rounded-[1rem] border-2 border-white/70 sm:h-[500px]"
+          className="relative h-[420px] overflow-hidden rounded-[1rem] border-2 border-white/70 sm:h-[500px]"
 
           style={{
 
@@ -1766,7 +1815,7 @@ export default function LineupForm({
 
           {/* JUGADORES */}
 
-          <div className="relative z-10 flex h-full flex-col justify-between px-1 py-2.5 sm:py-5">
+          <div className="relative z-10 flex h-full flex-col justify-between px-1 py-4 sm:py-5">
 
             <FieldRow
 
@@ -2146,7 +2195,8 @@ export default function LineupForm({
 
         }
 
-        className="mt-2 flex min-h-10 w-full items-center justify-between rounded-[1rem] bg-white px-3 text-xs font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
+        aria-expanded={showSquad}
+        className="mt-2 flex min-h-11 w-full items-center justify-between rounded-[1rem] bg-white px-3 text-xs font-black text-zinc-950 shadow-sm ring-1 ring-black/5"
 
       >
 
@@ -2610,7 +2660,7 @@ export default function LineupForm({
 
           <div className="flex min-h-11 items-center justify-center rounded-[0.95rem] bg-zinc-200 px-4 text-center text-xs font-black text-zinc-600">
 
-            🔒 Alineación bloqueada
+            🔒 Alineación bloqueada · {selectedIds.length}/11
 
           </div>
 
@@ -2643,10 +2693,12 @@ export default function LineupForm({
           >
 
             {pending
-
               ? "Guardando..."
-
-              : `Guardar Mi XI · ${selectedFormation.name}`}
+              : selectedIds.length !== 11
+                ? `Selecciona ${remainingPlayers} más para guardar`
+                : hasUnsavedChanges
+                  ? `Guardar cambios · ${selectedFormation.name}`
+                  : `Guardar Mi XI · ${selectedFormation.name}`}
 
           </button>
 
@@ -2816,11 +2868,12 @@ function FieldRow({
 
                 }
 
-                className="flex w-full max-w-[58px] flex-col items-center disabled:opacity-60"
+                aria-label={`Añadir jugador en posición ${labels[label]}`}
+                className="flex w-full max-w-[64px] flex-col items-center gap-1 rounded-xl py-1 transition active:scale-95 focus-visible:outline-2 focus-visible:outline-white disabled:opacity-60"
 
               >
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-dashed border-white/70 bg-white/10 text-base font-black text-white backdrop-blur-sm">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-white/80 bg-white/15 text-xl font-black text-white backdrop-blur-sm">
 
                   +
 
@@ -2828,7 +2881,7 @@ function FieldRow({
 
 
 
-                <span className="mt-0.5 text-[6px] font-black text-white/70">
+                <span className="mt-0.5 text-[9px] font-black text-white/85">
 
                   {
 
@@ -2868,7 +2921,7 @@ function FieldRow({
 
               }
 
-              className="relative flex w-full max-w-[62px] flex-col items-center"
+              className="relative flex w-full max-w-[76px] flex-col items-center"
 
             >
 
@@ -2876,7 +2929,7 @@ function FieldRow({
 
                 href={`/players/${player.id}`}
 
-                className="flex w-full flex-col items-center transition active:scale-95"
+                className="flex w-full flex-col items-center rounded-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-white"
 
                 title={`Ver perfil de ${player.firstName} ${player.lastName ?? ""}`}
 
@@ -2940,7 +2993,7 @@ function FieldRow({
 
 
 
-                <span className="mt-0.5 max-w-full truncate rounded bg-zinc-950/85 px-1 py-[1px] text-[6px] font-black leading-3 text-white shadow-sm sm:text-[9px]">
+                <span className="mt-1 block w-full max-w-[72px] truncate rounded-md bg-zinc-950/90 px-1 py-0.5 text-center text-[9px] font-black leading-3 text-white shadow-sm sm:text-[10px]">
 
                   {
 
@@ -2952,7 +3005,7 @@ function FieldRow({
 
 
 
-                <span className="text-[6px] font-bold leading-3 text-white/70">
+                <span className="text-[9px] font-bold leading-3 text-white/85">
 
                   {
 
@@ -2984,7 +3037,7 @@ function FieldRow({
 
                   aria-label={`Quitar a ${player.firstName} del XI`}
 
-                  className="absolute -right-1 -top-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white shadow ring-2 ring-white"
+                  className="absolute -right-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white shadow ring-2 ring-white focus-visible:outline-2 focus-visible:outline-white"
 
                 >
 
