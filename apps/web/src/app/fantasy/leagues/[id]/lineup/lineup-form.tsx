@@ -1,5 +1,7 @@
 "use client";
 
+import type { PlayerRecentForm } from "@/data/lineup-player-form";
+
 
 
 import Link from "next/link";
@@ -67,6 +69,8 @@ type Player = {
 
 
 type Props = {
+  recentForm: Record<string, PlayerRecentForm>;
+
 
   leagueId: string;
 
@@ -334,6 +338,7 @@ const FORMATIONS: Formation[] = [
 
 
 export default function LineupForm({
+  recentForm,
 
   leagueId,
 
@@ -2233,6 +2238,7 @@ export default function LineupForm({
           <PlayerSection
 
             title="Porteros"
+            recentForm={recentForm}
 
             players={
 
@@ -2265,6 +2271,7 @@ export default function LineupForm({
           <PlayerSection
 
             title="Defensas"
+            recentForm={recentForm}
 
             players={
 
@@ -2297,6 +2304,7 @@ export default function LineupForm({
           <PlayerSection
 
             title="Centrocampistas"
+            recentForm={recentForm}
 
             players={
 
@@ -2329,6 +2337,7 @@ export default function LineupForm({
           <PlayerSection
 
             title="Delanteros"
+            recentForm={recentForm}
 
             players={
 
@@ -2590,6 +2599,7 @@ export default function LineupForm({
 
                           </p>
 
+                        <RecentPoints form={recentForm[player.id]} />
                         </div>
 
                       </Link>
@@ -3064,6 +3074,7 @@ function FieldRow({
 
 
 function PlayerSection({
+  recentForm,
 
   title,
 
@@ -3088,6 +3099,8 @@ function PlayerSection({
     Player[];
 
 
+
+  recentForm: Record<string, PlayerRecentForm>;
 
   selectedIds:
 
@@ -3293,7 +3306,8 @@ function PlayerSection({
 
                     </p>
 
-                  </div>
+                  <RecentPoints form={recentForm[player.id]} />
+                </div>
 
                 </Link>
 
@@ -3465,4 +3479,32 @@ function Counter({
 
   );
 
+}
+function RecentPoints({ form }: { form?: PlayerRecentForm }) {
+  if (!form || form.average === null) {
+    return <p className="mt-1 text-[9px] font-semibold text-zinc-400">Sin datos Fantasy</p>;
+  }
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1">
+      <span className="mr-1 text-[9px] font-black">Media {form.average.toFixed(1)}</span>
+      {form.points.map((points, index) => (
+        <span
+          key={index}
+          title={points === null ? "Sin datos" : `${points} pts Fantasy`}
+          className={`flex min-h-5 min-w-5 items-center justify-center rounded px-1 text-[9px] font-black ${
+            points === null
+              ? "bg-zinc-100 text-zinc-400"
+              : points <= 4
+                ? "bg-[#fce7e7] text-[#a03939]"
+                : points <= 7
+                  ? "bg-[#f1f3cb] text-[#686c20]"
+                  : "bg-[#d9f0df] text-[#176b3b]"
+          }`}
+        >
+          {points ?? "—"}
+        </span>
+      ))}
+    </div>
+  );
 }
