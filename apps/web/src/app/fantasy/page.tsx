@@ -188,6 +188,8 @@ import ShareLeagueButton from "./share-league-button";
 
 
 
+import LatestMatchdaySummary from "./latest-matchday-summary";
+
 export default async function FantasyPage({
 
 
@@ -3802,6 +3804,14 @@ export default async function FantasyPage({
 
 
 
+
+          {/* ÚLTIMA JORNADA */}
+          <LatestMatchdaySummary
+            leagueId={activeLeague.id}
+            userId={user.id}
+            matchdays={matchdays}
+            standings={standings}
+          />
 
           {/* CLASIFICACIÓN */}
           <section className="mt-7">
