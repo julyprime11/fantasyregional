@@ -393,40 +393,21 @@ const backLabel =
           </div>
         </section>
 
-        {/* PROGRESO */}
-        {match.status ===
-          "voting" &&
-          totalCount >
-            0 && (
-            <section className="mt-2.5 rounded-[1rem] bg-[#e8f2ed] px-3 py-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.16em] text-[#557368]">
-                    Tu progreso
-                  </p>
-
-                  <p className="mt-0.5 text-xs font-black text-[#0b2f23]">
-                    {votedCount} de{" "}
-                    {totalCount} guardados
-                  </p>
-                </div>
-
-                <span className="flex h-9 min-w-9 items-center justify-center rounded-full bg-[#0f3d2e] px-2 text-[10px] font-black text-white">
-                  {progress}%
-                </span>
-              </div>
-
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/80">
-                <div
-                  className="h-full rounded-full bg-[#0f3d2e]"
-                  style={{
-                    width:
-                      `${progress}%`,
-                  }}
-                />
-              </div>
-            </section>
-          )}
+        {/* ESTADO DE ACCESO */}
+        {userCanVote && votingAvailable && votingPlayers.length > 0 && (
+          <div className="mt-3 rounded-[1rem] bg-[#e8f2ed] px-3 py-3">
+            <p className="text-xs font-black text-[#0b2f23]">
+              {votedCount === 0
+                ? "Pendiente de valorar"
+                : votedCount === totalCount
+                  ? "Valoraciones guardadas"
+                  : "Votación empezada"}
+            </p>
+            <p className="mt-1 text-[10px] leading-4 text-[#557368]">
+              Selecciona una nota del 0 al 10 y pulsa Guardar para confirmar los cambios.
+            </p>
+          </div>
+        )}
 
         {/* SIN PERMISO */}
         {!userCanVote && (

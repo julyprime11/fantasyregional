@@ -259,6 +259,19 @@ export function MobileVoteForm({
   const changedCount =
     changedPlayers.length;
 
+  const savedCount = players.filter(
+    (player) => savedScores[player.id] !== null,
+  ).length;
+
+  const votingStatus =
+    changedCount > 0
+      ? "Cambios sin guardar"
+      : savedCount === players.length
+        ? "Votación completa y guardada"
+        : savedCount > 0
+          ? "Votación parcial guardada"
+          : "Pendiente de votar";
+
   const completed =
     players.length >
       0 &&
@@ -320,47 +333,41 @@ export function MobileVoteForm({
         </div>
       </div>
 
-      {/* PROGRESO */}
-      <div className="mt-3 rounded-[1rem] bg-[#e8f2ed] p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-black text-[#0b2f23]">
-            Tu votación
-          </p>
-
-          <p className="text-[10px] font-black text-[#0f3d2e]">
-            {progress}%
-          </p>
-        </div>
-
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/80">
-          <div
-            className="h-full rounded-full bg-[#0f3d2e] transition-all"
-            style={{
-              width:
-                `${progress}%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {completed && (
-        <div className="mt-3 flex items-center gap-3 rounded-[1rem] bg-[#e8f2ed] px-3 py-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0f3d2e] text-xs font-black text-white">
-            ✓
-          </div>
-
+      {/* ESTADO Y PROGRESO */}
+      <div className="mt-3 rounded-[1rem] bg-[#e8f2ed] p-3" aria-live="polite">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-black text-[#0b2f23]">
-              Todos los jugadores tienen valoración
+              {votingStatus}
             </p>
-
-            <p className="mt-0.5 text-[10px] text-[#557368]">
-              Puedes seguir modificando o eliminando tus notas hasta que se cierre la votación.
+            <p className="mt-1 text-[10px] font-semibold text-[#557368]">
+              {savedCount} guardadas · {votedCount} seleccionadas
+              {changedCount > 0 ? ` · ${changedCount} cambios pendientes` : ""}
             </p>
           </div>
+          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-black text-[#0f3d2e]">
+            {progress}%
+          </span>
         </div>
-      )}
-
+        <div
+          role="progressbar"
+          aria-label="Jugadores con nota seleccionada"
+          aria-valuemin={0}
+          aria-valuemax={players.length}
+          aria-valuenow={votedCount}
+          className="mt-2 h-2 overflow-hidden rounded-full bg-white/80"
+        >
+          <div
+            className="h-full rounded-full bg-[#0f3d2e] transition-[width]"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        {completed && changedCount > 0 && (
+          <p className="mt-2 text-[10px] font-bold text-amber-800">
+            Todos tienen nota, pero aún debes guardar los cambios.
+          </p>
+        )}
+      </div>
       {/* JUGADORES */}
       <div className="mt-3 space-y-2.5">
         {players.map(
@@ -394,6 +401,15 @@ export function MobileVoteForm({
             const modified =
               selected !==
               saved;
+
+            const visualStatus =
+              selected === null
+                ? saved !== null
+                  ? "Se eliminará"
+                  : "Sin valorar"
+                : modified
+                  ? "Sin guardar"
+                  : "Guardado";
 
             const pendingDelete =
               modified &&
@@ -451,34 +467,28 @@ export function MobileVoteForm({
                           </p>
                         </div>
 
-                        {pendingDelete ? (
-                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-1 text-[8px] font-black uppercase tracking-wide text-red-700">
-                            Se eliminará
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <span className={`rounded-full px-2 py-1 text-[9px] font-black ${
+                            pendingDelete
+                              ? "bg-red-100 text-red-700"
+                              : modified
+                                ? "bg-amber-100 text-amber-800"
+                                : wasSaved
+                                  ? "bg-[#dceee4] text-[#0f3d2e]"
+                                  : "bg-zinc-100 text-zinc-500"
+                          }`}>
+                            {visualStatus}
                           </span>
-                        ) : selected !==
-                          null ? (
-                          <div className="flex items-center gap-1.5">
-                            {wasSaved && (
-                              <span className="hidden text-[8px] font-black uppercase tracking-wide text-[#557368] min-[380px]:inline">
-                                {modified
-                                  ? "Modificado"
-                                  : "Guardado"}
-                              </span>
-                            )}
-
-                            <span
-                              className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-base font-black ${
-                                modified
-                                  ? "bg-amber-500 text-white"
-                                  : "bg-[#0f3d2e] text-white"
-                              }`}
-                            >
-                              {
-                                selected
-                              }
+                          {selected !== null && (
+                            <span className={`flex h-9 min-w-9 items-center justify-center rounded-full px-2 text-base font-black ${
+                              modified
+                                ? "bg-amber-500 text-white"
+                                : "bg-[#0f3d2e] text-white"
+                            }`}>
+                              {selected}
                             </span>
-                          </div>
-                        ) : null}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -514,7 +524,7 @@ export function MobileVoteForm({
                     )}
 
                   {/* NOTAS 0-10 */}
-                  <div className="mt-3 grid grid-cols-6 gap-1.5">
+                  <div className="mt-3 grid grid-cols-6 gap-2">
                     {Array.from(
                       {
                         length:
@@ -544,7 +554,9 @@ export function MobileVoteForm({
                               score,
                             )
                           }
-                          className={`h-10 rounded-[0.7rem] text-xs font-black transition active:scale-95 ${
+                          aria-label={`Valorar a ${player.name} con ${score} puntos`}
+                          aria-pressed={selected === score}
+                          className={`min-h-11 rounded-[0.7rem] text-sm font-black transition active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f3d2e] ${
                             selected ===
                             score
                               ? "bg-[#0f3d2e] text-white shadow-md"
@@ -674,7 +686,9 @@ export function MobileVoteForm({
                 ? "Guardando..."
                 : changedCount ===
                     0
-                  ? "Votación guardada"
+                  ? savedCount === 0
+                    ? "Selecciona una nota"
+                    : "Votación guardada"
                   : wasPlural(
                         changedCount,
                       )
