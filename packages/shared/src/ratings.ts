@@ -5,9 +5,9 @@ import type {
 export interface RatingConfig {
   minimumVotes: number;
 
-  roleWeights: Readonly<
+  groupWeights: Readonly<
     Record<
-      string,
+      RatingGroupKey,
       number
     >
   >;
@@ -18,18 +18,15 @@ export const DEFAULT_RATING_CONFIG: Readonly<RatingConfig> =
     minimumVotes:
       1,
 
-    roleWeights:
+    groupWeights:
       Object.freeze({
-        jugador:
+        players:
           0.2,
 
-        directiva:
+        directors:
           0.3,
 
-        entrenador:
-          0.5,
-
-        cuerpo_tecnico:
+        coaches:
           0.5,
       }),
   });
@@ -222,7 +219,46 @@ function average(
   );
 }
 
-function createEmptyGroups(): RatingBreakdown {
+function validateGroupWeights(
+  groupWeights: Readonly<
+    Record<
+      RatingGroupKey,
+      number
+    >
+  >,
+): void {
+  for (
+    const group of
+    [
+      "players",
+      "directors",
+      "coaches",
+    ] as const
+  ) {
+    const weight =
+      groupWeights[group];
+
+    if (
+      !Number.isFinite(
+        weight,
+      ) ||
+      weight <= 0
+    ) {
+      throw new RangeError(
+        "All rating group weights must be finite and greater than zero.",
+      );
+    }
+  }
+}
+
+function createEmptyGroups(
+  groupWeights: Readonly<
+    Record<
+      RatingGroupKey,
+      number
+    >
+  >,
+): RatingBreakdown {
   return {
     players: {
       vote_count:
@@ -232,7 +268,7 @@ function createEmptyGroups(): RatingBreakdown {
         null,
 
       configured_weight:
-        0.2,
+        groupWeights.players,
 
       applied_weight:
         0,
@@ -246,7 +282,7 @@ function createEmptyGroups(): RatingBreakdown {
         null,
 
       configured_weight:
-        0.3,
+        groupWeights.directors,
 
       applied_weight:
         0,
@@ -260,7 +296,7 @@ function createEmptyGroups(): RatingBreakdown {
         null,
 
       configured_weight:
-        0.5,
+        groupWeights.coaches,
 
       applied_weight:
         0,
@@ -283,14 +319,27 @@ function createEmptyGroups(): RatingBreakdown {
  */
 export function calculatePanelRating(
   votes: readonly PanelVote[],
+  groupWeights: Readonly<
+    Record<
+      RatingGroupKey,
+      number
+    >
+  > =
+    DEFAULT_RATING_CONFIG.groupWeights,
 ): {
   panel_average: number | null;
   rounded_rating: number | null;
   vote_count: number;
   groups: RatingBreakdown;
 } {
+  validateGroupWeights(
+    groupWeights,
+  );
+
   const groups =
-    createEmptyGroups();
+    createEmptyGroups(
+      groupWeights,
+    );
 
   const groupedScores: Record<
     RatingGroupKey,
@@ -477,9 +526,14 @@ export function calculatePlayerRating(
     );
   }
 
+  const groupWeights =
+    config.groupWeights ??
+    DEFAULT_RATING_CONFIG.groupWeights;
+
   const panel =
     calculatePanelRating(
       input.votes,
+      groupWeights,
     );
 
   const details: RatingDetails = {
@@ -510,8 +564,19 @@ export function calculatePlayerRating(
     input.red_cards,
   ];
 
+  const hasInvalidVote =
+    input.votes.some(
+      (vote) =>
+        !Number.isFinite(
+          vote.score,
+        ) ||
+        vote.score < 0 ||
+        vote.score > 10,
+    );
+
   if (
     !input.player_id ||
+    hasInvalidVote ||
     counts.some(
       (value) =>
         !Number.isSafeInteger(
