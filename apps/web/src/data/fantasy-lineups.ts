@@ -128,7 +128,9 @@ async function assertFantasyContext(
   } =
     await supabase
       .from("fantasy_leagues")
-      .select("id, team_id")
+      .select(
+        "id, team_id, created_at",
+      )
       .eq("id", input.leagueId)
       .maybeSingle();
 
@@ -171,6 +173,38 @@ async function assertFantasyContext(
   if (!leagueTeamPlays) {
     throw new InputError(
       "Este partido no corresponde al equipo de la liga Fantasy.",
+    );
+  }
+
+  const matchTime =
+    new Date(
+      match.match_date,
+    ).getTime();
+
+  const leagueCreatedAt =
+    new Date(
+      league.created_at,
+    ).getTime();
+
+  if (
+    !Number.isFinite(
+      matchTime,
+    ) ||
+    !Number.isFinite(
+      leagueCreatedAt,
+    )
+  ) {
+    throw new InputError(
+      "No se pudo validar la fecha de la liga Fantasy.",
+    );
+  }
+
+  if (
+    matchTime <
+    leagueCreatedAt
+  ) {
+    throw new InputError(
+      "Este partido es anterior a la creación de la liga Fantasy.",
     );
   }
 
