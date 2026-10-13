@@ -174,6 +174,8 @@ import {
 
 
 
+import LineupCountdown from "./lineup-countdown";
+
 import LogoutButton from "./logout-button";
 
 
@@ -2440,6 +2442,134 @@ export default async function FantasyPage({
 
 
 
+  const lineupStatus =
+
+
+
+    locked
+
+
+
+      ? "Cerrado"
+
+
+
+      : selectedCount ===
+
+
+
+          11
+
+
+
+        ? "Completo"
+
+
+
+        : "Incompleto";
+
+
+
+
+
+
+
+  const lineupActionLabel =
+
+
+
+    locked
+
+
+
+      ? "Ver XI"
+
+
+
+      : selectedCount ===
+
+
+
+          11
+
+
+
+        ? "Editar XI"
+
+
+
+        : "Preparar XI";
+
+
+
+
+
+
+
+  const rivalTeam =
+
+
+
+    nextMatch
+
+
+
+      ? nextMatch.home_team_id ===
+
+
+
+          activeLeague.team_id
+
+
+
+        ? awayTeam
+
+
+
+        : homeTeam
+
+
+
+      : null;
+
+
+
+
+
+
+
+  const venueLabel =
+
+
+
+    nextMatch
+
+
+
+      ? nextMatch.home_team_id ===
+
+
+
+          activeLeague.team_id
+
+
+
+        ? "En casa"
+
+
+
+        : "Fuera de casa"
+
+
+
+      : null;
+
+
+
+
+
+
+
   return (
 
 
@@ -2825,7 +2955,7 @@ export default async function FantasyPage({
 
 
 
-          {/* PRÓXIMO PARTIDO */}
+          {/* PRÓXIMA JORNADA / ESTADO DEL XI */}
 
 
 
@@ -2837,7 +2967,7 @@ export default async function FantasyPage({
 
 
 
-              <div className="mb-3 flex items-center justify-between px-1">
+              <div className="mb-3 flex items-end justify-between px-1">
 
 
 
@@ -2849,7 +2979,7 @@ export default async function FantasyPage({
 
 
 
-                    Jornada
+                    Próxima jornada
 
 
 
@@ -2865,7 +2995,7 @@ export default async function FantasyPage({
 
 
 
-                    Próximo partido
+                    Tu próximo reto
 
 
 
@@ -2877,6 +3007,54 @@ export default async function FantasyPage({
 
 
 
+
+
+
+
+                <span
+
+
+
+                  className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wide ${
+
+
+
+                    locked
+
+
+
+                      ? "bg-zinc-950 text-white"
+
+
+
+                      : selectedCount === 11
+
+
+
+                        ? "bg-[#0f3d2e] text-white"
+
+
+
+                        : "bg-amber-100 text-amber-800"
+
+
+
+                  }`}
+
+
+
+                >
+
+
+
+                  {lineupStatus}
+
+
+
+                </span>
+
+
+
               </div>
 
 
@@ -2885,31 +3063,15 @@ export default async function FantasyPage({
 
 
 
-              <div className="overflow-hidden rounded-[1.4rem] bg-white shadow-sm ring-1 ring-black/5">
+              <div className="overflow-hidden rounded-[1.65rem] bg-white shadow-md ring-1 ring-black/5">
 
 
 
-                <div className="flex items-center gap-3 px-4 py-4">
+                <div className="relative overflow-hidden bg-[#0f3d2e] px-5 pb-5 pt-4 text-white">
 
 
 
-                  <div className="min-w-0 flex-1 text-right">
-
-
-
-                    <p className="text-xs font-black leading-4 text-zinc-950">
-
-
-
-                      {homeTeam}
-
-
-
-                    </p>
-
-
-
-                  </div>
+                  <div className="absolute -right-10 -top-12 h-32 w-32 rounded-full border-[20px] border-white/5" />
 
 
 
@@ -2917,15 +3079,27 @@ export default async function FantasyPage({
 
 
 
-                  <div className="rounded-xl bg-zinc-950 px-3 py-2 text-[9px] font-black text-white">
+                  <div className="relative z-10">
 
 
 
-                    VS
+                    <div className="flex items-center justify-between gap-3">
 
 
 
-                  </div>
+                      <div>
+
+
+
+                        <p className="text-[8px] font-black uppercase tracking-[0.16em] text-white/50">
+
+
+
+                          Rival
+
+
+
+                        </p>
 
 
 
@@ -2933,19 +3107,103 @@ export default async function FantasyPage({
 
 
 
-                  <div className="min-w-0 flex-1">
+                        <p className="mt-1 text-xl font-black leading-tight">
 
 
 
-                    <p className="text-xs font-black leading-4 text-zinc-950">
+                          {rivalTeam}
 
 
 
-                      {awayTeam}
+                        </p>
 
 
 
-                    </p>
+                      </div>
+
+
+
+
+
+
+
+                      <div className="rounded-2xl bg-white/10 px-3 py-2 text-right ring-1 ring-white/10">
+
+
+
+                        <p className="text-[8px] font-black uppercase tracking-wide text-white/50">
+
+
+
+                          Partido
+
+
+
+                        </p>
+
+
+
+
+
+
+
+                        <p className="mt-0.5 text-[10px] font-black capitalize text-white">
+
+
+
+                          {matchDateLabel}
+
+
+
+                        </p>
+
+
+
+                      </div>
+
+
+
+                    </div>
+
+
+
+
+
+
+
+                    <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-white/70">
+
+
+
+                      <span className="rounded-full bg-white/10 px-2.5 py-1">
+
+
+
+                        {venueLabel}
+
+
+
+                      </span>
+
+
+
+
+
+
+
+                      <span>
+
+
+
+                        {homeTeam} · {awayTeam}
+
+
+
+                      </span>
+
+
+
+                    </div>
 
 
 
@@ -2961,19 +3219,335 @@ export default async function FantasyPage({
 
 
 
-                <div className="border-t border-zinc-100 bg-zinc-50 px-4 py-2 text-center">
+                <div className="p-4">
 
 
 
-                  <p className="text-[10px] font-bold capitalize text-zinc-500">
+                  <div className="grid grid-cols-2 gap-3">
 
 
 
-                    {matchDateLabel}
+                    <div className="rounded-[1.1rem] bg-zinc-50 p-3 ring-1 ring-zinc-100">
 
 
 
-                  </p>
+                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-zinc-400">
+
+
+
+                        Tu XI
+
+
+
+                      </p>
+
+
+
+
+
+
+
+                      <div className="mt-1 flex items-end gap-1">
+
+
+
+                        <span className="text-2xl font-black text-zinc-950">
+
+
+
+                          {selectedCount}
+
+
+
+                        </span>
+
+
+
+
+
+
+
+                        <span className="pb-1 text-xs font-black text-zinc-400">
+
+
+
+                          /11
+
+
+
+                        </span>
+
+
+
+                      </div>
+
+
+
+
+
+
+
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200">
+
+
+
+                        <div
+
+
+
+                          className={`h-full rounded-full ${
+
+
+
+                            selectedCount === 11
+
+
+
+                              ? "bg-[#0f3d2e]"
+
+
+
+                              : "bg-amber-500"
+
+
+
+                          }`}
+
+
+
+                          style={{
+
+
+
+                            width: `${Math.min(
+
+
+
+                              100,
+
+
+
+                              Math.round(
+
+
+
+                                (selectedCount / 11) * 100,
+
+
+
+                              ),
+
+
+
+                            )}%`,
+
+
+
+                          }}
+
+
+
+                        />
+
+
+
+                      </div>
+
+
+
+                    </div>
+
+
+
+
+
+
+
+                    <div className="rounded-[1.1rem] bg-[#e8f2ed] p-3 ring-1 ring-[#d7e8df]">
+
+
+
+                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#557368]">
+
+
+
+                        Cierre del XI
+
+
+
+                      </p>
+
+
+
+
+
+
+
+                      {locked || lineupLockTime === null ? (
+
+
+
+                        <p className="mt-2 text-sm font-black text-[#0b2f23]">
+
+
+
+                          Alineación cerrada
+
+
+
+                        </p>
+
+
+
+                      ) : (
+
+
+
+                        <LineupCountdown
+
+
+
+                          lockAt={lineupLockTime}
+
+
+
+                          fallbackLabel={`Cierra a las ${lockTimeLabel}`}
+
+
+
+                        />
+
+
+
+                      )}
+
+
+
+                    </div>
+
+
+
+                  </div>
+
+
+
+
+
+
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+
+
+
+                    <div className="min-w-0">
+
+
+
+                      <p className="text-sm font-black text-zinc-950">
+
+
+
+                        {locked
+
+
+
+                          ? "Tu XI ya está bloqueado"
+
+
+
+                          : selectedCount === 11
+
+
+
+                            ? "Tu alineación está lista"
+
+
+
+                            : "Completa tu alineación"}
+
+                      </p>
+
+
+
+
+
+
+
+                      <p className="mt-0.5 text-[10px] leading-4 text-zinc-500">
+
+
+
+                        {locked
+
+
+
+                          ? `${selectedCount}/11 jugadores seleccionados`
+
+
+
+                          : selectedCount === 11
+
+
+
+                            ? `Puedes cambiarla hasta las ${lockTimeLabel}`
+
+
+
+                            : `Te faltan ${11 - selectedCount} jugadores · cierre ${lockTimeLabel}`}
+
+                      </p>
+
+
+
+                    </div>
+
+
+
+
+
+
+
+                    <Link
+
+
+
+                      href={lineupHref}
+
+
+
+                      className={`shrink-0 rounded-xl px-4 py-3 text-[10px] font-black transition active:scale-[0.99] ${
+
+
+
+                        locked
+
+
+
+                          ? "bg-zinc-950 text-white"
+
+
+
+                          : "bg-[#0f3d2e] text-white"
+
+
+
+                      }`}
+
+
+
+                    >
+
+
+
+                      {lineupActionLabel} →
+
+
+
+                    </Link>
+
+
+
+                  </div>
 
 
 
@@ -2993,415 +3567,19 @@ export default async function FantasyPage({
 
 
 
-            <section className="mt-5 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
+            <section className="mt-5 rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-black/5">
 
 
 
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
+              <div className="flex items-start gap-3">
 
 
 
-                Jornada
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8f2ed] text-lg">
 
 
 
-              </p>
-
-
-
-
-
-
-
-              <p className="mt-1.5 font-black text-zinc-950">
-
-
-
-                No hay próximo partido
-
-
-
-              </p>
-
-
-
-
-
-
-
-              <p className="mt-1 text-xs leading-5 text-zinc-500">
-
-
-
-                Cuando haya un partido programado aparecerá aquí.
-
-
-
-              </p>
-
-
-
-            </section>
-
-
-
-          )}
-
-
-
-
-
-
-
-          {/* MI XI */}
-
-
-
-          {nextMatch && (
-
-
-
-            <section className="mt-3">
-
-
-
-              <Link
-
-
-
-                href={
-
-
-
-                  lineupHref
-
-
-
-                }
-
-
-
-                className={`block rounded-[1.4rem] p-4 ${
-
-
-
-                  locked
-
-
-
-                    ? "bg-zinc-950 text-white"
-
-
-
-                    : selectedCount ===
-
-
-
-                        11
-
-
-
-                      ? "bg-[#e8f2ed]"
-
-
-
-                      : "bg-white shadow-sm ring-1 ring-black/5"
-
-
-
-                }`}
-
-
-
-              >
-
-
-
-                <div className="flex items-center justify-between gap-4">
-
-
-
-                  <div className="flex min-w-0 items-center gap-3">
-
-
-
-                    <div
-
-
-
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-black ${
-
-
-
-                        locked
-
-
-
-                          ? "bg-white/10 text-white"
-
-
-
-                          : selectedCount ===
-
-
-
-                              11
-
-
-
-                            ? "bg-[#0f3d2e] text-white"
-
-
-
-                            : "bg-[#e8f2ed] text-[#0f3d2e]"
-
-
-
-                      }`}
-
-
-
-                    >
-
-
-
-                      {locked
-
-
-
-                        ? "🔒"
-
-
-
-                        : selectedCount ===
-
-
-
-                            11
-
-
-
-                          ? "✓"
-
-
-
-                          : "11"}
-
-
-
-                    </div>
-
-
-
-
-
-
-
-                    <div>
-
-
-
-                      <p
-
-
-
-                        className={`text-[8px] font-black uppercase tracking-[0.16em] ${
-
-
-
-                          locked
-
-
-
-                            ? "text-white/45"
-
-
-
-                            : "text-zinc-400"
-
-
-
-                        }`}
-
-
-
-                      >
-
-
-
-                        Mi XI
-
-
-
-                      </p>
-
-
-
-
-
-
-
-                      <p
-
-
-
-                        className={`mt-0.5 font-black ${
-
-
-
-                          locked
-
-
-
-                            ? "text-white"
-
-
-
-                            : "text-zinc-950"
-
-
-
-                        }`}
-
-
-
-                      >
-
-
-
-                        {locked
-
-
-
-                          ? "Alineación cerrada"
-
-
-
-                          : selectedCount ===
-
-
-
-                              11
-
-
-
-                            ? "XI preparado"
-
-
-
-                            : "Prepara tu alineación"}
-
-
-
-                      </p>
-
-
-
-
-
-
-
-                      <p
-
-
-
-                        className={`mt-0.5 text-[10px] ${
-
-
-
-                          locked
-
-
-
-                            ? "text-white/55"
-
-
-
-                            : "text-zinc-500"
-
-
-
-                        }`}
-
-
-
-                      >
-
-
-
-                        {locked
-
-
-
-                          ? `${selectedCount}/11 jugadores`
-
-
-
-                          : selectedCount ===
-
-
-
-                              11
-
-
-
-                            ? `Editable hasta las ${lockTimeLabel}`
-
-
-
-                            : `${selectedCount}/11 · cierra ${lockTimeLabel}`}
-
-
-
-                      </p>
-
-
-
-                    </div>
-
-
-
-                  </div>
-
-
-
-
-
-
-
-                  <span
-
-
-
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-black ${
-
-
-
-                      locked
-
-
-
-                        ? "bg-white text-zinc-950"
-
-
-
-                        : "bg-zinc-950 text-white"
-
-
-
-                    }`}
-
-
-
-                  >
-
-
-
-                    →
-
-
-
-                  </span>
+                  📅
 
 
 
@@ -3409,7 +3587,63 @@ export default async function FantasyPage({
 
 
 
-              </Link>
+
+
+
+
+                <div>
+
+
+
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+
+
+
+                    Próxima jornada
+
+
+
+                  </p>
+
+
+
+
+
+
+
+                  <p className="mt-1 font-black text-zinc-950">
+
+
+
+                    No hay partido programado
+
+
+
+                  </p>
+
+
+
+
+
+
+
+                  <p className="mt-1 text-xs leading-5 text-zinc-500">
+
+
+
+                    Cuando se programe el próximo partido aparecerán aquí el rival, el cierre del XI y tu estado de alineación.
+
+
+
+                  </p>
+
+
+
+                </div>
+
+
+
+              </div>
 
 
 
