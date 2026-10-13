@@ -4,6 +4,7 @@ import {
   calculateFantasyPlayerPoints,
   calculatePlayerRating,
   DEFAULT_RATING_CONFIG,
+  FANTASY_MVP_POINTS,
   getResultsPhase,
   PLAYER_POSITIONS,
   selectMatchMvp,
@@ -416,7 +417,7 @@ export async function getMatchResults(
   /*
    * Tercer paso:
    *
-   * Aplicamos +3 puntos Fantasy al MVP.
+   * Aplicamos el bonus Fantasy centralizado al MVP.
    *
    * Importante:
    * el bonus MVP NO interviene en la
@@ -444,13 +445,13 @@ export async function getMatchResults(
 
             points:
               row.fantasy.points +
-              3,
+              FANTASY_MVP_POINTS,
 
             breakdown: {
               ...row.fantasy.breakdown,
 
               mvp:
-                3,
+                FANTASY_MVP_POINTS,
             },
           },
         };
