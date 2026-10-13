@@ -6,6 +6,9 @@ import {
   getFantasyLine,
 } from "./fantasy-lineup";
 
+export const FANTASY_MVP_POINTS =
+  2;
+
 export type FantasyPlayerPointsInput = {
   player_id: string;
 
@@ -216,20 +219,18 @@ export function getRatingFantasyPoints(
 
   let points: number;
 
-  if (rounded <= 1) {
+  if (rounded <= 2) {
     points = -2;
-  } else if (rounded <= 3) {
+  } else if (rounded <= 4) {
     points = -1;
-  } else if (rounded <= 5) {
+  } else if (rounded === 5) {
     points = 0;
-  } else if (rounded === 6) {
-    points = 2;
-  } else if (rounded === 7) {
-    points = 3;
+  } else if (rounded <= 7) {
+    points = 1;
   } else if (rounded <= 9) {
-    points = 4;
+    points = 2;
   } else {
-    points = 5;
+    points = 3;
   }
 
   return {
@@ -303,7 +304,7 @@ export function calculateFantasyPlayerPoints(
 
   const mvpPoints =
     input.is_mvp
-      ? 3
+      ? FANTASY_MVP_POINTS
       : 0;
 
   const breakdown: FantasyPlayerPointsBreakdown = {

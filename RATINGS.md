@@ -1,77 +1,121 @@
-# Initial player ratings and match MVP
+# Valoraciones de partido y MVP
 
-The engine is in `packages/shared/src/ratings.ts`. It has no framework, database,
-browser, or Node runtime dependency. Calculations are read-only and not persisted.
-The web results page accepts `voting` (provisional results and MVP) and `closed`
-(final results and MVP). Scheduled matches have no results; finished matches show
-that voting has not opened. Provisional results can change as new votes arrive.
+La fuente de verdad de la valoración está en `packages/shared/src/ratings.ts`.
+La conversión de la valoración a puntos Fantasy está en
+`packages/shared/src/fantasy-points.ts`.
 
-## Formula
+## Valoración humana
 
-Panel average is `sum(score * roleWeight) / sum(roleWeight)`. Every role defaults
-to weight 1, including unknown roles. An optional weight map allows future changes;
-configured weights must be finite and strictly positive. The web uses equal weights.
-`RatingConfig` exposes `minimumVotes` and `roleWeights`. `DEFAULT_RATING_CONFIG`
-defines the development minimum of 1 in one place. Pass a partial configuration to
-`calculatePlayerRating` or `getMatchResults` to override it. `minimumVotes` must be
-a positive integer; invalid thresholds throw a configuration error.
+La nota final del jugador es exclusivamente humana.
 
-Statistical modifiers:
+Las estadísticas reales del partido (minutos, goles, asistencias, tarjetas,
+portería a cero, etc.) no modifican esta valoración. Esas acciones ya tienen su
+propia puntuación dentro del sistema Fantasy y mezclarlas de nuevo dentro de la
+nota produciría una doble influencia sobre los puntos.
 
-| Position group | Positions | Goal | Clean sheet |
-| --- | --- | --- | --- |
-| Goalkeeper | GK | +2.0 | +0.8 |
-| Defenders | RB, CB, LB, RWB, LWB | +1.5 | +0.6 |
-| Midfielders | DM, CM, AM | +1.2 | +0.2 |
-| Forwards | RW, LW, ST | +1.0 | 0 |
+Los votos se agrupan por colectivo antes de ponderarlos:
 
-Each assist adds 0.5, yellow card subtracts 0.3, and red card subtracts 1.5.
-Cards are applied independently using the stored counts. Clean-sheet bonus applies
-once when the flag is true; the engine does not infer it from the match result.
+| Grupo | Roles internos | Peso |
+| --- | --- | ---: |
+| Jugadores | `player` y `jugador` solo por compatibilidad con votos históricos | 20 % |
+| Directiva | `directiva` | 30 % |
+| Cuerpo técnico | `entrenador`, `cuerpo_tecnico` | 50 % |
 
-| Minutes | Modifier coefficient |
-| --- | --- |
-| 0 | Not rateable |
-| 1–9 | 0.1 |
-| 10–29 | 0.4 |
-| 30–59 | 0.7 |
-| 60+ | 1.0 |
+Primero se calcula la media de cada grupo. Después se combinan las medias de los
+grupos con los pesos 20/30/50.
 
-`statistical_score = clamp(6 + coefficient * sum(modifiers), 1, 10)`
+Ejemplo:
 
-`final_rating = clamp(0.7 * panel_average + 0.3 * statistical_score, 1, 10)`
+- media jugadores: 6
+- media directiva: 8
+- media cuerpo técnico: 10
 
-Minutes attenuate both positive and negative modifiers around the neutral base of
-6; they do not reduce the base itself or alter the 70/30 split. Thus a forward with
-one goal, 90 minutes, and panel average 8 has statistics 7 and final rating 7.7.
-With 5 minutes the same player's statistics are 6.1 and final rating 7.43.
+`valoración = 6 × 0.20 + 8 × 0.30 + 10 × 0.50 = 8.60`
 
-## Missing data and MVP
+Si un grupo no tiene votos, su peso se redistribuye proporcionalmente entre los
+grupos que sí han votado. Por ejemplo, si solo votan jugadores y directiva, los
+pesos aplicados pasan de 20/30 a 40/60.
 
-Results include player ID, panel average, statistical score, final rating, vote
-count, status and reason. Zero minutes returns `no_minutes` and no statistical or
-final score. A vote count below `minimumVotes` returns `insufficient_votes`, with
-the available panel average and statistical score but no final score. No votes
-means a null panel average. Invalid position, counts, scores, or weights return `invalid_data`.
-No missing values are replaced with invented panel votes. Zero minutes takes
-precedence over missing votes. Invalid numeric source data is rejected first.
+`RatingConfig` expone:
 
-MVP includes every rateable player tied at the highest unrounded final rating.
-`MatchMvpResult` contains `status` (`none`, `single`, `shared`), `players`, and
-`final_rating`. Players are ordered by ID only for deterministic presentation;
-IDs never exclude a tied winner. Shared winners display "MVP compartido". If nobody
-is rateable, the player list is empty and the MVP rating is null. Only display
-values are rounded to two decimals; rounded equality does not count as a tie.
+- `minimumVotes`
+- `groupWeights`
 
-The adapter uses current player positions and current source data, including all
-roles equally. Votes are fetched in pages to avoid truncating the panel average.
-Votes for players outside the current squad do not enter results. Reads are not a
-transactional snapshot; concurrent source edits may require reloading the page.
-No historical position snapshot, weighted-role policy, or fantasy-user points are
-implemented yet. Existing voting remains development-only.
+`DEFAULT_RATING_CONFIG` utiliza un mínimo de 1 voto y los pesos 20/30/50.
+Los pesos configurados deben ser valores finitos y mayores que cero.
+
+El rol `jugador` no tiene permiso para crear votos nuevos. Se reconoce dentro del
+grupo de jugadores únicamente para no perder votos históricos que ya puedan estar
+almacenados con ese valor.
+
+## Estados
+
+- Partido en `voting`: resultados provisionales.
+- Partido en `closed`: resultados finales.
+- Otros estados: no hay resultados de valoración disponibles.
+- Un jugador con 0 minutos devuelve `no_minutes`.
+- Si no alcanza `minimumVotes`, devuelve `insufficient_votes`.
+- Notas fuera de 0–10 o datos numéricos inválidos devuelven `invalid_data`.
+
+La valoración final conserva sus decimales. El redondeo estándar se utiliza
+únicamente cuando la nota se transforma en puntos Fantasy.
+
+`statistical_score` permanece en el resultado por compatibilidad con consumidores
+anteriores, pero su valor actual es siempre `null` y no interviene en ningún
+cálculo.
+
+## MVP
+
+El MVP se decide exclusivamente con la valoración humana final sin redondear.
+
+Si varios jugadores tienen exactamente la misma valoración máxima, el MVP es
+compartido. Los IDs solo se utilizan para ordenar el resultado de forma
+determinista.
+
+Cada MVP recibe un bonus Fantasy de **+2 puntos**. El valor está centralizado en
+`FANTASY_MVP_POINTS`.
+
+## Conversión de nota a puntos Fantasy
+
+La valoración funciona como un modificador del rendimiento, no como la principal
+fuente de puntos de una jornada.
+
+La nota se redondea al entero más cercano y después se aplica:
+
+| Nota redondeada | Puntos Fantasy |
+| --- | ---: |
+| 0–2 | -2 |
+| 3–4 | -1 |
+| 5 | 0 |
+| 6–7 | +1 |
+| 8–9 | +2 |
+| 10 | +3 |
+
+La tabla anterior daba:
+
+- 0–1: -2
+- 2–3: -1
+- 4–5: 0
+- 6: +2
+- 7: +3
+- 8–9: +4
+- 10: +5
+- MVP: +3
+
+El ajuste reduce el peso de las votaciones para que minutos, goles, asistencias,
+portería a cero y tarjetas tengan más influencia relativa en la puntuación Fantasy.
 
 ## Tests
 
-Run `npm run test:ratings` at the repository root. Tests use Node's built-in test
-runner and TypeScript stripping (Node 22.6+; this project was validated on Node 24).
-No test dependency or database credentials are needed.
+Desde la raíz del repositorio:
+
+`npm.cmd run test:ratings --workspace=@regional-fantasy/shared`
+
+`npm.cmd run test:fantasy-points --workspace=@regional-fantasy/shared`
+
+Y antes de cerrar el cambio:
+
+`npm.cmd run typecheck`
+
+`minutesCoefficient` se mantiene únicamente por compatibilidad con imports
+anteriores. Ya no participa en la valoración ni en los puntos Fantasy.
