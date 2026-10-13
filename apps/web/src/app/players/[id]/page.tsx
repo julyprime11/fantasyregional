@@ -6,6 +6,7 @@ import {
 
 import {
   getPlayerProfile,
+  type PlayerProfileMatch,
 } from "@/data/player-profile";
 
 import BackButton from "./back-button";
@@ -80,6 +81,28 @@ function formatMatchDate(
       value,
     ),
   );
+}
+
+function formatShortDate(value: string): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "short",
+    timeZone: "Europe/Madrid",
+  }).format(new Date(value));
+}
+
+function getFantasyPointsClasses(points: number): string {
+  // Los negativos también pertenecen al tramo de rendimiento bajo.
+  if (points <= 4) {
+    return "bg-[#fce7e7] text-[#a03939] ring-[#f4cece]";
+  }
+
+  // El 8 ya se considera rendimiento alto.
+  if (points <= 7) {
+    return "bg-[#f1f3cb] text-[#686c20] ring-[#e1e7a8]";
+  }
+
+  return "bg-[#d9f0df] text-[#176b3b] ring-[#b8dfc3]";
 }
 
 function formatRating(
@@ -168,6 +191,22 @@ export default async function PlayerProfilePage({
       0,
       6,
     );
+
+  // Usamos la puntuación global y definitiva del partido.
+  // Los partidos pendientes no se confunden con 0 puntos.
+  // El orden visual es de más antiguo a más reciente.
+  const recentFantasyMatches = matches
+    .filter(
+      (
+        match,
+      ): match is PlayerProfileMatch & {
+        fantasy_points: number;
+      } =>
+        match.final &&
+        match.fantasy_points !== null,
+    )
+    .slice(0, 5)
+    .reverse();
 
   return (
     <main className="app-screen mx-auto min-h-screen max-w-xl bg-[#f2f4f2] pb-10">
@@ -344,6 +383,75 @@ export default async function PlayerProfilePage({
               </div>
             </div>
           </div>
+        </section>
+
+        {/* FORMA FANTASY: ÚLTIMOS CINCO PARTIDOS DEFINITIVOS */}
+        <section className="mt-5" aria-labelledby="recent-fantasy-title">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                Estado de forma
+              </p>
+              <h2
+                id="recent-fantasy-title"
+                className="mt-1 text-base font-black tracking-tight text-zinc-950"
+              >
+                Últimos 5 partidos Fantasy
+              </h2>
+            </div>
+            <p className="shrink-0 text-[9px] font-semibold text-zinc-400">
+              {recentFantasyMatches.length}/5
+            </p>
+          </div>
+
+          {recentFantasyMatches.length === 0 ? (
+            <div className="mt-3 rounded-[1.2rem] bg-white px-4 py-5 text-center shadow-sm ring-1 ring-black/5">
+              <p className="text-xs font-bold text-zinc-600">
+                Aún no hay partidos con puntos Fantasy definitivos.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-3 grid grid-cols-5 gap-1.5">
+                {recentFantasyMatches.map((match) => (
+                  <div
+                    key={match.match_id}
+                    title={`${match.home_team_name} - ${match.away_team_name} · ${formatMatchDate(match.match_date)}: ${match.fantasy_points} puntos Fantasy`}
+                    className={`flex min-w-0 flex-col items-center justify-center rounded-[0.9rem] px-1 py-3 text-center ring-1 ${getFantasyPointsClasses(match.fantasy_points)}`}
+                  >
+                    <p className="text-[22px] font-black leading-none tabular-nums">
+                      {match.fantasy_points}
+                    </p>
+                    <p className="mt-1 text-[8px] font-black uppercase tracking-wide opacity-70">
+                      pts
+                    </p>
+                    <p className="mt-2 whitespace-nowrap text-[9px] font-bold capitalize">
+                      {formatShortDate(match.match_date)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-1">
+                <p className="text-[9px] text-zinc-500">
+                  De más antiguo a más reciente →
+                </p>
+                <div className="flex items-center gap-2 text-[9px] font-bold text-zinc-500">
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-[#e8aaaa]" />
+                    ≤4
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-[#d8dc77]" />
+                    5–7
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-[#80c99c]" />
+                    8+
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
         </section>
 
         {/* DATOS ADICIONALES */}
