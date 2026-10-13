@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { createPasswordRecoverySupabaseClient } from "@/lib/supabase/recovery-client";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -13,10 +13,36 @@ export default function ForgotPasswordPage() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
+    const currentUrl =
+      new URL(
+        window.location.href,
+      );
+
+    const code =
+      currentUrl.searchParams.get(
+        "code",
+      );
+
+    if (code) {
+      window.location.replace(
+        `/reset-password?code=${encodeURIComponent(
+          code,
+        )}`,
+      );
+      return;
+    }
+
+    if (currentUrl.hash) {
+      window.location.replace(
+        `/reset-password${currentUrl.hash}`,
+      );
+      return;
+    }
+
     const reason =
-      new URLSearchParams(
-        window.location.search,
-      ).get("reason");
+      currentUrl.searchParams.get(
+        "reason",
+      );
 
     if (
       reason ===
@@ -38,7 +64,7 @@ export default function ForgotPasswordPage() {
     setErrorMessage("");
 
     const supabase =
-      createBrowserSupabaseClient();
+      createPasswordRecoverySupabaseClient();
 
     try {
       await supabase.auth.resetPasswordForEmail(

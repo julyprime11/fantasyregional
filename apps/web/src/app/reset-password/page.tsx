@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { createPasswordRecoverySupabaseClient } from "@/lib/supabase/recovery-client";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [sessionReady, setSessionReady] = useState<boolean | null>(null);
+  const [sessionMode, setSessionMode] = useState<"implicit" | "pkce" | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -48,60 +50,63 @@ export default function ResetPasswordPage() {
           "code",
         );
 
-      const hasRecoveryHash =
+      let ready = false;
+      let mode:
+        | "implicit"
+        | "pkce"
+        | null =
+        null;
+
+      if (
         hashType === "recovery" &&
-        Boolean(
-          accessToken &&
-          refreshToken,
-        );
-
-      const hasRecoveryCode =
-        Boolean(
-          code,
-        );
-
-      if (
-        !hasRecoveryHash &&
-        !hasRecoveryCode
-      ) {
-        if (active) {
-          setSessionReady(
-            false,
-          );
-        }
-
-        return;
-      }
-
-      const supabase =
-        createBrowserSupabaseClient();
-
-      if (
-        hasRecoveryHash &&
         accessToken &&
         refreshToken
       ) {
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-      } else if (code) {
-        await supabase.auth.exchangeCodeForSession(
-          code,
-        );
-      }
+        const supabase =
+          createPasswordRecoverySupabaseClient();
 
-      const { data } =
-        await supabase.auth.getSession();
+        const { data, error } =
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+        ready =
+          !error &&
+          Boolean(
+            data.session,
+          );
+
+        if (ready) {
+          mode = "implicit";
+        }
+      } else if (code) {
+        const supabase =
+          createBrowserSupabaseClient();
+
+        const { data, error } =
+          await supabase.auth.exchangeCodeForSession(
+            code,
+          );
+
+        ready =
+          !error &&
+          Boolean(
+            data.session,
+          );
+
+        if (ready) {
+          mode = "pkce";
+        }
+      }
 
       if (!active) {
         return;
       }
 
-      const ready =
-        Boolean(
-          data.session,
-        );
+      setSessionMode(
+        mode,
+      );
 
       setSessionReady(
         ready,
@@ -152,8 +157,17 @@ export default function ResetPasswordPage() {
 
     setPending(true);
 
+    if (!sessionMode) {
+      setErrorMessage(
+        "La sesión de recuperación no está disponible. Solicita un nuevo enlace.",
+      );
+      return;
+    }
+
     const supabase =
-      createBrowserSupabaseClient();
+      sessionMode === "implicit"
+        ? createPasswordRecoverySupabaseClient()
+        : createBrowserSupabaseClient();
 
     const { error } =
       await supabase.auth.updateUser({
