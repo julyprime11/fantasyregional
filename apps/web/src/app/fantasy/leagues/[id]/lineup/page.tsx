@@ -30,6 +30,7 @@ import {
 } from "@/data/fantasy-lineups";
 
 import LineupForm from "./lineup-form";
+import { getLineupPlayerForm } from "@/data/lineup-player-form";
 
 export default async function FantasyLineupPage({
   params,
@@ -186,6 +187,12 @@ export default async function FantasyLineupPage({
       (player) =>
         player.active,
     );
+
+  const recentForm = await getLineupPlayerForm(
+    matches,
+    league.team_id,
+    activePlayers.map((player) => player.id),
+  );
 
   const existingLineup =
     await getFantasyLineup({
@@ -457,6 +464,7 @@ export default async function FantasyLineupPage({
                 player.image_url,
             }),
           )}
+          recentForm={recentForm}
           initialSelectedIds={
             selectedPlayerIds
           }
