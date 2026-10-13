@@ -41,10 +41,10 @@ export default async function FantasyLeaguesPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#f2f4f2] pb-28">
+    <main className="app-screen min-h-screen bg-[#f2f4f2] pb-28">
       <div className="mx-auto max-w-xl">
         {/* CABECERA */}
-        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-6 text-white shadow-lg">
+        <header className="relative overflow-hidden rounded-b-[2rem] bg-[#0f3d2e] px-5 pb-7 pt-[calc(env(safe-area-inset-top)+0.75rem)] text-white shadow-lg">
           <div className="absolute -right-14 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
 
           <div className="absolute -bottom-20 -left-16 h-40 w-40 rounded-full border-[24px] border-white/5" />
@@ -84,7 +84,7 @@ export default async function FantasyLeaguesPage() {
           <section className="mt-5 grid grid-cols-2 gap-3">
             <Link
               href="/fantasy/leagues/create"
-              className="rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+              className="flex min-h-32 flex-col rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
                 +
@@ -101,7 +101,7 @@ export default async function FantasyLeaguesPage() {
 
             <Link
               href="/fantasy/leagues/join"
-              className="rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.98]"
+              className="flex min-h-32 flex-col rounded-[1.3rem] bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8f2ed] text-lg font-black text-[#0f3d2e]">
                 #
@@ -161,7 +161,7 @@ export default async function FantasyLeaguesPage() {
                       href={`/fantasy?league=${encodeURIComponent(
                         league.id,
                       )}`}
-                      className="group flex items-center justify-between gap-4 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5 active:scale-[0.99]"
+                      className="group flex min-h-24 items-center justify-between gap-3 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e8f2ed] text-xl">
@@ -181,16 +181,14 @@ export default async function FantasyLeaguesPage() {
                               "Equipo no disponible"}
                           </p>
 
-                          <p className="mt-1 text-[9px] font-black uppercase tracking-wide text-zinc-400">
-                            Código{" "}
-                            {
-                              league.code
-                            }
+                          <p className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#e8f2ed] px-2.5 py-1 text-[9px] font-black text-[#0f3d2e]">
+                            <span className="font-bold opacity-70">Código</span>
+                            <span className="truncate tracking-[0.12em]">{league.code}</span>
                           </p>
                         </div>
                       </div>
 
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-950 font-black text-white transition group-hover:translate-x-1">
+                      <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-950 font-black text-white transition group-hover:translate-x-1">
                         →
                       </span>
                     </Link>

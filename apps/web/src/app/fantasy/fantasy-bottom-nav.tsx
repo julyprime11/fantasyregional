@@ -170,7 +170,8 @@ export default function FantasyBottomNav({
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 border-t border-zinc-200 bg-white/95 px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+    <nav aria-label="Navegación Fantasy"
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-xl -translate-x-1/2 border-t border-zinc-200 bg-white/95 px-2 pb-[max(10px,env(safe-area-inset-bottom))] pt-2 backdrop-blur">
       <div
         className={
           showVoting
@@ -187,13 +188,14 @@ export default function FantasyBottomNav({
               href={
                 item.href
               }
-              className={`flex flex-col items-center gap-1 ${
+              aria-current={item.active ? "page" : undefined}
+              className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 transition-colors focus-visible:outline-2 focus-visible:outline-[#0f3d2e] ${
                 item.active
-                  ? "text-[#0f3d2e]"
-                  : "text-zinc-400"
+                  ? "bg-[#e8f2ed] text-[#0f3d2e]"
+                  : "text-zinc-500 hover:bg-zinc-50"
               }`}
             >
-              <span className="text-lg">
+              <span aria-hidden="true" className="text-lg leading-6">
                 {
                   item.icon
                 }
