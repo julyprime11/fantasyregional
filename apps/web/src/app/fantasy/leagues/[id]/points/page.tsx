@@ -21,6 +21,8 @@ import {
   getFantasyLeagueStandings,
 } from "@/data/fantasy-standings";
 
+import FantasyPointsEvolution from "./fantasy-points-evolution";
+
 export default async function FantasyPointsPage({
   params,
 }: {
@@ -127,6 +129,19 @@ export default async function FantasyPointsPage({
       ? totalPoints /
         readyMatchdays.length
       : 0;
+
+  // matchdays llega ordenado del más reciente al más antiguo.
+  // Solo mostramos jornadas con puntos definitivos, sin
+  // convertir partidos pendientes en jornadas de cero puntos.
+  const evolutionData = matchdays.flatMap(
+    (matchday, index) =>
+      matchday.points_status === "ready"
+        ? [{
+            label: `J${matchdays.length - index}`,
+            points: matchday.total_points ?? 0,
+          }]
+        : [],
+  ).reverse().slice(-10);
 
   const currentStandingIndex =
     standings.findIndex(
@@ -265,6 +280,9 @@ export default async function FantasyPointsPage({
             </div>
           </section>
         )}
+
+        {/* EVOLUCIÓN FANTASY */}
+        <FantasyPointsEvolution data={evolutionData} />
 
         {/* HISTÓRICO */}
         <section className="mt-7">
