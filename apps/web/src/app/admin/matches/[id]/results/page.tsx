@@ -226,9 +226,7 @@ export default async function ResultsPage({
                   "Amarillas",
                   "Rojas",
                   "Portería a cero",
-                  "Panel",
-                  "Estadística",
-                  "Final",
+                  "Valoración",
                   "Votos",
                   "Estado",
                 ].map(
@@ -316,18 +314,6 @@ export default async function ResultsPage({
                       {entry.clean_sheet
                         ? "Sí"
                         : "No"}
-                    </td>
-
-                    <td className="border-b p-2">
-                      {display(
-                        rating.panel_average,
-                      )}
-                    </td>
-
-                    <td className="border-b p-2">
-                      {display(
-                        rating.statistical_score,
-                      )}
                     </td>
 
                     <td className="border-b p-2">
