@@ -117,6 +117,10 @@ export async function getUserFantasyMatchdays(
       )
       .or(
         `home_team_id.eq.${league.team_id},away_team_id.eq.${league.team_id}`,
+      )
+      .gte(
+        "match_date",
+        league.created_at,
       );
 
   if (matchesError) {
