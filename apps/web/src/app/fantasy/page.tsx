@@ -3804,377 +3804,147 @@ export default async function FantasyPage({
 
 
           {/* CLASIFICACIÓN */}
-
-
-
           <section className="mt-7">
-
-
-
             <div className="flex items-end justify-between px-1">
-
-
-
               <div>
-
-
-
                 <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
-
-
-
                   Liga
-
-
-
                 </p>
-
-
-
-
-
-
-
                 <h2 className="mt-1 text-xl font-black text-zinc-950">
-
-
-
                   Clasificación
-
-
-
                 </h2>
-
-
-
               </div>
-
-
-
-
-
-
-
               <span className="text-[10px] font-semibold text-zinc-400">
-
-
-
                 {standings.length} jugadores
-
-
-
               </span>
-
-
-
             </div>
 
-
-
-
-
-
+            {standings.length > 0 && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-[1.15rem] bg-[#0f3d2e] px-3 py-3 text-white">
+                  <p className="text-[8px] font-black uppercase tracking-wide text-white/55">
+                    Líder
+                  </p>
+                  <p className="mt-1 truncate text-sm font-black">
+                    {standings[0].display_name}
+                  </p>
+                  <p className="mt-1 text-xl font-black">
+                    {standings[0].total_points}
+                    <span className="ml-1 text-[9px] text-white/60">
+                      pts
+                    </span>
+                  </p>
+                </div>
+                <div className="rounded-[1.15rem] bg-[#e8f2ed] px-3 py-3">
+                  <p className="text-[8px] font-black uppercase tracking-wide text-[#557368]">
+                    Tu distancia al líder
+                  </p>
+                  <p className="mt-1 text-xl font-black text-[#0f3d2e]">
+                    {standings.find(
+                      (standing) =>
+                        standing.user_id === user.id,
+                    )?.points_behind_leader ?? 0}
+                    <span className="ml-1 text-[9px] text-[#557368]">
+                      pts
+                    </span>
+                  </p>
+                  <p className="mt-1 text-[9px] text-[#557368]">
+                    {getMyPosition(standings, user.id)} posición
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="mt-3 overflow-hidden rounded-[1.4rem] bg-white shadow-sm ring-1 ring-black/5">
-
-
-
-              <div className="grid grid-cols-[36px_1fr_42px_48px] items-center border-b border-zinc-100 bg-zinc-50 px-3 py-2">
-
-
-
+              <div className="grid grid-cols-[32px_minmax(0,1fr)_48px_48px] items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-3 py-2">
                 <span className="text-[8px] font-black uppercase text-zinc-400">
-
-
-
                   Pos
-
-
-
                 </span>
-
-
-
-
-
-
-
                 <span className="text-[8px] font-black uppercase text-zinc-400">
-
-
-
                   Jugador
-
-
-
                 </span>
-
-
-
-
-
-
-
                 <span className="text-center text-[8px] font-black uppercase text-zinc-400">
-
-
-
-                  PJ
-
-
-
+                  Últ.
                 </span>
-
-
-
-
-
-
-
                 <span className="text-right text-[8px] font-black uppercase text-zinc-400">
-
-
-
-                  Pts
-
-
-
+                  Total
                 </span>
-
-
-
               </div>
-
-
-
-
-
-
-
-              {standings.map(
-
-
-
-                (
-
-
-
-                  standing,
-
-
-
-                  index,
-
-
-
-                ) => {
-
-
-
-                  const isCurrentUser =
-
-
-
-                    standing.user_id ===
-
-
-
-                    user.id;
-
-
-
-
-
-
-
-                  return (
-
-
-
-                    <div
-
-
-
-                      key={
-
-
-
-                        standing.user_id
-
-
-
-                      }
-
-
-
-                      className={`grid grid-cols-[36px_1fr_42px_48px] items-center border-b border-zinc-100 px-3 py-3 last:border-b-0 ${
-
-
-
-                        isCurrentUser
-
-
-
-                          ? "bg-[#edf5f1]"
-
-
-
-                          : "bg-white"
-
-
-
-                      }`}
-
-
-
-                    >
-
-
-
-                      <span
-
-
-
-                        className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-black ${
-
-
-
-                          index === 0
-
-
-
-                            ? "bg-[#0f3d2e] text-white"
-
-
-
-                            : "bg-zinc-100 text-zinc-600"
-
-
-
-                        }`}
-
-
-
-                      >
-
-
-
-                        {index + 1}
-
-
-
-                      </span>
-
-
-
-
-
-
-
-                      <div className="flex min-w-0 items-center gap-2">
-
-
-
+              {standings.map((standing, index) => {
+                const isCurrentUser =
+                  standing.user_id === user.id;
+
+                return (
+                  <div
+                    key={standing.user_id}
+                    className={`grid grid-cols-[32px_minmax(0,1fr)_48px_48px] items-center gap-2 border-b border-zinc-100 px-3 py-3 last:border-b-0 ${
+                      isCurrentUser
+                        ? "bg-[#edf5f1]"
+                        : "bg-white"
+                    }`}
+                  >
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-black ${
+                      index === 0
+                        ? "bg-[#0f3d2e] text-white"
+                        : index < 3
+                          ? "bg-[#e8f2ed] text-[#0f3d2e]"
+                          : "bg-zinc-100 text-zinc-600"
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-1.5">
                         <p className="truncate text-xs font-black text-zinc-950">
-
-
-
                           {standing.display_name}
-
-
-
                         </p>
-
-
-
-
-
-
-
                         {isCurrentUser && (
-
-
-
-                          <span className="rounded-full bg-[#0f3d2e] px-1.5 py-0.5 text-[7px] font-black uppercase text-white">
-
-
-
+                          <span className="shrink-0 rounded-full bg-[#0f3d2e] px-1.5 py-0.5 text-[7px] font-black text-white">
                             Tú
-
-
-
                           </span>
-
-
-
                         )}
-
-
-
                       </div>
-
-
-
-
-
-
-
-                      <p className="text-center text-xs font-semibold text-zinc-500">
-
-
-
-                        {standing.played_matches}
-
-
-
-                      </p>
-
-
-
-
-
-
-
-                      <p className="text-right text-sm font-black text-zinc-950">
-
-
-
-                        {standing.total_points}
-
-
-
-                      </p>
-
-
-
+                      <div className="mt-1 flex items-center gap-2 text-[9px] font-bold">
+                        {standing.position_change === null ? (
+                          <span className="text-zinc-400">
+                            Sin comparativa
+                          </span>
+                        ) : standing.position_change > 0 ? (
+                          <span className="text-emerald-700">
+                            ▲ {standing.position_change} puesto{standing.position_change === 1 ? "" : "s"}
+                          </span>
+                        ) : standing.position_change < 0 ? (
+                          <span className="text-red-600">
+                            ▼ {Math.abs(standing.position_change)} puesto{standing.position_change === -1 ? "" : "s"}
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">
+                            — Sin cambios
+                          </span>
+                        )}
+                        <span className="text-zinc-400">
+                          {index === 0
+                            ? "Líder"
+                            : `-${standing.points_behind_leader} pts`}
+                        </span>
+                      </div>
                     </div>
-
-
-
-                  );
-
-
-
-                },
-
-
-
-              )}
-
-
-
+                    <p className="text-center text-xs font-bold text-zinc-600">
+                      {standing.last_match_points === null
+                        ? "—"
+                        : standing.last_match_points}
+                    </p>
+                    <p className="text-right text-sm font-black text-zinc-950">
+                      {standing.total_points}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-
-
-
+            <p className="mt-2 px-1 text-[10px] leading-4 text-zinc-400">
+              Últ. = puntos de la última jornada finalizada.
+              Las flechas comparan la posición con la jornada anterior.
+            </p>
           </section>
-
-
-
-
-
-
-
           {/* JORNADAS */}
 
 
