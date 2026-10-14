@@ -481,6 +481,7 @@ export default function LineupForm({
     useState<string | null>(initialCaptainPlayerId);
   const [savedCaptainPlayerId, setSavedCaptainPlayerId] =
     useState<string | null>(initialCaptainPlayerId);
+  const [isSelectingCaptain, setIsSelectingCaptain] = useState(false);
 
 
 
@@ -1761,37 +1762,38 @@ export default function LineupForm({
 
       {/* CAPITÁN */}
       <section className="mt-3 rounded-[1.2rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-black text-[#0f3d2e]">★ Capitán ×2</h2>
-          <span className={`rounded-full px-2 py-1 text-[10px] font-black ${captainPlayerId && selectedIds.includes(captainPlayerId) ? "bg-[#e8f2ed] text-[#0f3d2e]" : "bg-amber-50 text-amber-700"}`}>
-            {captainPlayerId && selectedIds.includes(captainPlayerId) ? "Elegido" : "Pendiente"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`rounded-full px-2 py-1 text-[10px] font-black ${captainPlayerId && selectedIds.includes(captainPlayerId) ? "bg-[#e8f2ed] text-[#0f3d2e]" : "bg-amber-50 text-amber-700"}`}>
+              {captainPlayerId && selectedIds.includes(captainPlayerId) ? "Elegido" : "Pendiente"}
+            </span>
+            {!locked && (
+              <button
+                type="button"
+                disabled={pending || selectedIds.length === 0}
+                onClick={() => setIsSelectingCaptain((current) => !current)}
+                aria-pressed={isSelectingCaptain}
+                className={`min-h-10 rounded-xl px-3 text-[11px] font-black focus-visible:outline-2 focus-visible:outline-[#0f3d2e] disabled:opacity-40 ${isSelectingCaptain ? "bg-zinc-200 text-zinc-800" : "bg-[#0f3d2e] text-white"}`}
+              >
+                {isSelectingCaptain ? "Cancelar" : captainPlayerId ? "Cambiar" : "Seleccionar"}
+              </button>
+            )}
+          </div>
         </div>
-        <p className="mt-1 text-[11px] leading-5 text-zinc-500">
-          Elige uno de tus titulares. Sus puntos finales cuentan el doble para tu XI, incluidos los negativos.
+        <p className="mt-2 text-[11px] leading-5 text-zinc-500">
+          Los puntos finales de tu capitán cuentan el doble para tu XI, incluidos los negativos.
         </p>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {selectedPlayers.map((player) => (
-            <button
-              key={player.id}
-              type="button"
-              disabled={locked || pending}
-              aria-pressed={captainPlayerId === player.id}
-              onClick={() => {
-                setCaptainPlayerId(player.id);
-                setMessage("");
-                setErrorMessage("");
-              }}
-              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-black focus-visible:outline-2 focus-visible:outline-[#0f3d2e] disabled:opacity-60 ${captainPlayerId === player.id ? "bg-[#0f3d2e] text-white" : "bg-[#f2f4f2] text-zinc-800"}`}
-            >
-              <span className="text-base">{captainPlayerId === player.id ? "★" : "☆"}</span>
-              <span className="truncate">{player.firstName} {player.lastName ?? ""}</span>
-            </button>
-          ))}
-        </div>
-        {selectedPlayers.length === 0 && (
-          <p className="mt-2 text-xs text-zinc-400">Selecciona jugadores en el campo para elegir capitán.</p>
-        )}
+        {isSelectingCaptain ? (
+          <p role="status" className="mt-3 rounded-xl bg-amber-50 px-3 py-2.5 text-xs font-black text-amber-900">
+            Toca la foto de un titular en el campo para elegirlo como capitán.
+          </p>
+        ) : captainPlayerId && selectedIds.includes(captainPlayerId) ? (
+          <p className="mt-2 text-xs font-semibold text-[#557368]">
+            Capitán: {players.find((player) => player.id === captainPlayerId)?.firstName}{" "}
+            {players.find((player) => player.id === captainPlayerId)?.lastName ?? ""}
+          </p>
+        ) : null}
       </section>
       {/* CAMPO */}
 
@@ -1878,6 +1880,14 @@ export default function LineupForm({
                 togglePlayer
 
               }
+              captainPlayerId={captainPlayerId}
+              isSelectingCaptain={isSelectingCaptain}
+              onSelectCaptain={(playerId) => {
+                setCaptainPlayerId(playerId);
+                setIsSelectingCaptain(false);
+                setMessage("");
+                setErrorMessage("");
+              }}
 
               onAdd={() =>
 
@@ -1920,6 +1930,14 @@ export default function LineupForm({
                 togglePlayer
 
               }
+              captainPlayerId={captainPlayerId}
+              isSelectingCaptain={isSelectingCaptain}
+              onSelectCaptain={(playerId) => {
+                setCaptainPlayerId(playerId);
+                setIsSelectingCaptain(false);
+                setMessage("");
+                setErrorMessage("");
+              }}
 
               onAdd={() =>
 
@@ -1962,6 +1980,14 @@ export default function LineupForm({
                 togglePlayer
 
               }
+              captainPlayerId={captainPlayerId}
+              isSelectingCaptain={isSelectingCaptain}
+              onSelectCaptain={(playerId) => {
+                setCaptainPlayerId(playerId);
+                setIsSelectingCaptain(false);
+                setMessage("");
+                setErrorMessage("");
+              }}
 
               onAdd={() =>
 
@@ -2004,6 +2030,14 @@ export default function LineupForm({
                 togglePlayer
 
               }
+              captainPlayerId={captainPlayerId}
+              isSelectingCaptain={isSelectingCaptain}
+              onSelectCaptain={(playerId) => {
+                setCaptainPlayerId(playerId);
+                setIsSelectingCaptain(false);
+                setMessage("");
+                setErrorMessage("");
+              }}
 
               onAdd={() =>
 
@@ -2769,6 +2803,9 @@ function FieldRow({
 
   onRemove,
 
+  captainPlayerId,
+  isSelectingCaptain,
+  onSelectCaptain,
   onAdd,
 
   locked,
@@ -2805,6 +2842,9 @@ function FieldRow({
 
 
 
+  captainPlayerId: string | null;
+  isSelectingCaptain: boolean;
+  onSelectCaptain: (playerId: string) => void;
   onAdd:
 
     () => void;
@@ -2970,6 +3010,102 @@ function FieldRow({
 
             >
 
+{isSelectingCaptain && !locked ? (
+              <button
+
+                type="button"
+                onClick={() => onSelectCaptain(player.id)}
+                aria-label={`Elegir a ${player.firstName} ${player.lastName ?? ""} como capitán`}
+                aria-pressed={captainPlayerId === player.id}
+
+                className="flex w-full flex-col items-center rounded-lg transition active:scale-95 focus-visible:outline-2 focus-visible:outline-white"
+
+                title="Elegir capitán"
+
+              >
+
+                <div className="relative">
+
+                  {player.imageUrl ? (
+
+                    <div
+
+                      className="h-11 w-11 rounded-full bg-white bg-cover bg-center shadow-md ring-2 ring-white/70 sm:h-14 sm:w-14"
+
+                      style={{
+
+                        backgroundImage:
+
+                          `url("${player.imageUrl}")`,
+
+                      }}
+
+                    />
+
+                  ) : (
+
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[12px] font-black text-[#0f5e3d] shadow-md ring-2 ring-white/30 sm:h-14 sm:w-14">
+
+                      {
+
+                        player.shirtNumber ??
+
+                        "•"
+
+                      }
+
+                    </div>
+
+                  )}
+
+
+
+                  {player.imageUrl &&
+
+                    player.shirtNumber !==
+
+                      null && (
+
+                      <span className="absolute -bottom-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0f3d2e] px-1 text-[6px] font-black text-white shadow ring-1 ring-white">
+
+                        {
+
+                          player.shirtNumber
+
+                        }
+
+                      </span>
+
+                    )}
+
+                </div>
+
+
+
+                <span className="mt-1 block w-full max-w-[72px] truncate rounded-md bg-zinc-950/90 px-1 py-0.5 text-center text-[9px] font-black leading-3 text-white shadow-sm sm:text-[10px]">
+
+                  {
+
+                    name
+
+                  }
+
+                </span>
+
+
+
+                <span className="text-[9px] font-bold leading-3 text-white/85">
+
+                  {
+
+                    player.position
+
+                  }
+
+                </span>
+
+              </button>
+              ) : (
               <Link
 
                 href={`/players/${player.id}`}
@@ -3061,9 +3197,13 @@ function FieldRow({
                 </span>
 
               </Link>
+              )}
 
 
 
+              {captainPlayerId === player.id && (
+                <span aria-label="Capitán" title="Capitán ×2" className="pointer-events-none absolute -left-1 -top-1 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-amber-400 text-sm font-black text-[#0b2f23] shadow ring-2 ring-white">★</span>
+              )}
               {!locked && (
 
                 <button
