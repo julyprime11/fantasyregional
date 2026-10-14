@@ -194,17 +194,17 @@ test("lineup total is the sum of every player fantasy score", () => {
     calculateFantasyLineupPoints([
       createPlayerInput({
         player_id: "1",
-        minutes_played: 15,
+        minutes_played: 1,
         panel_rating: 6,
       }),
       createPlayerInput({
         player_id: "2",
-        minutes_played: 15,
+        minutes_played: 1,
         panel_rating: 7,
       }),
       createPlayerInput({
         player_id: "3",
-        minutes_played: 15,
+        minutes_played: 1,
         panel_rating: 8,
       }),
       createPlayerInput({
@@ -262,7 +262,7 @@ test("direct red is -5 and second yellow dismissal is -4 total", () => {
 
   for (const [cards, expected] of cases) {
     const result = calculateFantasyPlayerPoints(
-      createPlayerInput(cards),
+      createPlayerInput({ ...cards, minutes_played: 1 }),
     );
     assert.equal(result.breakdown.cards, expected);
   }
@@ -270,7 +270,7 @@ test("direct red is -5 and second yellow dismissal is -4 total", () => {
 
 test("explicit direct vs second-yellow dismissal", () => {
   const cards = (overrides) =>
-    calculateFantasyPlayerPoints(createPlayerInput(overrides)).breakdown.cards;
+    calculateFantasyPlayerPoints(createPlayerInput({ ...overrides, minutes_played: 1 })).breakdown.cards;
   assert.equal(cards({yellow_cards: 2,red_cards: 1,red_card_reason:"direct"}),-9);
   assert.equal(cards({yellow_cards: 2,red_cards: 1,red_card_reason:"second_yellow"}),-4);
   assert.equal(cards({yellow_cards: 1,red_cards: 1,red_card_reason:"direct"}),-7);
@@ -281,13 +281,13 @@ test("captain bonus includes positive, negative and zero final points", () => {
   const lineup = calculateFantasyLineupPoints([
     createPlayerInput({
       player_id: "captain-positive",
-      minutes_played: 15,
+      minutes_played: 1,
       panel_rating: 10,
       is_mvp: true,
     }),
     createPlayerInput({
       player_id: "captain-negative",
-      minutes_played: 15,
+      minutes_played: 1,
       panel_rating: 0,
     }),
     createPlayerInput({
