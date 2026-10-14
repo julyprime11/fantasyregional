@@ -20,6 +20,7 @@ import {
 
 import {
   updateMatchPlayerQuickStat,
+  updateMatchRedCardReason,
   updateTeamCleanSheet,
   type QuickStatField,
 } from "@/data/match-players";
@@ -594,6 +595,32 @@ export async function performMatchSubstitutionAction(
               Error
             ? error.message
             : "No se pudo registrar la sustitución.",
+    };
+  }
+}
+export async function updateMatchRedCardReasonAction(
+  matchId: string,
+  entryId: string,
+  reason: "direct" | "second_yellow",
+): Promise<LiveMatchActionState> {
+  const forbidden = await requireAdmin();
+  if (forbidden) return forbidden;
+
+  try {
+    const parsedMatchId = parseMatchId(matchId);
+    const parsedEntryId = parseMatchPlayerId(entryId);
+    if (reason !== "direct" && reason !== "second_yellow") {
+      throw new InputError("El motivo de expulsión no es válido.");
+    }
+    await updateMatchRedCardReason(parsedMatchId, parsedEntryId, reason);
+    refreshMatch(parsedMatchId);
+    return { status: "success", message: "Motivo de expulsión guardado." };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error
+        ? error.message
+        : "No se pudo guardar el motivo de expulsión.",
     };
   }
 }

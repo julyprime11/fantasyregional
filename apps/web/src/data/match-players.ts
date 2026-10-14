@@ -530,3 +530,33 @@ export async function removeMatchPlayer(
     throw error;
   }
 }
+/**
+ * Registra el motivo de una expulsión en las estadísticas del partido.
+ * Solo admite una roja por jugador en el modelo actual.
+ */
+export async function updateMatchRedCardReason(
+  matchId: string,
+  entryId: string,
+  reason: "direct" | "second_yellow",
+): Promise<void> {
+  const supabase = await createServerSupabaseClient();
+  const { data: entry, error } = await supabase
+    .from("match_players")
+    .select("red_cards, yellow_cards")
+    .eq("match_id", matchId)
+    .eq("id", entryId)
+    .single();
+  if (error) throw error;
+  if (entry.red_cards !== 1) {
+    throw new InputError("Debe haber exactamente una roja para indicar el motivo.");
+  }
+  if (reason === "second_yellow" && entry.yellow_cards < 2) {
+    throw new InputError("La expulsión por doble amarilla requiere dos amarillas registradas.");
+  }
+  const { error: saveError } = await supabase
+    .from("match_players")
+    .update({ red_card_reason: reason })
+    .eq("match_id", matchId)
+    .eq("id", entryId);
+  if (saveError) throw saveError;
+}

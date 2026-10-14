@@ -18,6 +18,7 @@ import {
 
 import {
   updateQuickPlayerStatAction,
+  updateMatchRedCardReasonAction,
 } from "./actions";
 
 import type {
@@ -40,7 +41,7 @@ type StatsFormProps = {
   yellowCards: number;
 
   redCards: number;
-
+  redCardReason: string | null;
   cleanSheet: boolean;
 
   onSaved?: () => void;
@@ -64,7 +65,7 @@ type RealtimeMatchPlayer = {
   yellow_cards?: number;
 
   red_cards?: number;
-
+  red_card_reason?: string | null;
   clean_sheet?: boolean;
 
   stats_completed?: boolean;
@@ -79,6 +80,7 @@ export default function StatsForm({
   assists,
   yellowCards,
   redCards,
+  redCardReason,
   cleanSheet,
   onSaved,
 }: StatsFormProps) {
@@ -158,9 +160,10 @@ export default function StatsForm({
     redValue,
     setRedValue,
   ] =
-    useState(
-      redCards,
-    );
+    useState(redCards);
+  const [redReasonValue, setRedReasonValue] = useState<string | null>(redCardReason);
+  const [reasonPending, setReasonPending] = useState(false);
+  const [reasonMessage, setReasonMessage] = useState("");
 
   const [
     cleanSheetValue,
@@ -286,6 +289,7 @@ export default function StatsForm({
               assists,
               yellow_cards,
               red_cards,
+              red_card_reason,
               clean_sheet,
               stats_completed
             `,
@@ -337,10 +341,8 @@ export default function StatsForm({
           0,
       );
 
-      setRedValue(
-        data.red_cards ??
-          0,
-      );
+      setRedValue(data.red_cards ?? 0);
+      setRedReasonValue(data.red_card_reason ?? null);
 
       setCleanSheetValue(
         data.clean_sheet ??
@@ -413,13 +415,11 @@ export default function StatsForm({
               );
             }
 
-            if (
-              typeof updated.red_cards ===
-              "number"
-            ) {
-              setRedValue(
-                updated.red_cards,
-              );
+            if (typeof updated.red_cards === "number") {
+              setRedValue(updated.red_cards);
+            }
+            if ("red_card_reason" in updated) {
+              setRedReasonValue(updated.red_card_reason ?? null);
             }
 
             if (
@@ -774,7 +774,48 @@ export default function StatsForm({
           />
         </div>
 
-        {quickError && (
+        {redValue > 0 && (
+          <div className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-3">
+            <p className="text-xs font-black text-red-800">
+              Motivo de la tarjeta roja
+            </p>
+            <p className="mt-1 text-[11px] text-red-700">
+              Indica si fue directa o por segunda amarilla para calcular los puntos.
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {([
+                ["direct", "Roja directa"],
+                ["second_yellow", "Doble amarilla"],
+              ] as const).map(([value, label]) => (
+                <button
+                  type="button"
+                  key={value}
+                  disabled={reasonPending || quickPendingField !== null}
+                  aria-pressed={redReasonValue === value}
+                  onClick={async () => {
+                    setReasonPending(true);
+                    setReasonMessage("");
+                    const response = await updateMatchRedCardReasonAction(matchId, entryId, value);
+                    setReasonPending(false);
+                    if (response.status === "success") setRedReasonValue(value);
+                    setReasonMessage(response.message);
+                  }}
+                  className={`min-h-11 rounded-lg px-2 text-xs font-black disabled:opacity-50 ${
+                    redReasonValue === value
+                      ? "bg-red-800 text-white"
+                      : "bg-white text-red-800 ring-1 ring-red-200"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p role="status" className="mt-2 text-[11px] font-semibold text-red-800">
+              {reasonPending ? "Guardando motivo..." : reasonMessage || (redReasonValue ? "Motivo registrado" : "Motivo pendiente de registrar")}
+            </p>
+          </div>
+        )}
+                {quickError && (
           <p
             role="alert"
             className="mt-3 rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700"

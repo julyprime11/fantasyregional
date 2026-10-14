@@ -114,9 +114,7 @@ type StatsPlayer = {
   yellowCards: number;
 
   redCards: number;
-
-
-
+  redCardReason: string | null;
   cleanSheet: boolean;
 
 };
@@ -482,12 +480,8 @@ export default function StatsManager({
 
 
 
-                red_cards:
-
-                  number;
-
-
-
+                red_cards: number;
+                red_card_reason: string | null;
                 clean_sheet:
 
                   boolean;
@@ -570,9 +564,8 @@ export default function StatsManager({
 
 
 
-                          redCards:
-
-                            updated.red_cards,
+                          redCards: updated.red_cards,
+                          redCardReason: updated.red_card_reason,
 
 
 
@@ -2459,11 +2452,8 @@ export default function StatsManager({
 
               }
 
-              redCards={
-
-                selectedPlayer.redCards
-
-              }
+              redCards={selectedPlayer.redCards}
+              redCardReason={selectedPlayer.redCardReason}
 
               cleanSheet={
 

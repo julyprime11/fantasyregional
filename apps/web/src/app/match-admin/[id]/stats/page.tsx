@@ -492,8 +492,8 @@ export default async function MatchStatsPage({
                   yellowCards:
                     entry.yellow_cards,
 
-                  redCards:
-                    entry.red_cards,
+                  redCards: entry.red_cards,
+                  redCardReason: entry.red_card_reason,
 
                   cleanSheet:
                     entry.clean_sheet,
