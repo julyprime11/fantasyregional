@@ -46,9 +46,10 @@ export type FantasyMatchPlayerPoints = {
   rounded_rating:
     number | null;
 
-  points:
-    number;
-
+  points: number;
+  base_points: number;
+  captain_bonus: number;
+  is_captain: boolean;
   rateable:
     boolean;
 
@@ -391,10 +392,13 @@ export async function getFantasyMatchPoints(
             null,
 
           points:
-            playerPoints
-              ?.points ??
-            0,
-
+            (playerPoints?.points ?? 0) *
+            (lineup.captain_player_id === entry.player_id ? 2 : 1),
+          base_points: playerPoints?.points ?? 0,
+          captain_bonus: lineup.captain_player_id === entry.player_id
+            ? (playerPoints?.points ?? 0)
+            : 0,
+          is_captain: lineup.captain_player_id === entry.player_id,
           rateable:
             playerPoints
               ?.rateable ??
@@ -433,7 +437,10 @@ export async function getFantasyMatchPoints(
       "ready",
 
     total_points:
-      fantasy.total_points,
+      fantasy.total_points +
+      (lineup.captain_player_id
+        ? (pointsByPlayer.get(lineup.captain_player_id)?.points ?? 0)
+        : 0),
 
     players,
   };

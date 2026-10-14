@@ -115,6 +115,7 @@ export default function PlayerPointsTrigger({
             {player.player_name}
           </span>
 
+          {player.is_captain && <span className="mt-1 text-[9px] font-black text-amber-200">★ Capitán ×2</span>}
           {played ? (
             <span className="mt-1 text-[8px] font-bold text-white/75">
               {player.minutes_played} min
@@ -147,6 +148,7 @@ export default function PlayerPointsTrigger({
 
               <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[9px] font-semibold text-zinc-400">
                 <span>{player.position ?? "—"}</span>
+                {player.is_captain && <span className="font-black text-amber-700">★ Capitán ×2</span>}
                 <span>·</span>
                 {played ? (
                   <span>{player.minutes_played} min</span>
@@ -223,7 +225,7 @@ export default function PlayerPointsTrigger({
 
           <div className="mt-5 flex items-end justify-between border-t border-white/15 pt-4">
             <span className="text-sm font-bold text-white/70">
-              Total del partido
+              Total para tu XI
             </span>
             <span className="text-3xl font-black">
               {player.points}
@@ -279,6 +281,12 @@ export default function PlayerPointsTrigger({
             })}
           </div>
 
+          {player.is_captain && (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-amber-50 px-4 py-3 text-amber-900">
+              <span className="text-xs font-black">★ Capitán ×2 · Base {player.base_points} pts</span>
+              <span className="text-sm font-black">Bonus {player.captain_bonus} pts</span>
+            </div>
+          )}
           <div className="mt-4 flex items-center justify-between rounded-xl bg-[#e8f2ed] px-4 py-3">
             <span className="text-sm font-black text-[#0b2f23]">
               Total Fantasy
