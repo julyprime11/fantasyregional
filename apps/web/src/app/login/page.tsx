@@ -299,6 +299,15 @@ export default function LoginPage() {
               </div>
             </div>
           </section>
+
+          <a
+            href="/Manual_Usuario_Fantasy_Regional.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-[#0f3d2e] underline underline-offset-4 transition hover:bg-white/70 focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+          >
+            Manual de usuario (PDF) ↗
+          </a>
         </div>
       </div>
     </main>

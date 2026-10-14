@@ -4655,6 +4655,15 @@ export default async function FantasyPage({
 
 
 
+            <a
+              href="/Manual_Usuario_Fantasy_Regional.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-[#0f3d2e] shadow-sm ring-1 ring-black/5 transition hover:bg-[#e8f2ed] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+            >
+              Consultar manual de usuario (PDF) ↗
+            </a>
+
           </section>
 
 
