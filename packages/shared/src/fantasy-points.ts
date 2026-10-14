@@ -9,6 +9,8 @@ import {
 export const FANTASY_MVP_POINTS =
   2;
 
+export type FantasyRedCardReason = "direct" | "second_yellow";
+
 export type FantasyPlayerPointsInput = {
   player_id: string;
 
@@ -23,6 +25,8 @@ export type FantasyPlayerPointsInput = {
   yellow_cards: number;
 
   red_cards: number;
+
+  red_card_reason?: FantasyRedCardReason | null;
 
   clean_sheet: boolean;
 
@@ -167,27 +171,19 @@ export function getCleanSheetFantasyPoints(
 export function getCardsFantasyPoints(
   yellowCards: number,
   redCards: number,
+  redCardReason: FantasyRedCardReason | null = null,
 ): number {
-  /*
-   * La expulsión por doble amarilla ya supone -4
-   * por las dos tarjetas. No se añade otra
-   * penalización por la roja registrada.
-   *
-   * Si se registra una roja con menos de
-   * dos amarillas, se considera roja directa:
-   * -5 por roja y -2 por cada amarilla previa.
-   *
-   * Match Admin aún no distingue explícitamente
-   * el motivo de expulsión; esta interpretación
-   * conserva la estructura actual de datos.
-   */
-  const secondYellowDismissals =
-    Math.min(redCards, Math.floor(yellowCards / 2));
+  const yellowPenalty = yellowCards * -2;
 
-  const directReds =
-    redCards - secondYellowDismissals;
+  if (redCards === 0) return yellowPenalty;
+  if (redCardReason === "direct") return yellowPenalty + redCards * -5;
+  if (redCardReason === "second_yellow" && yellowCards >= 2) {
+    return yellowPenalty + Math.max(0, redCards - 1) * -5;
+  }
 
-  return yellowCards * -2 + directReds * -5;
+  // Compatibilidad provisional con registros historicos sin motivo.
+  const presumedSecondYellow = Math.min(redCards, Math.floor(yellowCards / 2));
+  return yellowPenalty + (redCards - presumedSecondYellow) * -5;
 }
 
 export function getRatingFantasyPoints(
@@ -299,6 +295,7 @@ export function calculateFantasyPlayerPoints(
     getCardsFantasyPoints(
       input.yellow_cards,
       input.red_cards,
+      input.red_card_reason ?? null,
     );
 
   const rating =

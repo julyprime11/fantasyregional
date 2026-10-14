@@ -280,6 +280,9 @@ export async function getFantasyMatchPoints(
               result.entry
                 .red_cards,
 
+            red_card_reason:
+              result.entry.red_card_reason as "direct" | "second_yellow" | null,
+
             clean_sheet:
               result.entry
                 .clean_sheet,

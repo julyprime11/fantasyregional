@@ -343,6 +343,9 @@ export async function getMatchResults(
                 red_cards:
                   entry.red_cards,
 
+                red_card_reason:
+                  entry.red_card_reason as "direct" | "second_yellow" | null,
+
                 clean_sheet:
                   entry.clean_sheet,
 

@@ -263,3 +263,12 @@ test("direct red is -5 and second yellow dismissal is -4 total", () => {
     assert.equal(result.breakdown.cards, expected);
   }
 });
+
+test("explicit direct vs second-yellow dismissal", () => {
+  const cards = (overrides) =>
+    calculateFantasyPlayerPoints(createPlayerInput(overrides)).breakdown.cards;
+  assert.equal(cards({yellow_cards: 2,red_cards: 1,red_card_reason:"direct"}),-9);
+  assert.equal(cards({yellow_cards: 2,red_cards: 1,red_card_reason:"second_yellow"}),-4);
+  assert.equal(cards({yellow_cards: 1,red_cards: 1,red_card_reason:"direct"}),-7);
+  assert.equal(cards({yellow_cards: 2,red_cards: 1}),-4);
+});

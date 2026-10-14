@@ -298,6 +298,7 @@ export type Database = {
           minutes_played: number
           on_field: boolean
           player_id: string
+          red_card_reason: string | null
           red_cards: number
           starter: boolean
           stats_completed: boolean
@@ -317,6 +318,7 @@ export type Database = {
           minutes_played?: number
           on_field?: boolean
           player_id: string
+          red_card_reason?: string | null
           red_cards?: number
           starter?: boolean
           stats_completed?: boolean
@@ -336,6 +338,7 @@ export type Database = {
           minutes_played?: number
           on_field?: boolean
           player_id?: string
+          red_card_reason?: string | null
           red_cards?: number
           starter?: boolean
           stats_completed?: boolean
