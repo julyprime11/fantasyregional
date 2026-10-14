@@ -267,6 +267,26 @@ export function calculateFantasyPlayerPoints(
     );
   }
 
+  // Un jugador que no disputó ningún minuto no puntúa,
+  // aunque existan valoraciones o estadísticas asociadas.
+  if (input.minutes_played === 0) {
+    return {
+      player_id: input.player_id,
+      points: 0,
+      rateable: false,
+      rounded_rating: null,
+      breakdown: {
+        minutes: 0,
+        goals: 0,
+        assists: 0,
+        clean_sheet: 0,
+        cards: 0,
+        rating: 0,
+        mvp: 0,
+      },
+    };
+  }
+
   const minutesPoints =
     getMinutesFantasyPoints(
       input.minutes_played,

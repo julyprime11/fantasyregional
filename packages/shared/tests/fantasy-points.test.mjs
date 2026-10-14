@@ -194,14 +194,17 @@ test("lineup total is the sum of every player fantasy score", () => {
     calculateFantasyLineupPoints([
       createPlayerInput({
         player_id: "1",
+        minutes_played: 15,
         panel_rating: 6,
       }),
       createPlayerInput({
         player_id: "2",
+        minutes_played: 15,
         panel_rating: 7,
       }),
       createPlayerInput({
         player_id: "3",
+        minutes_played: 15,
         panel_rating: 8,
       }),
       createPlayerInput({
@@ -278,11 +281,13 @@ test("captain bonus includes positive, negative and zero final points", () => {
   const lineup = calculateFantasyLineupPoints([
     createPlayerInput({
       player_id: "captain-positive",
+      minutes_played: 15,
       panel_rating: 10,
       is_mvp: true,
     }),
     createPlayerInput({
       player_id: "captain-negative",
+      minutes_played: 15,
       panel_rating: 0,
     }),
     createPlayerInput({
@@ -300,4 +305,26 @@ test("captain bonus includes positive, negative and zero final points", () => {
   assert.equal(lineup.total_points, 3);
   assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-positive"), 8);
   assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-negative"), 1);
+});
+
+test("players with zero minutes always receive zero including captain", () => {
+  const result = calculateFantasyPlayerPoints(createPlayerInput({
+    minutes_played: 0,
+    goals: 2,
+    assists: 1,
+    yellow_cards: 1,
+    red_cards: 1,
+    clean_sheet: true,
+    starter: true,
+    panel_rating: 10,
+    is_mvp: true,
+  }));
+  assert.equal(result.points, 0);
+  assert.deepEqual(result.breakdown, {
+    minutes: 0, goals: 0, assists: 0,
+    clean_sheet: 0, cards: 0, rating: 0, mvp: 0,
+  });
+  assert.equal(result.rateable, false);
+  assert.equal(result.rounded_rating, null);
+  assert.equal(getFantasyCaptainBonus([result], result.player_id), 0);
 });
