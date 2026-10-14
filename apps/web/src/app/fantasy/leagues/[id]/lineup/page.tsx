@@ -205,10 +205,11 @@ export default async function FantasyLineupPage({
         nextMatch.id,
     });
 
-  let selectedPlayerIds:
-    string[] = [];
+  let selectedPlayerIds: string[] = [];
+  let initialCaptainPlayerId: string | null = null;
 
   if (existingLineup) {
+    initialCaptainPlayerId = existingLineup.captain_player_id;
     const lineupPlayers =
       await getFantasyLineupPlayers(
         existingLineup.id,
@@ -465,9 +466,8 @@ export default async function FantasyLineupPage({
             }),
           )}
           recentForm={recentForm}
-          initialSelectedIds={
-            selectedPlayerIds
-          }
+          initialSelectedIds={selectedPlayerIds}
+          initialCaptainPlayerId={initialCaptainPlayerId}
           locked={
             locked
           }

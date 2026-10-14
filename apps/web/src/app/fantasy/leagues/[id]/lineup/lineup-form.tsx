@@ -84,9 +84,8 @@ type Props = {
 
 
 
-  initialSelectedIds:
-
-    string[];
+  initialSelectedIds: string[];
+  initialCaptainPlayerId: string | null;
 
 
 
@@ -128,8 +127,8 @@ type FieldLine =
 
 
 type LineupDraft = {
-
   selectedIds: string[];
+  captainPlayerId: string | null;
 
   formationName: string;
 
@@ -347,9 +346,8 @@ export default function LineupForm({
   players,
 
   initialSelectedIds,
-
+  initialCaptainPlayerId,
   locked,
-
 }: Props) {
 
   const initialPlayers =
@@ -479,6 +477,10 @@ export default function LineupForm({
   // Separar el XI guardado del borrador de la sesión.
   const [savedIds, setSavedIds] =
     useState<string[]>(initialSelectedIds);
+  const [captainPlayerId, setCaptainPlayerId] =
+    useState<string | null>(initialCaptainPlayerId);
+  const [savedCaptainPlayerId, setSavedCaptainPlayerId] =
+    useState<string | null>(initialCaptainPlayerId);
 
 
 
@@ -699,10 +701,12 @@ export default function LineupForm({
                 );
 
 
-            setSelectedIds(
-
-              validIds,
-
+            setSelectedIds(validIds);
+            setCaptainPlayerId(
+              typeof draft.captainPlayerId === "string" &&
+              validIds.includes(draft.captainPlayerId)
+                ? draft.captainPlayerId
+                : null,
             );
 
           }
@@ -809,8 +813,9 @@ export default function LineupForm({
 
 
       const draft: LineupDraft = {
-
         selectedIds,
+        captainPlayerId: selectedIds.includes(captainPlayerId ?? "")
+          ? captainPlayerId : null,
 
         formationName:
 
@@ -842,9 +847,8 @@ export default function LineupForm({
       locked,
 
       selectedFormation.name,
-
       selectedIds,
-
+      captainPlayerId,
     ],
 
   );
@@ -852,7 +856,8 @@ export default function LineupForm({
 
   const hasUnsavedChanges =
     selectedIds.length !== savedIds.length ||
-    selectedIds.some((id) => !savedIds.includes(id));
+    selectedIds.some((id) => !savedIds.includes(id)) ||
+    captainPlayerId !== savedCaptainPlayerId;
 
   const remainingPlayers =
     Math.max(0, 11 - selectedIds.length);
@@ -1250,12 +1255,8 @@ export default function LineupForm({
 
 
 
-    if (
-
-      alreadySelected
-
-    ) {
-
+    if (alreadySelected) {
+      if (captainPlayerId === player.id) setCaptainPlayerId(null);
       setSelectedIds(
 
         (
@@ -1516,9 +1517,8 @@ export default function LineupForm({
 
 
 
-                playerIds:
-
-                  selectedIds,
+                playerIds: selectedIds,
+                captainPlayerId,
 
               }),
 
@@ -1566,6 +1566,7 @@ export default function LineupForm({
 
       sessionStorage.removeItem(draftKey);
       setSavedIds([...selectedIds]);
+      setSavedCaptainPlayerId(captainPlayerId);
       setMessage("Alineación guardada correctamente.");
 
     } catch {
@@ -1758,6 +1759,40 @@ export default function LineupForm({
           : "Pulsa + para añadir, × para quitar y la foto para consultar la ficha del jugador."}
       </p>
 
+      {/* CAPITÁN */}
+      <section className="mt-3 rounded-[1.2rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-base font-black text-[#0f3d2e]">★ Capitán ×2</h2>
+          <span className={`rounded-full px-2 py-1 text-[10px] font-black ${captainPlayerId && selectedIds.includes(captainPlayerId) ? "bg-[#e8f2ed] text-[#0f3d2e]" : "bg-amber-50 text-amber-700"}`}>
+            {captainPlayerId && selectedIds.includes(captainPlayerId) ? "Elegido" : "Pendiente"}
+          </span>
+        </div>
+        <p className="mt-1 text-[11px] leading-5 text-zinc-500">
+          Elige uno de tus titulares. Sus puntos finales cuentan el doble para tu XI, incluidos los negativos.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {selectedPlayers.map((player) => (
+            <button
+              key={player.id}
+              type="button"
+              disabled={locked || pending}
+              aria-pressed={captainPlayerId === player.id}
+              onClick={() => {
+                setCaptainPlayerId(player.id);
+                setMessage("");
+                setErrorMessage("");
+              }}
+              className={`flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-black focus-visible:outline-2 focus-visible:outline-[#0f3d2e] disabled:opacity-60 ${captainPlayerId === player.id ? "bg-[#0f3d2e] text-white" : "bg-[#f2f4f2] text-zinc-800"}`}
+            >
+              <span className="text-base">{captainPlayerId === player.id ? "★" : "☆"}</span>
+              <span className="truncate">{player.firstName} {player.lastName ?? ""}</span>
+            </button>
+          ))}
+        </div>
+        {selectedPlayers.length === 0 && (
+          <p className="mt-2 text-xs text-zinc-400">Selecciona jugadores en el campo para elegir capitán.</p>
+        )}
+      </section>
       {/* CAMPO */}
 
       <div className="mt-1.5 overflow-hidden rounded-[1.3rem] bg-[#087443] p-1.5 shadow-lg ring-1 ring-black/10">
@@ -2692,12 +2727,10 @@ export default function LineupForm({
 
               !validation.valid ||
 
-              selectedIds.length !==
-
-                11
-
+              selectedIds.length !== 11 ||
+              !captainPlayerId ||
+              !selectedIds.includes(captainPlayerId)
             }
-
             className="min-h-11 w-full rounded-[0.95rem] bg-[#0f3d2e] px-4 text-xs font-black text-white shadow-lg transition active:scale-[0.99] disabled:opacity-40"
 
           >
@@ -2706,7 +2739,9 @@ export default function LineupForm({
               ? "Guardando..."
               : selectedIds.length !== 11
                 ? `Selecciona ${remainingPlayers} más para guardar`
-                : hasUnsavedChanges
+                : !captainPlayerId
+                  ? "Elige un capitán para guardar"
+                  : hasUnsavedChanges
                   ? `Guardar cambios · ${selectedFormation.name}`
                   : `Guardar Mi XI · ${selectedFormation.name}`}
 
