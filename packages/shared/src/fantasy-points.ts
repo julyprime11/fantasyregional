@@ -151,13 +151,13 @@ export function getCleanSheetFantasyPoints(
         : 0;
 
     case "DEF":
-      return 2;
+      return 3;
 
     case "MID":
-      return 1;
+      return 2;
 
     case "FWD":
-      return 0;
+      return 1;
 
     default:
       return 0;
@@ -169,21 +169,25 @@ export function getCardsFantasyPoints(
   redCards: number,
 ): number {
   /*
-   * Si hay roja y al menos 2 amarillas,
-   * descontamos una amarilla para evitar
-   * duplicar artificialmente la segunda
-   * amarilla que provoca la expulsión.
+   * La expulsión por doble amarilla ya supone -4
+   * por las dos tarjetas. No se añade otra
+   * penalización por la roja registrada.
+   *
+   * Si se registra una roja con menos de
+   * dos amarillas, se considera roja directa:
+   * -5 por roja y -2 por cada amarilla previa.
+   *
+   * Match Admin aún no distingue explícitamente
+   * el motivo de expulsión; esta interpretación
+   * conserva la estructura actual de datos.
    */
-  const effectiveYellowCards =
-    redCards > 0 &&
-    yellowCards >= 2
-      ? yellowCards - 1
-      : yellowCards;
+  const secondYellowDismissals =
+    Math.min(redCards, Math.floor(yellowCards / 2));
 
-  return (
-    effectiveYellowCards * -2 +
-    redCards * -4
-  );
+  const directReds =
+    redCards - secondYellowDismissals;
+
+  return yellowCards * -2 + directReds * -5;
 }
 
 export function getRatingFantasyPoints(

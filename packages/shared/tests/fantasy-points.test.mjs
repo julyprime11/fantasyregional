@@ -215,3 +215,51 @@ test("lineup total is the sum of every player fantasy score", () => {
   assert.equal(result.players[3].points, 0);
   assert.equal(result.total_points, 4);
 });
+
+test("clean sheet points scale from forward to goalkeeper", () => {
+  const cases = [
+    ["ST", 1],
+    ["CM", 2],
+    ["CB", 3],
+    ["GK", 4],
+  ];
+
+  for (const [position, expected] of cases) {
+    const result = calculateFantasyPlayerPoints(
+      createPlayerInput({
+        position,
+        minutes_played: 90,
+        starter: true,
+        clean_sheet: true,
+      }),
+    );
+    assert.equal(result.breakdown.clean_sheet, expected, position);
+  }
+
+  // La restricción ya existente para porteros continúa vigente.
+  const substitutedGoalkeeper = calculateFantasyPlayerPoints(
+    createPlayerInput({
+      position: "GK",
+      starter: true,
+      minutes_played: 75,
+      clean_sheet: true,
+    }),
+  );
+  assert.equal(substitutedGoalkeeper.breakdown.clean_sheet, 0);
+});
+
+test("direct red is -5 and second yellow dismissal is -4 total", () => {
+  const cases = [
+    [{ yellow_cards: 1 }, -2],
+    [{ yellow_cards: 2, red_cards: 1 }, -4],
+    [{ red_cards: 1 }, -5],
+    [{ yellow_cards: 1, red_cards: 1 }, -7],
+  ];
+
+  for (const [cards, expected] of cases) {
+    const result = calculateFantasyPlayerPoints(
+      createPlayerInput(cards),
+    );
+    assert.equal(result.breakdown.cards, expected);
+  }
+});
