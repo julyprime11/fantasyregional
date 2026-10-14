@@ -5,6 +5,7 @@ import {
   calculateFantasyLineupPoints,
   calculateFantasyPlayerPoints,
   FANTASY_MVP_POINTS,
+  getFantasyCaptainBonus,
   getRatingFantasyPoints,
 } from "../src/fantasy-points.ts";
 
@@ -271,4 +272,32 @@ test("explicit direct vs second-yellow dismissal", () => {
   assert.equal(cards({yellow_cards: 2,red_cards: 1,red_card_reason:"second_yellow"}),-4);
   assert.equal(cards({yellow_cards: 1,red_cards: 1,red_card_reason:"direct"}),-7);
   assert.equal(cards({yellow_cards: 2,red_cards: 1}),-4);
+});
+
+test("captain bonus includes positive, negative and zero final points", () => {
+  const lineup = calculateFantasyLineupPoints([
+    createPlayerInput({
+      player_id: "captain-positive",
+      panel_rating: 10,
+      is_mvp: true,
+    }),
+    createPlayerInput({
+      player_id: "captain-negative",
+      panel_rating: 0,
+    }),
+    createPlayerInput({
+      player_id: "captain-zero",
+      panel_rating: 5,
+    }),
+  ]);
+
+  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-positive"), 5);
+  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-negative"), -2);
+  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-zero"), 0);
+  assert.equal(getFantasyCaptainBonus(lineup.players, null), 0);
+  assert.equal(getFantasyCaptainBonus(lineup.players, "not-in-xi"), 0);
+
+  assert.equal(lineup.total_points, 3);
+  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-positive"), 8);
+  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-negative"), 1);
 });

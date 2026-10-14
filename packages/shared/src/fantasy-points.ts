@@ -383,3 +383,19 @@ export function calculateFantasyLineupPoints(
       totalPoints,
   };
 }
+/**
+ * Bonus exclusivo del XI Fantasy: un capitán aporta su
+ * puntuación final una segunda vez, también si es negativa.
+ */
+export function getFantasyCaptainBonus(
+  players: readonly FantasyPlayerPointsResult[],
+  captainPlayerId: string | null,
+): number {
+  if (!captainPlayerId) {
+    return 0;
+  }
+
+  return players.find(
+    (player) => player.player_id === captainPlayerId,
+  )?.points ?? 0;
+}

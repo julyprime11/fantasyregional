@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   calculateFantasyLineupPoints,
+  getFantasyCaptainBonus,
   PLAYER_POSITIONS,
   type FantasyPlayerPointsResult,
   type PlayerPosition,
@@ -441,9 +442,7 @@ export async function getFantasyMatchPoints(
 
     total_points:
       fantasy.total_points +
-      (lineup.captain_player_id
-        ? (pointsByPlayer.get(lineup.captain_player_id)?.points ?? 0)
-        : 0),
+      getFantasyCaptainBonus(fantasy.players, lineup.captain_player_id),
 
     players,
   };
