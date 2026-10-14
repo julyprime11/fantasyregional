@@ -181,12 +181,7 @@ export async function submitMatchRatings(
         ),
     );
 
-  const input =
-    hasScores
-      ? parseRatingInput(
-          raw,
-        )
-      : null;
+  // La identidad se incorporará tras validarla en el servidor.
 
   /*
    * SEGURIDAD:
@@ -248,6 +243,15 @@ export async function submitMatchRatings(
 
   const voterRole =
     profile.voter_role;
+
+  const input =
+    hasScores
+      ? parseRatingInput({
+          ...raw,
+          voter_id: voterId,
+          voter_role: voterRole,
+        })
+      : null;
 
   /*
    * No permitimos una petición vacía.
