@@ -265,6 +265,7 @@ export async function getOrCreateFantasyLineup(
 export async function saveFantasyLineup(
   input: LineupIdentity & {
     playerIds: readonly string[];
+    captainPlayerId: string;
   },
 ): Promise<FantasyLineupRow> {
   const context =
@@ -315,6 +316,15 @@ export async function saveFantasyLineup(
   if (uniquePlayerIds.length !== 11) {
     throw new InputError(
       "Debes seleccionar exactamente 11 jugadores.",
+    );
+  }
+
+  if (
+    !input.captainPlayerId ||
+    !uniquePlayerIds.includes(input.captainPlayerId)
+  ) {
+    throw new InputError(
+      "Selecciona un capitán entre los 11 jugadores de tu XI.",
     );
   }
 
@@ -474,6 +484,7 @@ export async function saveFantasyLineup(
     await supabase
       .from("fantasy_lineups")
       .update({
+        captain_player_id: input.captainPlayerId,
         updated_at:
           new Date().toISOString(),
       })

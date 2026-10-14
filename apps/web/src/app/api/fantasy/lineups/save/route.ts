@@ -42,6 +42,11 @@ export async function POST(
           )
         : [];
 
+    const captainPlayerId =
+      typeof body.captainPlayerId === "string"
+        ? body.captainPlayerId
+        : "";
+
     if (
       !leagueId ||
       !matchId
@@ -62,6 +67,7 @@ export async function POST(
       userId: user.id,
       matchId,
       playerIds,
+      captainPlayerId,
     });
 
     return NextResponse.json({
