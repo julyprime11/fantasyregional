@@ -308,6 +308,11 @@ export default async function MatchStatsPage({
             managedTeams={
               managedTeams
             }
+            initialGoals={events.filter((event) => event.event_type === "goal").map((event) => ({
+              teamId: event.scoring_team_id ?? (
+                players.find((entry) => entry.player_id === event.player_id)?.team_id ?? ""
+              ),
+            })).filter((event) => event.teamId !== "")}
           />
         </section>
 

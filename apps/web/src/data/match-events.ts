@@ -218,33 +218,15 @@ export async function finalizeMatchPlayerMinutes(
     );
   }
 }
-/** Gol sin goleador inscrito: rival o en propia puerta. */
-export async function registerUnattributedMatchGoal(
-  matchId: string,
-  scoringTeamId: string,
-  minute: number,
-  isOwnGoal: boolean,
-): Promise<void> {
-  if (
-    !Number.isSafeInteger(minute) ||
-    minute < 1 ||
-    minute > 150 ||
-    typeof isOwnGoal !== "boolean"
-  ) {
-    throw new InputError("Indica un minuto válido entre 1 y 150.");
-  }
-
+/** Registro rápido: el servidor calcula el minuto del partido. */
+export async function registerLiveGoalWithoutPlayer(
+  matchId: string, scoringTeamId: string, isOwnGoal: boolean,
+): Promise<number> {
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.rpc(
-    "register_match_goal_without_player",
-    {
-      p_match_id: matchId,
-      p_scoring_team_id: scoringTeamId,
-      p_minute: minute,
-      p_is_own_goal: isOwnGoal,
-    },
-  );
-  if (error) {
-    throw new InputError(error.message);
-  }
+  const { data, error } = await supabase.rpc("register_live_goal_without_player", {
+    p_match_id: matchId, p_scoring_team_id: scoringTeamId, p_is_own_goal: isOwnGoal,
+  });
+  if (error) throw new InputError(error.message);
+  if (typeof data !== "number") throw new InputError("No se pudo registrar el gol.");
+  return data;
 }

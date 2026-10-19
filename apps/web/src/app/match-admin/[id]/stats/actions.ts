@@ -27,7 +27,7 @@ import {
 
 import {
   performMatchSubstitution,
-  registerUnattributedMatchGoal,
+  registerLiveGoalWithoutPlayer,
 } from "@/data/match-events";
 
 import {
@@ -626,24 +626,17 @@ export async function updateMatchRedCardReasonAction(
   }
 }
 
-export async function registerUnattributedMatchGoalAction(
-  matchId: string,
-  scoringTeamId: string,
-  minute: number,
-  isOwnGoal: boolean,
+export async function registerLiveGoalAction(
+  matchId: string, scoringTeamId: string, isOwnGoal: boolean,
 ): Promise<LiveMatchActionState> {
   const forbidden = await requireAdmin();
   if (forbidden) return forbidden;
-
   try {
-    const parsedMatchId = parseMatchId(matchId);
-    await registerUnattributedMatchGoal(parsedMatchId, scoringTeamId, minute, isOwnGoal);
-    refreshMatch(parsedMatchId);
+    const parsedId = parseMatchId(matchId);
+    const minute = await registerLiveGoalWithoutPlayer(parsedId, scoringTeamId, isOwnGoal);
+    refreshMatch(parsedId);
     return { status: "success", message: `Gol registrado en el minuto ${minute}.` };
   } catch (error) {
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "No se pudo registrar el gol.",
-    };
+    return { status: "error", message: error instanceof Error ? error.message : "No se pudo registrar el gol." };
   }
 }

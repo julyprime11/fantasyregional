@@ -21,7 +21,7 @@ import {
   startLiveMatchAction,
   startLiveSecondHalfAction,
   updateTeamCleanSheetAction,
-  registerUnattributedMatchGoalAction,
+  registerLiveGoalAction,
   type LiveMatchActionState,
 } from "./actions";
 
@@ -58,6 +58,7 @@ type Props = {
 
   managedTeams:
     ManagedTeam[];
+  initialGoals: { teamId: string }[];
 };
 
 export default function LiveMatchController({
@@ -72,6 +73,7 @@ export default function LiveMatchController({
   clockSeconds,
   clockStartedAt,
   managedTeams,
+  initialGoals,
 }: Props) {
   const router =
     useRouter();
@@ -118,30 +120,22 @@ export default function LiveMatchController({
       managedTeams,
     );
 
-  const [opponentGoalMinute, setOpponentGoalMinute] = useState("");
-  const [opponentOwnGoal, setOpponentOwnGoal] = useState(false);
-  const [opponentScoringTeamId, setOpponentScoringTeamId] = useState(
-    managedTeams.length === 1
-      ? managedTeams[0].id === homeTeamId ? awayTeamId : homeTeamId
-      : awayTeamId,
-  );
+  const [ownGoal, setOwnGoal] = useState(false);
+  const managedTeamId = managedTeams.length === 1 ? managedTeams[0].id : null;
+  const rivalTeamId = managedTeamId === homeTeamId ? awayTeamId : homeTeamId;
+  const liveHomeScore = initialGoals.filter((goal) => goal.teamId === homeTeamId).length;
+  const liveAwayScore = initialGoals.filter((goal) => goal.teamId === awayTeamId).length;
 
   function saveOpponentGoal() {
-    const minute = Number(opponentGoalMinute);
-    if (!Number.isSafeInteger(minute) || minute < 1 || minute > 150) {
-      setMessage("Introduce un minuto válido entre 1 y 150.");
-      setMessageType("error");
-      return;
-    }
+    if (!managedTeamId) return;
+    setMessage("");
+    setMessageType(null);
     startTransition(async () => {
-      const result = await registerUnattributedMatchGoalAction(
-        matchId, opponentScoringTeamId, minute, opponentOwnGoal,
-      );
+      const result = await registerLiveGoalAction(matchId, rivalTeamId, ownGoal);
       setMessage(result.message);
       setMessageType(result.status === "success" ? "success" : "error");
       if (result.status === "success") {
-        setOpponentGoalMinute("");
-        setOpponentOwnGoal(false);
+        setOwnGoal(false);
         router.refresh();
       }
     });
@@ -161,8 +155,7 @@ export default function LiveMatchController({
     setFinalHomeScore,
   ] =
     useState(
-      homeScore ??
-        0,
+      homeScore ?? liveHomeScore,
     );
 
   const [
@@ -170,8 +163,7 @@ export default function LiveMatchController({
     setFinalAwayScore,
   ] =
     useState(
-      awayScore ??
-        0,
+      awayScore ?? liveAwayScore,
     );
 
   const [
@@ -190,17 +182,17 @@ export default function LiveMatchController({
 
   useEffect(() => {
     setFinalHomeScore(
-      homeScore ??
-        0,
+      homeScore ?? liveHomeScore,
     );
 
     setFinalAwayScore(
-      awayScore ??
-        0,
+      awayScore ?? liveAwayScore,
     );
   }, [
     homeScore,
     awayScore,
+    liveHomeScore,
+    liveAwayScore,
   ]);
 
   /*
@@ -303,13 +295,11 @@ export default function LiveMatchController({
     );
 
     setFinalHomeScore(
-      homeScore ??
-        0,
+      homeScore ?? liveHomeScore,
     );
 
     setFinalAwayScore(
-      awayScore ??
-        0,
+      awayScore ?? liveAwayScore,
     );
 
     setFinalScoreOpen(
@@ -554,15 +544,15 @@ export default function LiveMatchController({
             </p>
 
             <div className="rounded-xl bg-white/10 px-3 py-2">
-              {hasResult ? (
+              {(hasResult || initialGoals.length > 0 || phase !== "not_started") ? (
                 <p className="whitespace-nowrap text-xl font-black">
-                  {homeScore}
+                  {hasResult ? homeScore : liveHomeScore}
 
                   <span className="mx-2 text-zinc-600">
                     -
                   </span>
 
-                  {awayScore}
+                  {hasResult ? awayScore : liveAwayScore}
                 </p>
               ) : (
                 <p className="text-xs font-black text-zinc-500">
@@ -577,52 +567,28 @@ export default function LiveMatchController({
           </div>
 
           {running && (
-            <div className="mt-5 rounded-xl bg-white/10 p-3 text-left">
-              <p className="text-sm font-black">⚽ Gol rival</p>
-              <p className="mt-1 text-[11px] text-white/70">
-                Registra el minuto de cada gol recibido sin dar de alta jugadores rivales.
+            <div className="mt-5 rounded-xl bg-white/10 p-3">
+              <button
+                type="button"
+                onClick={saveOpponentGoal}
+                disabled={pending || !managedTeamId}
+                className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#d8f36a] px-4 text-base font-black text-zinc-950 disabled:opacity-50"
+              >
+                <span className="text-2xl">+</span> Gol rival
+              </button>
+              <p className="mt-2 text-center text-[11px] text-white/60">
+                Guarda el gol con el minuto actual automáticamente.
               </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <label className="min-w-0 flex-1">
-                  <span className="sr-only">Equipo que marca</span>
-                  <select
-                    value={opponentScoringTeamId}
-                    onChange={(event) => setOpponentScoringTeamId(event.target.value)}
-                    disabled={pending}
-                    className="min-h-11 w-full rounded-lg bg-zinc-800 px-2 text-xs font-semibold text-white"
-                  >
-                    <option value={homeTeamId}>{homeTeam}</option>
-                    <option value={awayTeamId}>{awayTeam}</option>
-                  </select>
-                </label>
-                <label className="w-20">
-                  <span className="sr-only">Minuto del gol</span>
-                  <input
-                    type="number" min={1} max={150} inputMode="numeric"
-                    value={opponentGoalMinute}
-                    onChange={(event) => setOpponentGoalMinute(event.target.value)}
-                    placeholder="Min."
-                    disabled={pending}
-                    className="min-h-11 w-full rounded-lg bg-zinc-800 px-2 text-center text-sm font-bold text-white"
-                  />
-                </label>
-                <button
-                  type="button" onClick={saveOpponentGoal}
-                  disabled={pending || !opponentGoalMinute}
-                  className="min-h-11 rounded-lg bg-[#d8f36a] px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
-                >
-                  Guardar gol
-                </button>
-              </div>
-              <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-white/80">
-                <input
-                  type="checkbox"
-                  checked={opponentOwnGoal}
-                  onChange={(event) => setOpponentOwnGoal(event.target.checked)}
-                  disabled={pending}
-                  className="h-4 w-4 accent-[#d8f36a]"
-                />
-                Gol en propia puerta (para el equipo seleccionado)
+              {!managedTeamId && (
+                <p className="mt-2 text-center text-xs text-amber-300">
+                  Debe haber exactamente un equipo gestionado para usar el botón.
+                </p>
+              )}
+              <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-white/75">
+                <input type="checkbox" checked={ownGoal}
+                  onChange={(e) => setOwnGoal(e.target.checked)}
+                  disabled={pending} className="h-4 w-4 accent-[#d8f36a]" />
+                Gol en propia puerta a favor del rival
               </label>
             </div>
           )}
