@@ -6,6 +6,8 @@ import {
   calculateFantasyPlayerPoints,
   FANTASY_MVP_POINTS,
   getFantasyCaptainBonus,
+  getGoalsConcededFantasyPoints,
+  countGoalsConcededOnField,
   getRatingFantasyPoints,
 } from "../src/fantasy-points.ts";
 
@@ -327,4 +329,31 @@ test("players with zero minutes always receive zero including captain", () => {
   assert.equal(result.rateable, false);
   assert.equal(result.rounded_rating, null);
   assert.equal(getFantasyCaptainBonus([result], result.player_id), 0);
+});
+
+test("goals conceded penalty uses position-specific complete groups", () => {
+  const cases = [
+    ["GK", [0, -1, -2, -3, -4]],
+    ["CB", [0, 0, -1, -1, -2]],
+    ["CM", [0, 0, 0, -1, -1]],
+    ["ST", [0, 0, 0, 0, -1]],
+  ];
+  for (const [position, expected] of cases) {
+    expected.forEach((points, conceded) => {
+      assert.equal(getGoalsConcededFantasyPoints(position, conceded), points);
+    });
+  }
+  assert.throws(() => getGoalsConcededFantasyPoints("GK", -1), RangeError);
+  assert.throws(() => getGoalsConcededFantasyPoints("GK", 1.5), RangeError);
+});
+
+test("conceded goals count only during participation window", () => {
+  const goalMinutes = [20, 55, 80];
+  assert.equal(countGoalsConcededOnField(goalMinutes, 0, 60), 2);
+  assert.equal(getGoalsConcededFantasyPoints("CB", 2), -1);
+  assert.equal(countGoalsConcededOnField(goalMinutes, 60, 90), 1);
+  assert.equal(getGoalsConcededFantasyPoints("CB", 1), 0);
+  assert.equal(countGoalsConcededOnField(goalMinutes, 0, 90), 3);
+  assert.equal(countGoalsConcededOnField(goalMinutes, 60, 60), 0);
+  assert.throws(() => countGoalsConcededOnField(goalMinutes, 70, 60), RangeError);
 });

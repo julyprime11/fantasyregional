@@ -168,6 +168,55 @@ export function getCleanSheetFantasyPoints(
   }
 }
 
+/**
+ * Penalización por goles recibidos durante los minutos en campo.
+ * La capa de eventos debe entregar exclusivamente los goles
+ * encajados mientras el jugador participaba en el encuentro.
+ */
+export function getGoalsConcededFantasyPoints(
+  position: PlayerPosition,
+  goalsConcededOnField: number,
+): number {
+  if (!validateNonNegativeInteger(goalsConcededOnField)) {
+    throw new RangeError("Goles encajados no válidos.");
+  }
+  const goalsPerPenalty: Record<
+    ReturnType<typeof getFantasyLine>,
+    number
+  > = {
+    GK: 1,
+    DEF: 2,
+    MID: 3,
+    FWD: 4,
+  };
+  return -Math.floor(
+    goalsConcededOnField / goalsPerPenalty[getFantasyLine(position)],
+  );
+}
+
+/**
+ * El minuto de entrada cuenta; el de salida no.
+ * Minutos iguales requieren orden cronológico de eventos
+ * antes de utilizar esta función.
+ */
+export function countGoalsConcededOnField(
+  goalMinutes: readonly number[],
+  enteredMinute: number,
+  exitedMinute: number,
+): number {
+  if (
+    !validateNonNegativeInteger(enteredMinute) ||
+    !validateNonNegativeInteger(exitedMinute) ||
+    exitedMinute < enteredMinute ||
+    goalMinutes.some((minute) => !validateNonNegativeInteger(minute))
+  ) {
+    throw new RangeError("Cronología del partido no válida.");
+  }
+  return goalMinutes.filter(
+    (minute) => minute >= enteredMinute && minute < exitedMinute,
+  ).length;
+}
+
 export function getCardsFantasyPoints(
   yellowCards: number,
   redCards: number,
