@@ -346,6 +346,7 @@ export default async function MatchStatsPage({
             playerNames={
               playerNames
             }
+            teamNames={Object.fromEntries(teamNames)}
           />
         </section>
 

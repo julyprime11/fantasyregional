@@ -235,31 +235,16 @@ export async function registerUnattributedMatchGoal(
   }
 
   const supabase = await createServerSupabaseClient();
-  const { data: match, error: matchError } = await supabase
-    .from("matches")
-    .select("home_team_id, away_team_id, live_phase")
-    .eq("id", matchId)
-    .single();
-
-  if (matchError || !match) {
-    throw new InputError("El partido no está disponible.");
+  const { error } = await supabase.rpc(
+    "register_match_goal_without_player",
+    {
+      p_match_id: matchId,
+      p_scoring_team_id: scoringTeamId,
+      p_minute: minute,
+      p_is_own_goal: isOwnGoal,
+    },
+  );
+  if (error) {
+    throw new InputError(error.message);
   }
-  if (
-    match.live_phase === "not_started" ||
-    (scoringTeamId !== match.home_team_id &&
-      scoringTeamId !== match.away_team_id)
-  ) {
-    throw new InputError("El gol debe corresponder a uno de los equipos y a un partido iniciado.");
-  }
-
-  const { error } = await supabase.from("match_events").insert({
-    match_id: matchId,
-    event_type: "goal",
-    player_id: null,
-    secondary_player_id: null,
-    minute,
-    scoring_team_id: scoringTeamId,
-    is_own_goal: isOwnGoal,
-  });
-  if (error) throw error;
 }

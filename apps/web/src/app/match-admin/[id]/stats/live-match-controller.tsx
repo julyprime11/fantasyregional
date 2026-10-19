@@ -119,6 +119,7 @@ export default function LiveMatchController({
     );
 
   const [opponentGoalMinute, setOpponentGoalMinute] = useState("");
+  const [opponentOwnGoal, setOpponentOwnGoal] = useState(false);
   const [opponentScoringTeamId, setOpponentScoringTeamId] = useState(
     managedTeams.length === 1
       ? managedTeams[0].id === homeTeamId ? awayTeamId : homeTeamId
@@ -134,12 +135,13 @@ export default function LiveMatchController({
     }
     startTransition(async () => {
       const result = await registerUnattributedMatchGoalAction(
-        matchId, opponentScoringTeamId, minute, false,
+        matchId, opponentScoringTeamId, minute, opponentOwnGoal,
       );
       setMessage(result.message);
       setMessageType(result.status === "success" ? "success" : "error");
       if (result.status === "success") {
         setOpponentGoalMinute("");
+        setOpponentOwnGoal(false);
         router.refresh();
       }
     });
@@ -612,6 +614,16 @@ export default function LiveMatchController({
                   Guardar gol
                 </button>
               </div>
+              <label className="mt-3 flex items-center gap-2 text-xs font-semibold text-white/80">
+                <input
+                  type="checkbox"
+                  checked={opponentOwnGoal}
+                  onChange={(event) => setOpponentOwnGoal(event.target.checked)}
+                  disabled={pending}
+                  className="h-4 w-4 accent-[#d8f36a]"
+                />
+                Gol en propia puerta (para el equipo seleccionado)
+              </label>
             </div>
           )}
 

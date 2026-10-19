@@ -47,12 +47,14 @@ type Props = {
       string,
       string
     >;
+  teamNames: Record<string, string>;
 };
 
 export default function MatchTimeline({
   matchId,
   initialEvents,
   playerNames,
+  teamNames,
 }: Props) {
   const [
     events,
@@ -280,6 +282,7 @@ export default function MatchTimeline({
                 playerNames={
                   playerNames
                 }
+                teamNames={teamNames}
               />
             ),
           )}
@@ -292,15 +295,11 @@ export default function MatchTimeline({
 function TimelineRow({
   event,
   playerNames,
+  teamNames,
 }: {
-  event:
-    TimelineEvent;
-
-  playerNames:
-    Record<
-      string,
-      string
-    >;
+  event: TimelineEvent;
+  playerNames: Record<string, string>;
+  teamNames: Record<string, string>;
 }) {
   const player =
     event.playerId
@@ -334,11 +333,14 @@ function TimelineRow({
           "goal" && (
           <>
             <p className="font-black text-zinc-950">
-              ⚽ {event.playerId ? "Gol" : "Gol rival"}
+              ⚽ {event.isOwnGoal ? "Gol en propia puerta" : event.playerId ? "Gol" : "Gol sin goleador registrado"}
             </p>
 
             <p className="mt-0.5 text-xs font-semibold text-zinc-500">
-              {event.playerId ? player : "Goleador rival no registrado"}
+              {event.playerId ? player : "Goleador no registrado"}
+              {event.scoringTeamId && (
+                <span className="ml-1">· {teamNames[event.scoringTeamId] ?? "Equipo"}</span>
+              )}
             </p>
           </>
         )}

@@ -672,6 +672,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      register_match_goal_without_player: {
+        Args: {
+          p_match_id: string
+          p_scoring_team_id: string
+          p_minute: number
+          p_is_own_goal?: boolean
+        }
+        Returns: string
+      }
       finalize_match_player_minutes: {
         Args: { p_match_id: string }
         Returns: undefined
