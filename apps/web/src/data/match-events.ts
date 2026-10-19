@@ -31,6 +31,9 @@ export type MatchEvent = {
 
   minute: number;
 
+  scoring_team_id: string | null;
+  is_own_goal: boolean;
+
   created_by:
     string | null;
 
@@ -214,4 +217,49 @@ export async function finalizeMatchPlayerMinutes(
         "No se pudieron cerrar los minutos del partido.",
     );
   }
+}
+/** Gol sin goleador inscrito: rival o en propia puerta. */
+export async function registerUnattributedMatchGoal(
+  matchId: string,
+  scoringTeamId: string,
+  minute: number,
+  isOwnGoal: boolean,
+): Promise<void> {
+  if (
+    !Number.isSafeInteger(minute) ||
+    minute < 1 ||
+    minute > 150 ||
+    typeof isOwnGoal !== "boolean"
+  ) {
+    throw new InputError("Indica un minuto válido entre 1 y 150.");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data: match, error: matchError } = await supabase
+    .from("matches")
+    .select("home_team_id, away_team_id, live_phase")
+    .eq("id", matchId)
+    .single();
+
+  if (matchError || !match) {
+    throw new InputError("El partido no está disponible.");
+  }
+  if (
+    match.live_phase === "not_started" ||
+    (scoringTeamId !== match.home_team_id &&
+      scoringTeamId !== match.away_team_id)
+  ) {
+    throw new InputError("El gol debe corresponder a uno de los equipos y a un partido iniciado.");
+  }
+
+  const { error } = await supabase.from("match_events").insert({
+    match_id: matchId,
+    event_type: "goal",
+    player_id: null,
+    secondary_player_id: null,
+    minute,
+    scoring_team_id: scoringTeamId,
+    is_own_goal: isOwnGoal,
+  });
+  if (error) throw error;
 }

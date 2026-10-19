@@ -237,6 +237,8 @@ export type Database = {
           id: string
           match_id: string
           minute: number
+          scoring_team_id: string | null
+          is_own_goal: boolean
           player_id: string | null
           secondary_player_id: string | null
         }
@@ -247,6 +249,8 @@ export type Database = {
           id?: string
           match_id: string
           minute?: number
+          scoring_team_id?: string | null
+          is_own_goal?: boolean
           player_id?: string | null
           secondary_player_id?: string | null
         }
@@ -257,6 +261,8 @@ export type Database = {
           id?: string
           match_id?: string
           minute?: number
+          scoring_team_id?: string | null
+          is_own_goal?: boolean
           player_id?: string | null
           secondary_player_id?: string | null
         }
