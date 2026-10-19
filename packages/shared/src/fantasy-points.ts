@@ -189,9 +189,10 @@ export function getGoalsConcededFantasyPoints(
     MID: 3,
     FWD: 4,
   };
-  return -Math.floor(
+  const penaltyGroups = Math.floor(
     goalsConcededOnField / goalsPerPenalty[getFantasyLine(position)],
   );
+  return penaltyGroups === 0 ? 0 : -penaltyGroups;
 }
 
 /**
