@@ -30,6 +30,8 @@ type TimelineEvent = {
     | null;
 
   minute: number;
+  scoringTeamId: string | null;
+  isOwnGoal: boolean;
 
   createdAt: string;
 };
@@ -118,8 +120,9 @@ export default function MatchTimeline({
                 minute:
                   number;
 
-                created_at:
-                  string;
+                created_at: string;
+                scoring_team_id: string | null;
+                is_own_goal: boolean;
               };
 
             const next: TimelineEvent = {
@@ -138,9 +141,9 @@ export default function MatchTimeline({
               secondaryPlayerId:
                 row.secondary_player_id,
 
-              minute:
-                row.minute,
-
+              minute: row.minute,
+              scoringTeamId: row.scoring_team_id,
+              isOwnGoal: row.is_own_goal,
               createdAt:
                 row.created_at,
             };
@@ -331,11 +334,11 @@ function TimelineRow({
           "goal" && (
           <>
             <p className="font-black text-zinc-950">
-              ⚽ Gol
+              ⚽ {event.playerId ? "Gol" : "Gol rival"}
             </p>
 
             <p className="mt-0.5 text-xs font-semibold text-zinc-500">
-              {player}
+              {event.playerId ? player : "Goleador rival no registrado"}
             </p>
           </>
         )}

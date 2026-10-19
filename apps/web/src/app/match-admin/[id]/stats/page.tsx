@@ -287,9 +287,9 @@ export default async function MatchStatsPage({
             homeTeam={
               homeTeam
             }
-            awayTeam={
-              awayTeam
-            }
+            awayTeam={awayTeam}
+             homeTeamId={match.home_team_id}
+             awayTeamId={match.away_team_id}
             homeScore={
               match.home_score
             }
@@ -336,10 +336,10 @@ export default async function MatchStatsPage({
                 secondaryPlayerId:
                   event.secondary_player_id,
 
-                minute:
-                  event.minute,
-
-                createdAt:
+                minute: event.minute,
+                 scoringTeamId: event.scoring_team_id,
+                 isOwnGoal: event.is_own_goal,
+                 createdAt:
                   event.created_at,
               }),
             )}

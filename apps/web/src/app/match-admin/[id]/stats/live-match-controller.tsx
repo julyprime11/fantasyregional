@@ -21,6 +21,7 @@ import {
   startLiveMatchAction,
   startLiveSecondHalfAction,
   updateTeamCleanSheetAction,
+  registerUnattributedMatchGoalAction,
   type LiveMatchActionState,
 } from "./actions";
 
@@ -35,6 +36,8 @@ type Props = {
 
   homeTeam: string;
   awayTeam: string;
+  homeTeamId: string;
+  awayTeamId: string;
 
   homeScore:
     | number
@@ -61,6 +64,8 @@ export default function LiveMatchController({
   matchId,
   homeTeam,
   awayTeam,
+  homeTeamId,
+  awayTeamId,
   homeScore,
   awayScore,
   phase,
@@ -112,6 +117,33 @@ export default function LiveMatchController({
     useState(
       managedTeams,
     );
+
+  const [opponentGoalMinute, setOpponentGoalMinute] = useState("");
+  const [opponentScoringTeamId, setOpponentScoringTeamId] = useState(
+    managedTeams.length === 1
+      ? managedTeams[0].id === homeTeamId ? awayTeamId : homeTeamId
+      : awayTeamId,
+  );
+
+  function saveOpponentGoal() {
+    const minute = Number(opponentGoalMinute);
+    if (!Number.isSafeInteger(minute) || minute < 1 || minute > 150) {
+      setMessage("Introduce un minuto válido entre 1 y 150.");
+      setMessageType("error");
+      return;
+    }
+    startTransition(async () => {
+      const result = await registerUnattributedMatchGoalAction(
+        matchId, opponentScoringTeamId, minute, false,
+      );
+      setMessage(result.message);
+      setMessageType(result.status === "success" ? "success" : "error");
+      if (result.status === "success") {
+        setOpponentGoalMinute("");
+        router.refresh();
+      }
+    });
+  }
 
   /*
    * MODAL RESULTADO FINAL
@@ -541,6 +573,47 @@ export default function LiveMatchController({
               {awayTeam}
             </p>
           </div>
+
+          {running && (
+            <div className="mt-5 rounded-xl bg-white/10 p-3 text-left">
+              <p className="text-sm font-black">⚽ Gol rival</p>
+              <p className="mt-1 text-[11px] text-white/70">
+                Registra el minuto de cada gol recibido sin dar de alta jugadores rivales.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">Equipo que marca</span>
+                  <select
+                    value={opponentScoringTeamId}
+                    onChange={(event) => setOpponentScoringTeamId(event.target.value)}
+                    disabled={pending}
+                    className="min-h-11 w-full rounded-lg bg-zinc-800 px-2 text-xs font-semibold text-white"
+                  >
+                    <option value={homeTeamId}>{homeTeam}</option>
+                    <option value={awayTeamId}>{awayTeam}</option>
+                  </select>
+                </label>
+                <label className="w-20">
+                  <span className="sr-only">Minuto del gol</span>
+                  <input
+                    type="number" min={1} max={150} inputMode="numeric"
+                    value={opponentGoalMinute}
+                    onChange={(event) => setOpponentGoalMinute(event.target.value)}
+                    placeholder="Min."
+                    disabled={pending}
+                    className="min-h-11 w-full rounded-lg bg-zinc-800 px-2 text-center text-sm font-bold text-white"
+                  />
+                </label>
+                <button
+                  type="button" onClick={saveOpponentGoal}
+                  disabled={pending || !opponentGoalMinute}
+                  className="min-h-11 rounded-lg bg-[#d8f36a] px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
+                >
+                  Guardar gol
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* BOTONES DEL PARTIDO */}
           <div className="mt-6">
