@@ -324,7 +324,7 @@ test("players with zero minutes always receive zero including captain", () => {
   assert.equal(result.points, 0);
   assert.deepEqual(result.breakdown, {
     minutes: 0, goals: 0, assists: 0,
-    clean_sheet: 0, cards: 0, rating: 0, mvp: 0,
+    clean_sheet: 0, goals_conceded: 0, cards: 0, rating: 0, mvp: 0,
   });
   assert.equal(result.rateable, false);
   assert.equal(result.rounded_rating, null);
@@ -356,4 +356,37 @@ test("conceded goals count only during participation window", () => {
   assert.equal(countGoalsConcededOnField(goalMinutes, 0, 90), 3);
   assert.equal(countGoalsConcededOnField(goalMinutes, 60, 60), 0);
   assert.throws(() => countGoalsConcededOnField(goalMinutes, 70, 60), RangeError);
+});
+
+test("player fantasy score includes conceded goals and captain doubles the penalty", () => {
+  const defender = calculateFantasyPlayerPoints(createPlayerInput({
+    position: "CB", minutes_played: 90, starter: true,
+    goals_conceded_on_field: 3,
+  }));
+  assert.equal(defender.breakdown.goals_conceded, -1);
+  assert.equal(defender.points, 2); // 3 minutos, -1 encajados
+  assert.equal(getFantasyCaptainBonus([defender], defender.player_id), 2);
+
+  const keeper = calculateFantasyPlayerPoints(createPlayerInput({
+    position: "GK", minutes_played: 90, starter: true,
+    goals_conceded_on_field: 3,
+  }));
+  assert.equal(keeper.breakdown.goals_conceded, -3);
+  assert.equal(keeper.points, 0);
+
+  const unavailable = calculateFantasyPlayerPoints(createPlayerInput({
+    position: "CB", minutes_played: 90,
+    goals_conceded_on_field: null,
+  }));
+  assert.equal(unavailable.breakdown.goals_conceded, 0);
+  assert.equal(unavailable.points, 3);
+
+  const nonParticipant = calculateFantasyPlayerPoints(createPlayerInput({
+    position: "GK", goals_conceded_on_field: 7,
+  }));
+  assert.equal(nonParticipant.breakdown.goals_conceded, 0);
+  assert.equal(nonParticipant.points, 0);
+  assert.throws(() => calculateFantasyPlayerPoints(createPlayerInput({
+    minutes_played: 90, goals_conceded_on_field: -1,
+  })), RangeError);
 });

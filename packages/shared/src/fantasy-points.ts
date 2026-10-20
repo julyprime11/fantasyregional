@@ -34,6 +34,9 @@ export type FantasyPlayerPointsInput = {
 
   match_minutes: number;
 
+  /** null: cronología incompleta, no se aplica penalización estimada. */
+  goals_conceded_on_field?: number | null;
+
   panel_rating: number | null;
 
   is_mvp: boolean;
@@ -47,6 +50,8 @@ export type FantasyPlayerPointsBreakdown = {
   assists: number;
 
   clean_sheet: number;
+
+  goals_conceded: number;
 
   cards: number;
 
@@ -301,6 +306,7 @@ export function calculateFantasyPlayerPoints(
     input.yellow_cards,
     input.red_cards,
     input.match_minutes,
+    ...(input.goals_conceded_on_field == null ? [] : [input.goals_conceded_on_field]),
   ];
 
   if (
@@ -330,6 +336,7 @@ export function calculateFantasyPlayerPoints(
         goals: 0,
         assists: 0,
         clean_sheet: 0,
+        goals_conceded: 0,
         cards: 0,
         rating: 0,
         mvp: 0,
@@ -361,6 +368,10 @@ export function calculateFantasyPlayerPoints(
       input.clean_sheet,
     );
 
+  const concededPoints = input.goals_conceded_on_field == null
+    ? 0
+    : getGoalsConcededFantasyPoints(input.position, input.goals_conceded_on_field);
+
   const cardsPoints =
     getCardsFantasyPoints(
       input.yellow_cards,
@@ -391,6 +402,8 @@ export function calculateFantasyPlayerPoints(
     clean_sheet:
       cleanSheetPoints,
 
+    goals_conceded: concededPoints,
+
     cards:
       cardsPoints,
 
@@ -406,6 +419,7 @@ export function calculateFantasyPlayerPoints(
     breakdown.goals +
     breakdown.assists +
     breakdown.clean_sheet +
+    breakdown.goals_conceded +
     breakdown.cards +
     breakdown.rating +
     breakdown.mvp;
