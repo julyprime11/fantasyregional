@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   calculateFantasyPlayerPoints,
+  getMatchGoalsConcededOnField,
   calculatePlayerRating,
   DEFAULT_RATING_CONFIG,
   FANTASY_MVP_POINTS,
@@ -31,6 +32,8 @@ import {
   type MatchPlayerDetails,
 } from "./match-players";
 
+import { getMatchEvents } from "./match-events";
+
 type ResultRow = {
   entry: MatchPlayerDetails;
 
@@ -50,6 +53,7 @@ type ResultRow = {
    */
   fantasy:
     FantasyPlayerPointsResult | null;
+  goalsConcededOnField: number | null;
 };
 
 export type MatchResults =
@@ -146,6 +150,7 @@ export async function getMatchResults(
     await getMatchPlayers(
       matchId,
     );
+  const events = await getMatchEvents(matchId);
 
   const client =
     await createServerSupabaseClient();
@@ -260,6 +265,26 @@ export async function getMatchResults(
       ),
     );
 
+  const goalsConceded = getMatchGoalsConcededOnField(
+    {
+      home_team_id: match.home_team_id,
+      away_team_id: match.away_team_id,
+      home_score: match.home_score,
+      away_score: match.away_score,
+      match_minutes: matchMinutes,
+    },
+    squad.map((entry) => ({
+      player_id: entry.player_id,
+      team_id: entry.team_id,
+      starter: entry.starter,
+      minutes_played: entry.minutes_played,
+      entered_minute: entry.entered_minute,
+      dismissal_minute: entry.dismissal_minute,
+      red_cards: entry.red_cards,
+    })),
+    events,
+  );
+
   /*
    * Primer paso:
    *
@@ -355,6 +380,8 @@ export async function getMatchResults(
                 match_minutes:
                   matchMinutes,
 
+                goals_conceded_on_field: goalsConceded?.get(entry.player_id) ?? null,
+
                 /*
                  * final_rating contiene ahora
                  * la valoración humana ponderada.
@@ -380,6 +407,7 @@ export async function getMatchResults(
           entry,
           rating,
           fantasy,
+          goalsConcededOnField: goalsConceded?.get(entry.player_id) ?? null,
         };
       },
     );

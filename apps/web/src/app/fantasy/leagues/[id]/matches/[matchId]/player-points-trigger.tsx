@@ -40,6 +40,10 @@ const POINT_ROWS: ReadonlyArray<{
     label: "Portería a cero",
   },
   {
+    key: "goals_conceded",
+    label: "Goles encajados",
+  },
+  {
     key: "cards",
     label: "Tarjetas",
   },

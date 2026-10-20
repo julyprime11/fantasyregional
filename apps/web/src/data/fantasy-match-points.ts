@@ -67,6 +67,8 @@ export type FantasyMatchPlayerPoints = {
     clean_sheet:
       number;
 
+    goals_conceded: number;
+
     cards:
       number;
 
@@ -295,6 +297,8 @@ export async function getFantasyMatchPoints(
             match_minutes:
               matchMinutes,
 
+            goals_conceded_on_field: result.goalsConcededOnField,
+
             panel_rating:
               result.rating
                 .final_rating,
@@ -422,6 +426,8 @@ export async function getFantasyMatchPoints(
 
               clean_sheet:
                 0,
+
+              goals_conceded: 0,
 
               cards:
                 0,
