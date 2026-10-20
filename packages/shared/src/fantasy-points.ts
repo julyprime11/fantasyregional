@@ -223,6 +223,112 @@ export function countGoalsConcededOnField(
   ).length;
 }
 
+export type ConcededGoalEvent = {
+  event_type: "goal" | "substitution" | "red_card" | string;
+  player_id: string | null;
+  secondary_player_id: string | null;
+  minute: number;
+  scoring_team_id: string | null;
+  created_at: string;
+  id: string;
+};
+
+export type ConcededGoalParticipant = {
+  player_id: string;
+  team_id: string;
+  starter: boolean;
+  minutes_played: number;
+  entered_minute: number | null;
+  dismissal_minute: number | null;
+  red_cards: number;
+};
+
+export type ConcededGoalMatch = {
+  home_team_id: string;
+  away_team_id: string;
+  home_score: number | null;
+  away_score: number | null;
+  match_minutes: number;
+};
+
+/**
+ * Reproduce el timeline. Si el resultado no coincide o faltan datos
+ * esenciales, devuelve null: nunca descuenta puntos estimados.
+ * A igualdad de minuto, created_at fija el orden de acciones.
+ */
+export function getMatchGoalsConcededOnField(
+  match: ConcededGoalMatch,
+  participants: readonly ConcededGoalParticipant[],
+  events: readonly ConcededGoalEvent[],
+): Map<string, number> | null {
+  const all = [...events].sort((a, b) =>
+    a.minute - b.minute ||
+    a.created_at.localeCompare(b.created_at) ||
+    a.id.localeCompare(b.id),
+  );
+  const teams = [match.home_team_id, match.away_team_id];
+  if (
+    match.home_score === null || match.away_score === null ||
+    teams[0] === teams[1] ||
+    !validateNonNegativeInteger(match.home_score) ||
+    !validateNonNegativeInteger(match.away_score)
+  ) return null;
+
+  const byPlayer = new Map(participants.map((p) => [p.player_id, p]));
+  const counts = new Map(participants.map((p) => [p.player_id, 0]));
+  const active = new Set(
+    participants.filter((p) => p.starter && p.minutes_played > 0)
+      .map((p) => p.player_id),
+  );
+  let homeGoals = 0;
+  let awayGoals = 0;
+
+  for (const event of all) {
+    if (!validateNonNegativeInteger(event.minute) || event.minute > 150) return null;
+    if (event.event_type === "substitution") {
+      if (!event.player_id || !event.secondary_player_id ||
+        !active.has(event.player_id) || active.has(event.secondary_player_id)) return null;
+      const outgoing = byPlayer.get(event.player_id);
+      const incoming = byPlayer.get(event.secondary_player_id);
+      if (!outgoing || !incoming || outgoing.team_id !== incoming.team_id) return null;
+      active.delete(event.player_id);
+      active.add(event.secondary_player_id);
+    } else if (event.event_type === "red_card") {
+      if (!event.player_id) return null;
+      active.delete(event.player_id);
+    } else if (event.event_type === "goal") {
+      const scorerTeam = event.scoring_team_id ??
+        (event.player_id ? byPlayer.get(event.player_id)?.team_id : null);
+      if (!scorerTeam || !teams.includes(scorerTeam)) return null;
+      if (scorerTeam === teams[0]) homeGoals++;
+      else awayGoals++;
+      for (const playerId of active) {
+        const player = byPlayer.get(playerId);
+        if (player && player.team_id !== scorerTeam) {
+          counts.set(playerId, (counts.get(playerId) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  if (homeGoals !== match.home_score || awayGoals !== match.away_score) return null;
+
+  // Si un jugador participó pero no hay trazabilidad de la sustitución
+  // o expulsión, no se puede atribuir con precisión sus goles.
+  for (const player of participants) {
+    if (player.minutes_played === 0) continue;
+    if (player.starter && player.minutes_played < match.match_minutes &&
+      active.has(player.player_id)) return null;
+    if (!player.starter && player.entered_minute === null) return null;
+    if (!player.starter && !all.some((e) =>
+      e.event_type === "substitution" && e.secondary_player_id === player.player_id
+    )) return null;
+    if (player.red_cards > 0 && !all.some((e) =>
+      e.event_type === "red_card" && e.player_id === player.player_id
+    )) return null;
+  }
+  return counts;
+}
+
 export function getCardsFantasyPoints(
   yellowCards: number,
   redCards: number,
