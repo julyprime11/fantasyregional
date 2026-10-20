@@ -7,6 +7,7 @@ import {
   FANTASY_MVP_POINTS,
   getFantasyCaptainBonus,
   getGoalsConcededFantasyPoints,
+  getMatchGoalsConcededOnField,
   countGoalsConcededOnField,
   getRatingFantasyPoints,
 } from "../src/fantasy-points.ts";
@@ -389,4 +390,100 @@ test("player fantasy score includes conceded goals and captain doubles the penal
   assert.throws(() => calculateFantasyPlayerPoints(createPlayerInput({
     minutes_played: 90, goals_conceded_on_field: -1,
   })), RangeError);
+});
+
+const matchForConceded = {
+  home_team_id: "home", away_team_id: "away",
+  home_score: 0, away_score: 3, match_minutes: 90,
+};
+const participant = (player_id, overrides = {}) => ({
+  player_id, team_id: "home", starter: true,
+  minutes_played: 90, entered_minute: 0,
+  dismissal_minute: null, red_cards: 0, ...overrides,
+});
+const event = (event_type, minute, extra = {}, order = 0) => ({
+  id: String(order), event_type, minute,
+  player_id: null, secondary_player_id: null,
+  scoring_team_id: null, created_at: `2026-10-20T12:${String(order).padStart(2,"0")}:00Z`,
+  ...extra,
+});
+const concedingGoal = (minute, order) =>
+  event("goal", minute, {scoring_team_id: "away"}, order);
+
+test("chronological goals: substituted defender concedes two, substitute one", () => {
+  const squad = [
+    participant("starter", {minutes_played:60}),
+    participant("sub", {starter:false, minutes_played:30, entered_minute:60}),
+  ];
+  const timeline = [
+    concedingGoal(20, 1),
+    concedingGoal(55, 2),
+    event("substitution", 60, {player_id:"starter",secondary_player_id:"sub"},3),
+    concedingGoal(80, 4),
+  ];
+  const conceded = getMatchGoalsConcededOnField(matchForConceded, squad, timeline);
+  assert.equal(conceded?.get("starter"), 2);
+  assert.equal(conceded?.get("sub"), 1);
+  assert.equal(getGoalsConcededFantasyPoints("CB", conceded.get("starter")), -1);
+  assert.equal(getGoalsConcededFantasyPoints("CB", conceded.get("sub")), 0);
+});
+
+test("dismissal stops conceded-goal counting, full-match starter counts all", () => {
+  const squad = [
+    participant("sent-off", {minutes_played:60, red_cards:1, dismissal_minute:60}),
+    participant("stays"),
+  ];
+  const events = [
+    concedingGoal(20,1),concedingGoal(55,2),
+    event("red_card",60,{player_id:"sent-off"},3),
+    concedingGoal(80,4),
+  ];
+  const conceded = getMatchGoalsConcededOnField(matchForConceded,squad,events);
+  assert.equal(conceded?.get("sent-off"),2);
+  assert.equal(conceded?.get("stays"),3);
+});
+
+test("own goal counts for the team whose scoreboard rises", () => {
+  const squad = [participant("p")];
+  const timeline = [
+    event("goal",20,{scoring_team_id:"away",player_id:"p"},1),
+    concedingGoal(55,2),concedingGoal(80,3),
+  ];
+  const conceded = getMatchGoalsConcededOnField(matchForConceded,squad,timeline);
+  assert.equal(conceded?.get("p"),3);
+});
+
+test("same-minute substitutions respect chronological insertion order", () => {
+  const match = {...matchForConceded, away_score:1};
+  const squad = [
+    participant("starter",{minutes_played:60}),
+    participant("sub",{starter:false,minutes_played:30,entered_minute:60}),
+  ];
+  const events = [
+    event("substitution",60,{player_id:"starter",secondary_player_id:"sub"},1),
+    concedingGoal(60,2),
+  ];
+  const conceded = getMatchGoalsConcededOnField(match,squad,events);
+  assert.equal(conceded?.get("starter"),0);
+  assert.equal(conceded?.get("sub"),1);
+});
+
+test("incomplete goals or unknown participation never produce speculative penalties", () => {
+  const match = {...matchForConceded, away_score:2};
+  assert.equal(
+    getMatchGoalsConcededOnField(match,[participant("p")],[concedingGoal(20,1)]),
+    null,
+  );
+  assert.equal(
+    getMatchGoalsConcededOnField({...match,away_score:1},[
+      participant("starter",{minutes_played:60}),
+    ],[concedingGoal(20,1)]),
+    null,
+  );
+  assert.equal(
+    getMatchGoalsConcededOnField({...match,away_score:1},[
+      participant("sub",{starter:false,minutes_played:30,entered_minute:60}),
+    ],[concedingGoal(80,1)]),
+    null,
+  );
 });
