@@ -318,7 +318,6 @@ export function getMatchGoalsConcededOnField(
     if (player.minutes_played === 0) continue;
     if (player.starter && player.minutes_played < match.match_minutes &&
       active.has(player.player_id)) return null;
-    if (!player.starter && player.entered_minute === null) return null;
     if (!player.starter && !all.some((e) =>
       e.event_type === "substitution" && e.secondary_player_id === player.player_id
     )) return null;
