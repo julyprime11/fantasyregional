@@ -479,6 +479,7 @@ export default async function MatchAdminResultsPage({
                     entry,
                     rating,
                     fantasy,
+                    goalsConcededOnField,
                   },
                   index,
                 ) => {
@@ -727,6 +728,34 @@ export default async function MatchAdminResultsPage({
                                 }
                               />
 
+                              {goalsConcededOnField === null && entry.minutes_played > 0 ? (
+                                <div className="rounded-lg bg-amber-50 px-2 py-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] font-semibold text-amber-900">
+                                      Goles encajados
+                                    </span>
+                                    <span className="text-[10px] font-black text-amber-800">
+                                      Sin verificar
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-[9px] leading-4 text-amber-800">
+                                    Sin penalización: el marcador y los eventos o cambios registrados no permiten reconstruir todos los goles con seguridad.
+                                  </p>
+                                </div>
+                              ) : (
+                                <div>
+                                  <PointRow
+                                    label="Goles encajados"
+                                    value={fantasy.breakdown.goals_conceded}
+                                  />
+                                  {goalsConcededOnField !== null && entry.minutes_played > 0 && (
+                                    <p className="text-[9px] text-zinc-400">
+                                      {goalsConcededOnField} recibido{goalsConcededOnField === 1 ? "" : "s"} mientras jugaba
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
                               <PointRow
                                 label="Tarjetas"
                                 value={
@@ -798,7 +827,7 @@ export default async function MatchAdminResultsPage({
           </p>
 
           <p className="mt-1.5 text-[10px] leading-4 text-[#557368]">
-            Después se suman los puntos por minutos, goles, asistencias, portería a cero, tarjetas y valoración. El total puede ser positivo o negativo.
+            Después se suman los puntos por minutos, goles, asistencias, portería a cero, goles encajados, tarjetas y valoración. Los goles encajados solo se descuentan cuando pueden verificarse con la cronología del encuentro.
           </p>
         </section>
       </div>
