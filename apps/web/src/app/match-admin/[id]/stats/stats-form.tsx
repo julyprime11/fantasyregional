@@ -563,10 +563,10 @@ export default function StatsForm({
   }
 
   return (
-    <div className="mt-5 space-y-5">
+    <div className="mt-3 space-y-3">
       {/* ESTADO REALTIME */}
       <div
-        className={`flex items-center justify-between rounded-xl px-3 py-2 ${
+        className={`flex items-center justify-between rounded-xl px-2.5 py-1.5 ${
           realtimeStatus ===
           "connected"
             ? "bg-[#edf5f1]"
@@ -619,48 +619,27 @@ export default function StatsForm({
       </div>
 
       {/* MINUTOS AUTOMÁTICOS */}
-      <section className="rounded-[1.2rem] bg-[#e8f2ed] p-4">
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#557368]">
-          Minutos automáticos
-        </p>
-
-        <div className="mt-2 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-3xl font-black text-[#0f3d2e]">
-              {minutes}
-              <span className="ml-1 text-base">
-                &apos;
-              </span>
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-[#557368]">
-              Se calculan mediante el cronómetro y las sustituciones.
-            </p>
-          </div>
-
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0f3d2e] text-white">
-            ⏱
+      <section className="flex items-center justify-between gap-3 rounded-xl bg-[#e8f2ed] px-3 py-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span aria-hidden="true" className="text-lg">⏱</span>
+          <div className="min-w-0">
+            <p className="text-[11px] font-black text-[#0f3d2e]">Minutos automáticos</p>
+            <p className="text-[10px] text-[#557368]">Cronómetro y sustituciones</p>
           </div>
         </div>
+        <p className="shrink-0 text-2xl font-black tabular-nums text-[#0f3d2e]">
+          {minutes}<span className="ml-0.5 text-sm">&apos;</span>
+        </p>
       </section>
 
       {/* ESTADÍSTICAS RÁPIDAS */}
       <section>
-        <div>
-          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
-            En directo
-          </p>
-
-          <h3 className="mt-1 text-lg font-black text-zinc-950">
-            Estadísticas rápidas
-          </h3>
-
-          <p className="mt-1 text-xs leading-5 text-zinc-500">
-            Los cambios se guardan automáticamente y aparecen en los demás dispositivos.
-          </p>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-sm font-black text-zinc-950">Estadísticas rápidas</h3>
+          <span className="text-[10px] font-semibold text-zinc-500">Guardado automático</span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <QuickStatControl
             icon="⚽"
             label="Goles"
@@ -826,40 +805,14 @@ export default function StatsForm({
       </section>
 
       {/* CLEAN SHEET SOLO INFORMATIVO */}
-      <section
-        className={`rounded-[1.2rem] p-4 ${
-          cleanSheetValue
-            ? "bg-emerald-50"
-            : "bg-zinc-50"
-        }`}
-      >
-        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-          Equipo
-        </p>
-
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <div>
-            <p className="font-black text-zinc-950">
-              Portería a cero
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-zinc-500">
-              Se gestiona para todo el equipo desde la pantalla del partido.
-            </p>
-          </div>
-
-          <span
-            className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-black ${
-              cleanSheetValue
-                ? "bg-emerald-600 text-white"
-                : "bg-zinc-200 text-zinc-500"
-            }`}
-          >
-            {cleanSheetValue
-              ? "SÍ"
-              : "NO"}
-          </span>
+      <section className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 ${cleanSheetValue ? "bg-emerald-50" : "bg-zinc-50"}`}>
+        <div className="min-w-0">
+          <p className="text-xs font-black text-zinc-950">🧤 Portería a cero</p>
+          <p className="text-[10px] text-zinc-500">Se gestiona por equipo</p>
         </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${cleanSheetValue ? "bg-emerald-600 text-white" : "bg-zinc-200 text-zinc-500"}`}>
+          {cleanSheetValue ? "SÍ" : "NO"}
+        </span>
       </section>
 
       {/* MARCAR COMPLETADO */}
@@ -867,7 +820,7 @@ export default function StatsForm({
         action={
           formAction
         }
-        className="border-t border-zinc-100 pt-5"
+        className="border-t border-zinc-100 pt-3"
       >
         {/*
          * El parser de la action sigue esperando
@@ -959,11 +912,11 @@ export default function StatsForm({
           disabled={
             pending
           }
-          className="flex min-h-14 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 font-semibold text-white disabled:opacity-50"
+          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-50"
         >
           {pending
             ? "Guardando..."
-            : "Marcar estadísticas como completadas"}
+            : "Marcar estadísticas completadas"}
         </button>
       </form>
     </div>
@@ -994,7 +947,7 @@ function QuickStatControl({
   onPlus: () => void;
 }) {
   return (
-    <div className="rounded-[1.2rem] bg-zinc-50 p-3 ring-1 ring-black/5">
+    <div className="rounded-xl bg-zinc-50 p-2.5 ring-1 ring-black/5">
       <div className="flex items-center gap-2">
         <span className="text-base">
           {icon}
@@ -1005,7 +958,7 @@ function QuickStatControl({
         </p>
       </div>
 
-      <div className="mt-3 grid grid-cols-[38px_1fr_38px] items-center gap-2">
+      <div className="mt-1.5 grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-1">
         <button
           type="button"
           disabled={
@@ -1015,13 +968,13 @@ function QuickStatControl({
           onClick={
             onMinus
           }
-          className="flex h-9 items-center justify-center rounded-lg bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
+          className="flex h-11 items-center justify-center rounded-lg bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
           aria-label={`Restar ${label}`}
         >
           −
         </button>
 
-        <p className="text-center text-2xl font-black text-zinc-950">
+        <p className="text-center text-xl font-black tabular-nums text-zinc-950">
           {pending
             ? "…"
             : value}
@@ -1035,7 +988,7 @@ function QuickStatControl({
           onClick={
             onPlus
           }
-          className="flex h-9 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
+          className="flex h-11 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
           aria-label={`Sumar ${label}`}
         >
           +
