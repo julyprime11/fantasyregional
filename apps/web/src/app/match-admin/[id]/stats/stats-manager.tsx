@@ -2184,7 +2184,7 @@ export default function StatsManager({
 
           <div
 
-            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-[2rem] bg-white p-5 shadow-2xl sm:rounded-[2rem]"
+            className="max-h-[96dvh] w-full max-w-xl overflow-y-auto rounded-t-[1.5rem] bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[1.5rem] sm:p-4"
 
             onClick={(
 
@@ -2209,9 +2209,6 @@ export default function StatsManager({
                     selectedPlayer
 
                   }
-
-                  large
-
                 />
 
 
@@ -2226,7 +2223,7 @@ export default function StatsManager({
 
 
 
-                  <h2 className="mt-1 text-2xl font-black tracking-tight text-zinc-950">
+                  <h2 className="mt-0.5 text-xl font-black leading-tight tracking-tight text-zinc-950">
 
                     {
 
@@ -2238,7 +2235,7 @@ export default function StatsManager({
 
 
 
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-0.5 text-xs leading-4 text-zinc-500">
 
                     {
 
@@ -2258,11 +2255,11 @@ export default function StatsManager({
 
 
 
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
 
                     <span
 
-                      className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+                      className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
 
                         selectedPlayer.starter
 
@@ -2288,7 +2285,7 @@ export default function StatsManager({
 
                       <span
 
-                        className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+                        className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
 
                           selectedPlayer.onField
 
@@ -2314,7 +2311,7 @@ export default function StatsManager({
 
                     <span
 
-                      className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+                      className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
 
                         selectedPlayer.cleanSheet
 
@@ -2330,9 +2327,9 @@ export default function StatsManager({
 
                       {selectedPlayer.cleanSheet
 
-                        ? "Portería a cero"
+                        ? "A cero"
 
-                        : "Sin portería a cero"}
+                        : "Sin P. cero"}
 
                     </span>
 
@@ -2358,6 +2355,8 @@ export default function StatsManager({
 
                 }
 
+                aria-label="Cerrar estadísticas"
+
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-black text-zinc-700"
 
               >
@@ -2369,6 +2368,94 @@ export default function StatsManager({
             </div>
 
 
+
+            {/* EDICIÓN DEL XI SOLO ANTES DEL PARTIDO */}
+
+            {!matchStarted &&
+
+              selectedPlayer.starter && (
+
+                <button
+
+                  type="button"
+
+                  disabled={
+
+                    pending
+
+                  }
+
+                  onClick={() => {
+
+                    removeStarter(
+
+                      selectedPlayer,
+
+                    );
+
+
+
+                    setSelectedEntryId(
+
+                      null,
+
+                    );
+
+                  }}
+
+                  className="mt-2 min-h-11 w-full rounded-xl bg-red-50 px-3 text-sm font-black text-red-700 disabled:opacity-50"
+
+                >
+
+                  Quitar del once inicial
+
+                </button>
+
+              )}
+
+
+
+            {!matchStarted &&
+
+              !selectedPlayer.starter && (
+
+                <button
+
+                  type="button"
+
+                  disabled={
+
+                    pending
+
+                  }
+
+                  onClick={() => {
+
+                    addStarter(
+
+                      selectedPlayer,
+
+                    );
+
+
+
+                    setSelectedEntryId(
+
+                      null,
+
+                    );
+
+                  }}
+
+                  className="mt-2 min-h-11 w-full rounded-xl bg-zinc-100 px-3 text-sm font-black text-zinc-950 disabled:opacity-50"
+
+                >
+
+                  Añadir al once inicial
+
+                </button>
+
+              )}
 
             {/* SUSTITUCIÓN */}
 
@@ -2390,7 +2477,7 @@ export default function StatsManager({
 
                   }
 
-                  className="mt-5 flex min-h-12 w-full items-center justify-center rounded-[1rem] bg-[#e8f2ed] px-4 text-sm font-black text-[#0f3d2e]"
+                  className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#e8f2ed] px-3 text-sm font-black text-[#0f3d2e]"
 
                 >
 
@@ -2474,94 +2561,6 @@ export default function StatsManager({
             />
 
 
-
-            {/* EDICIÓN DEL XI SOLO ANTES DEL PARTIDO */}
-
-            {!matchStarted &&
-
-              selectedPlayer.starter && (
-
-                <button
-
-                  type="button"
-
-                  disabled={
-
-                    pending
-
-                  }
-
-                  onClick={() => {
-
-                    removeStarter(
-
-                      selectedPlayer,
-
-                    );
-
-
-
-                    setSelectedEntryId(
-
-                      null,
-
-                    );
-
-                  }}
-
-                  className="mt-4 min-h-12 w-full rounded-[1rem] bg-red-50 px-4 font-black text-red-700 disabled:opacity-50"
-
-                >
-
-                  Quitar del once inicial
-
-                </button>
-
-              )}
-
-
-
-            {!matchStarted &&
-
-              !selectedPlayer.starter && (
-
-                <button
-
-                  type="button"
-
-                  disabled={
-
-                    pending
-
-                  }
-
-                  onClick={() => {
-
-                    addStarter(
-
-                      selectedPlayer,
-
-                    );
-
-
-
-                    setSelectedEntryId(
-
-                      null,
-
-                    );
-
-                  }}
-
-                  className="mt-4 min-h-12 w-full rounded-[1rem] bg-zinc-100 px-4 font-black text-zinc-950 disabled:opacity-50"
-
-                >
-
-                  Añadir al once inicial
-
-                </button>
-
-              )}
 
           </div>
 
