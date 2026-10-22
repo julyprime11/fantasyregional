@@ -1,10 +1,14 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { redirect } from "next/navigation";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function getCurrentUser() {
+// Compartimos la validación de usuario entre layouts y páginas
+// durante una única petición, sin persistir sesiones entre peticiones.
+export const getCurrentUser = cache(async function getCurrentUser() {
   const supabase =
     await createServerSupabaseClient();
 
@@ -18,7 +22,7 @@ export async function getCurrentUser() {
   }
 
   return user;
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import {
   calculateFantasyPlayerPoints,
   getMatchGoalsConcededOnField,
@@ -112,7 +114,9 @@ function toPlayerPosition(
     : null;
 }
 
-export async function getMatchResults(
+// Reutilizamos el resultado durante una única petición al servidor.
+// No se cachean puntuaciones entre usuarios, peticiones ni partidos.
+export const getMatchResults = cache(async function getMatchResults(
   matchId: string,
   config: Partial<RatingConfig> =
     DEFAULT_RATING_CONFIG,
@@ -508,4 +512,4 @@ export async function getMatchResults(
 
     mvp,
   };
-}
+});
