@@ -153,7 +153,8 @@ const ROLE_PERMISSIONS: Readonly<
   /*
    * ENTRENADOR
    *
-   * Solo participa en las votaciones.
+   * Puede votar y consultar notas finales de partidos cerrados.
+   * No tiene acceso a Fantasy ni a Match Admin.
    */
   entrenador: Object.freeze({
     canPlayFantasy: false,
