@@ -385,12 +385,14 @@ export function getRatingFantasyPoints(
     points = -1;
   } else if (rounded === 5) {
     points = 0;
-  } else if (rounded <= 7) {
+  } else if (rounded === 6) {
     points = 2;
-  } else if (rounded <= 9) {
+  } else if (rounded === 7) {
     points = 3;
-  } else {
+  } else if (rounded <= 9) {
     points = 4;
+  } else {
+    points = 5;
   }
 
   return {
