@@ -87,11 +87,11 @@ La nota se redondea al entero más cercano y después se aplica:
 | 0–2 | -2 |
 | 3–4 | -1 |
 | 5 | 0 |
-| 6–7 | +1 |
-| 8–9 | +2 |
-| 10 | +3 |
+| 6–7 | +2 |
+| 8–9 | +3 |
+| 10 | +4 |
 
-La tabla anterior daba:
+Antes del primer ajuste, el sistema daba:
 
 - 0–1: -2
 - 2–3: -1
