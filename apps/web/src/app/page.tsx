@@ -23,6 +23,8 @@ import {
   getRolePermissions,
 } from "@/lib/roles";
 
+import LogoutButton from "./fantasy/logout-button";
+
 export default async function Home() {
   await connection();
 
@@ -295,6 +297,13 @@ export default async function Home() {
               </div>
             </div>
           </section>
+        )}
+
+        {/* Los roles de votación sin Fantasy también necesitan cerrar sesión. */}
+        {!showFantasy && showVoting && (
+          <div className="mt-3 flex justify-end">
+            <LogoutButton />
+          </div>
         )}
       </div>
     </main>
