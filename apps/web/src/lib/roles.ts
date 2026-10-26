@@ -49,6 +49,7 @@ export type RolePermissions = {
    * VOTACIÓN
    */
   canVote: boolean;
+  canViewFinalMatchResults: boolean;
 
   /*
    * GESTIÓN DE PARTIDOS
@@ -76,6 +77,7 @@ const NO_PERMISSIONS: Readonly<RolePermissions> =
     canViewFantasyPoints: false,
 
     canVote: false,
+    canViewFinalMatchResults: false,
 
     canAccessMatchAdmin: false,
 
@@ -108,6 +110,7 @@ const ROLE_PERMISSIONS: Readonly<
     canViewFantasyPoints: true,
 
     canVote: false,
+    canViewFinalMatchResults: false,
 
     canAccessMatchAdmin: false,
 
@@ -134,6 +137,7 @@ const ROLE_PERMISSIONS: Readonly<
     canViewFantasyPoints: true,
 
     canVote: true,
+    canViewFinalMatchResults: false,
 
     canAccessMatchAdmin: false,
 
@@ -159,6 +163,7 @@ const ROLE_PERMISSIONS: Readonly<
     canViewFantasyPoints: false,
 
     canVote: true,
+    canViewFinalMatchResults: true,
 
     canAccessMatchAdmin: false,
 
@@ -185,6 +190,7 @@ const ROLE_PERMISSIONS: Readonly<
     canViewFantasyPoints: false,
 
     canVote: true,
+    canViewFinalMatchResults: false,
 
     canAccessMatchAdmin: false,
 
@@ -220,6 +226,7 @@ const ROLE_PERMISSIONS: Readonly<
     canViewFantasyPoints: true,
 
     canVote: true,
+    canViewFinalMatchResults: true,
 
     canAccessMatchAdmin: true,
 
@@ -271,6 +278,12 @@ export function canVote(
   return getRolePermissions(
     role,
   ).canVote;
+}
+
+export function canViewFinalMatchResults(
+  role: string | null | undefined,
+): boolean {
+  return getRolePermissions(role).canViewFinalMatchResults;
 }
 
 export function canPlayFantasy(
