@@ -4,40 +4,53 @@ import {
   getTeams,
 } from "@/data/teams";
 
+import { requireUser } from "@/lib/auth";
+import { canViewFinalMatchResults } from "@/lib/roles";
+
 import {
   createServerSupabaseClient,
 } from "@/lib/supabase/server";
 
 export default async function MatchesPage() {
-  const supabase =
-    await createServerSupabaseClient();
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("voter_role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const canSeeFinalResults = canViewFinalMatchResults(profile?.voter_role);
 
   const [
     teamsResult,
     matchesResult,
-  ] =
-    await Promise.all([
-      getTeams(),
+    closedMatchesResult,
+  ] = await Promise.all([
+    getTeams(),
 
-      supabase
-        .from(
-          "matches",
-        )
-        .select(
-          `
-            id,
-            home_team_id,
-            away_team_id,
-            status,
-            voting_opens_at,
-            voting_closes_at
-          `,
-        )
-        .eq(
-          "status",
-          "voting",
-        ),
-    ]);
+    supabase
+      .from("matches")
+      .select(`
+        id,
+        home_team_id,
+        away_team_id,
+        status,
+        voting_opens_at,
+        voting_closes_at
+      `)
+      .eq("status", "voting"),
+
+    canSeeFinalResults
+      ? supabase
+          .from("matches")
+          .select("id, home_team_id, away_team_id, home_score, away_score, match_date")
+          .eq("status", "closed")
+          .order("match_date", { ascending: false })
+          .limit(30)
+      : Promise.resolve(null),
+  ]);
 
   const teams =
     teamsResult;
@@ -45,6 +58,8 @@ export default async function MatchesPage() {
   const matches =
     matchesResult.data ??
     [];
+
+  const closedMatches = closedMatchesResult?.data ?? [];
 
   const teamNames =
     new Map(
@@ -73,7 +88,9 @@ export default async function MatchesPage() {
           </h1>
 
           <p className="mt-1 text-xs leading-5 text-white/60">
-            Selecciona un partido para valorar a los jugadores.
+            {canSeeFinalResults
+              ? "Vota en los partidos abiertos y consulta las notas finales."
+              : "Selecciona un partido para valorar a los jugadores."}
           </p>
         </div>
       </header>
@@ -166,6 +183,57 @@ export default async function MatchesPage() {
                   </Link>
                 );
               },
+            )}
+          </section>
+        )}
+
+        {canSeeFinalResults && (
+          <section className="mt-7">
+            <div className="px-1">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#0f3d2e]">
+                Votaciones cerradas
+              </p>
+              <h2 className="mt-1 text-xl font-black tracking-tight text-zinc-950">
+                Resultados finales
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Consulta las notas definitivas y el MVP de los últimos partidos.
+              </p>
+            </div>
+
+            {closedMatchesResult?.error ? (
+              <p role="alert" className="mt-3 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-700">
+                No se pudieron cargar los resultados finales.
+              </p>
+            ) : closedMatches.length === 0 ? (
+              <p className="mt-3 rounded-xl bg-white p-4 text-sm text-zinc-500 shadow-sm ring-1 ring-black/5">
+                Todavía no hay partidos con las votaciones cerradas.
+              </p>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {closedMatches.map((match) => (
+                  <Link
+                    key={match.id}
+                    href={`/matches/${match.id}/results`}
+                    className="block rounded-[1.2rem] bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+                  >
+                    <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#0f3d2e]">
+                      Ver resultados finales
+                    </p>
+                    <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                      <p className="text-right text-sm font-black leading-5 text-zinc-950">
+                        {teamNames.get(match.home_team_id) ?? "Equipo local"}
+                      </p>
+                      <span className="rounded-lg bg-zinc-950 px-3 py-2 text-xs font-black tabular-nums text-white">
+                        {match.home_score ?? "—"} - {match.away_score ?? "—"}
+                      </span>
+                      <p className="text-left text-sm font-black leading-5 text-zinc-950">
+                        {teamNames.get(match.away_team_id) ?? "Equipo visitante"}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </section>
         )}
