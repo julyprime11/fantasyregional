@@ -87,10 +87,9 @@ La nota se redondea al entero más cercano y después se aplica:
 | 0–2 | -2 |
 | 3–4 | -1 |
 | 5 | 0 |
-| 6 | +2 |
-| 7 | +3 |
-| 8–9 | +4 |
-| 10 | +5 |
+| 6–7 | +2 |
+| 8–9 | +3 |
+| 10 | +4 |
 
 Antes del primer ajuste, el sistema daba:
 
@@ -103,9 +102,8 @@ Antes del primer ajuste, el sistema daba:
 - 10: +5
 - MVP: +3
 
-La nota final sigue siendo exclusivamente humana. La conversión de nota a puntos
-Fantasy no altera el resto de conceptos (minutos, goles, asistencias, portería a cero
-y tarjetas). El bonus MVP actual se mantiene en +2 puntos.
+El ajuste reduce el peso de las votaciones para que minutos, goles, asistencias,
+portería a cero y tarjetas tengan más influencia relativa en la puntuación Fantasy.
 
 ## Tests
 
