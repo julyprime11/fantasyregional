@@ -125,12 +125,17 @@ export default function LiveMatchController({
   const liveHomeScore = initialGoals.filter((goal) => goal.teamId === homeTeamId).length;
   const liveAwayScore = initialGoals.filter((goal) => goal.teamId === awayTeamId).length;
 
-  function saveOpponentGoal() {
+  function saveGoal(isOwnGoal: boolean) {
     if (!managedTeamId) return;
+
+    // Gol normal del rival: suma al rival.
+    // Gol en propia del rival: suma al equipo gestionado.
+    const scoringTeamId = isOwnGoal ? managedTeamId : rivalTeamId;
+
     setMessage("");
     setMessageType(null);
     startTransition(async () => {
-      const result = await registerLiveGoalAction(matchId, rivalTeamId, false);
+      const result = await registerLiveGoalAction(matchId, scoringTeamId, isOwnGoal);
       setMessage(result.message);
       setMessageType(result.status === "success" ? "success" : "error");
       if (result.status === "success") {
@@ -568,14 +573,23 @@ export default function LiveMatchController({
             <div className="mt-5 rounded-xl bg-white/10 p-3">
               <button
                 type="button"
-                onClick={saveOpponentGoal}
+                onClick={() => saveGoal(false)}
                 disabled={pending || !managedTeamId}
                 className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#d8f36a] px-4 text-base font-black text-zinc-950 disabled:opacity-50"
               >
                 <span className="text-2xl">+</span> Gol rival
               </button>
+              <button
+                type="button"
+                onClick={() => saveGoal(true)}
+                disabled={pending || !managedTeamId}
+                className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-black text-zinc-950 transition active:scale-[0.99] disabled:opacity-50"
+              >
+                ⚽ Gol en propia del rival
+              </button>
               <p className="mt-2 text-center text-[11px] text-white/60">
-                Guarda el gol con el minuto actual automáticamente.
+                El gol en propia suma a {managedTeams.length === 1 ? managedTeams[0].name : "tu equipo"}.
+                Ambos se registran con el minuto actual.
               </p>
               {!managedTeamId && (
                 <p className="mt-2 text-center text-xs text-amber-300">
