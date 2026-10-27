@@ -9,15 +9,19 @@
 export const FANTASY_ECONOMY = Object.freeze({
   currency: "EUR",
   initialBudget: 100_000,
+  minimumBudget: 90_000,
   maximumBudget: 120_000,
-  budgetPointsPerTier: 20,
-  budgetGainPerTier: 1_000,
+  budgetLossThreshold: 10,
+  budgetNeutralThreshold: 20,
+  budgetGainThreshold: 30,
+  budgetStrongGainThreshold: 40,
+  budgetAdjustmentStep: 1_000,
   maxBudgetGainPerMatchday: 2_000,
+  maxBudgetLossPerMatchday: 2_000,
   minimumPlayerPrice: 4_000,
   maximumPlayerPrice: 18_000,
   defaultPlayerPrice: 8_000,
   priceAdjustmentStep: 1_000,
-  initialPriceHistorySize: 3,
 });
 
 export type FantasyPlayerPricePerformance = {
@@ -58,31 +62,28 @@ function assertIntegerRange(
 }
 
 /**
- * Precio de apertura para la primera jornada económica.
- * Los resultados llegan ordenados de más antiguo a más reciente.
- * Únicamente deben pasarse puntuaciones globales definitivas.
- * Si no hay historial, el precio de referencia es 8.000 €. Los precios
- * se fijan en euros enteros sin céntimos.
+ * Precio de salida de cada jugador cuando activemos la economía.
+ * Se utiliza exclusivamente su PRIMER partido oficial con valoración
+ * Fantasy definitiva. La misma valoración global se aplica en todas
+ * las ligas; no usamos una nota o puntuación específica de una liga.
+ *
+ * null = no disputó o no tiene puntuación definitiva: 8.000 €.
+ * El partido utilizado para el precio inicial NO se procesa después
+ * como una subida/bajada adicional: así evitamos contabilizarlo dos veces.
  */
 export function getInitialFantasyPlayerPrice(
-  recentFinalPoints: readonly number[],
+  firstOfficialMatchPoints: number | null,
 ): number {
-  if (recentFinalPoints.length === 0) {
+  if (firstOfficialMatchPoints === null) {
     return FANTASY_ECONOMY.defaultPlayerPrice;
   }
+  assertFinite(firstOfficialMatchPoints, "Los puntos de la primera jornada oficial");
 
-  const latest = recentFinalPoints.slice(-FANTASY_ECONOMY.initialPriceHistorySize);
-  for (const points of latest) {
-    assertFinite(points, "Los puntos del historial");
-  }
-
-  const average = latest.reduce((sum, points) => sum + points, 0) / latest.length;
-
-  if (average <= 0) return 5_000;
-  if (average <= 3) return 7_000;
-  if (average <= 5) return 9_000;
-  if (average <= 7) return 11_000;
-  if (average <= 9) return 13_000;
+  if (firstOfficialMatchPoints <= 0) return 5_000;
+  if (firstOfficialMatchPoints <= 3) return 7_000;
+  if (firstOfficialMatchPoints <= 5) return 9_000;
+  if (firstOfficialMatchPoints <= 7) return 11_000;
+  if (firstOfficialMatchPoints <= 9) return 13_000;
   return 15_000;
 }
 
@@ -145,26 +146,65 @@ export function getNextFantasyPlayerPrice({
 }
 
 /**
- * Presupuesto por usuario/liga para la siguiente jornada.
- * El coste del XI NO se descuenta: es un límite de selección, sin fichajes.
- * null = jornada sin puntuación definitiva; no hay ingreso.
- * El ingreso se aplicará una única vez por jornada cerrada en la futura BD.
+ * Saldo del usuario dentro de una liga tras una jornada.
+ * Usamos el total Fantasy del XI ya calculado por la lógica actual:
+ * NO volvemos a calcular las puntuaciones de cada futbolista.
+ *
+ * - Menos de 10 puntos: -2.000 €.
+ * - De 10 a 19: -1.000 €.
+ * - De 20 a 29: sin cambio.
+ * - De 30 a 39: +1.000 €.
+ * - 40 o más: +2.000 €.
+ *
+ * null = no existe una alineación con puntuación definitiva: sin cambio.
+ * El saldo limita el coste de un nuevo XI pero no se gasta al alinearlo.
+ * La futura persistencia debe aplicar cada jornada UNA SOLA VEZ.
  */
 export function getNextFantasyBudget(
   currentBudget: number,
   matchdayPoints: number | null,
 ): number {
-  assertIntegerRange(currentBudget, 0, FANTASY_ECONOMY.maximumBudget, "El presupuesto");
+  assertIntegerRange(
+    currentBudget,
+    FANTASY_ECONOMY.minimumBudget,
+    FANTASY_ECONOMY.maximumBudget,
+    "El presupuesto",
+  );
   if (matchdayPoints === null) return currentBudget;
   assertFinite(matchdayPoints, "Los puntos de la jornada");
 
-  const gain = Math.min(
-    FANTASY_ECONOMY.maxBudgetGainPerMatchday,
-    Math.floor(Math.max(0, matchdayPoints) / FANTASY_ECONOMY.budgetPointsPerTier) *
-      FANTASY_ECONOMY.budgetGainPerTier,
-  );
+  const step = FANTASY_ECONOMY.budgetAdjustmentStep;
+  let change = 0;
 
-  return Math.min(FANTASY_ECONOMY.maximumBudget, currentBudget + gain);
+  if (matchdayPoints < FANTASY_ECONOMY.budgetLossThreshold) {
+    change = -FANTASY_ECONOMY.maxBudgetLossPerMatchday;
+  } else if (matchdayPoints < FANTASY_ECONOMY.budgetNeutralThreshold) {
+    change = -step;
+  } else if (matchdayPoints < FANTASY_ECONOMY.budgetGainThreshold) {
+    change = 0;
+  } else if (matchdayPoints < FANTASY_ECONOMY.budgetStrongGainThreshold) {
+    change = step;
+  } else {
+    change = FANTASY_ECONOMY.maxBudgetGainPerMatchday;
+  }
+
+  return Math.max(
+    FANTASY_ECONOMY.minimumBudget,
+    Math.min(FANTASY_ECONOMY.maximumBudget, currentBudget + change),
+  );
+}
+
+/**
+ * Saldo de apertura del usuario usando el XI de la primera jornada oficial.
+ * Si no presentó XI válido o todavía no hay puntos definitivos, usar null.
+ */
+export function getOpeningFantasyBudget(
+  firstOfficialLineupPoints: number | null,
+): number {
+  return getNextFantasyBudget(
+    FANTASY_ECONOMY.initialBudget,
+    firstOfficialLineupPoints,
+  );
 }
 
 /**
