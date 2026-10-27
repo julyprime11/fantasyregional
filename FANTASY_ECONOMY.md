@@ -12,21 +12,21 @@ Los importes son **euros ficticios del juego**, sin dinero real, transferencias,
 - El usuario no paga por alinear: el saldo en euros ficticios es un **límite de coste** que no se consume. El próximo XI se puede rehacer.
 - No se cambian ni los puntos Fantasy ni las reglas de votación, permisos, capitán o bloqueo de XI.
 
-## Precios iniciales (primer día de activación)
+## Precios de apertura: primera jornada oficial
 
-El cálculo utiliza hasta las últimas **3 puntuaciones definitivas** de cada jugador, ordenadas por partido. Los partidos sin puntuación válida no cuentan.
+Los futbolistas **ya arrancan con precios distintos** usando sus puntos Fantasy globales definitivos de la **primera jornada oficial**. No se aplicará sobre esa misma jornada una segunda subida o bajada: quedaría contabilizada dos veces.
 
-| Media Fantasy histórica | Precio inicial |
+| Puntos Fantasy del primer partido | Precio inicial |
 |---|---:|
-| Sin histórico | 8.000 € |
-| Hasta 0 | 5.000 € |
-| Más de 0 y hasta 3 | 7.000 € |
-| Más de 3 y hasta 5 | 9.000 € |
-| Más de 5 y hasta 7 | 11.000 € |
-| Más de 7 y hasta 9 | 13.000 € |
+| Sin puntuación definitiva | 8.000 € |
+| 0 o menos | 5.000 € |
+| Más de 0 hasta 3 | 7.000 € |
+| Más de 3 hasta 5 | 9.000 € |
+| Más de 5 hasta 7 | 11.000 € |
+| Más de 7 hasta 9 | 13.000 € |
 | Más de 9 | 15.000 € |
 
-Si los precios iniciales generan equipos imposibles de alinear por menos de 100.000 € (en especial plantillas pequeñas), se necesitará un análisis previo con datos reales y calibración **antes** de activar el sistema.
+La selección del partido debe ser cronológica, por jugador, utilizando solo partidos oficiales cerrados. Es obligatorio distinguir los jugadores que no participaron de quienes puntuaron cero o negativo. **Antes de activar, simularemos con datos reales** para garantizar al menos un XI válido por equipo bajo presupuesto.
 
 ## Ajuste de precio tras cada jornada definitiva
 
@@ -45,19 +45,25 @@ Se toma la puntuación Fantasy definitiva del futbolista y la **media de los jug
 - Los precios deben actualizarse **una sola vez por partido cerrado**, de forma atómica y reproducible.
 - La siguiente jornada debe usar una **instantánea de precios** congelada antes de abrir la preparación de XI. Los precios posteriores no alteran la validez de alineaciones anteriores.
 
-## Evolución del presupuesto
+## Saldo de los usuarios: también se puede perder
 
-Saldo inicial **100.000 €**; máximo absoluto **120.000 €**.
+Cada usuario dispone inicialmente de **100.000 €** en cada liga, con un mínimo de **90.000 €** y un máximo de **120.000 €**. El saldo sigue siendo un límite de selección, no una cantidad que se gaste por alinear.
 
-Al cerrar la jornada de cada usuario y liga:
-- 0 a 19 puntos: +0 €.
-- 20 a 39 puntos: +1.000 €.
-- 40 o más: +2.000 € (límite de incremento por jornada).
-- Una puntuación negativa no resta presupuesto; una jornada pendiente tampoco suma.
-- Se debe registrar una única concesión por **liga + usuario + partido**. Un XI ausente no recibe una bonificación por error.
-- La misma puntuación global puede alimentar varias ligas, pero el presupuesto de cada usuario **no se comparte** entre ligas.
+Tras cerrar las votaciones de una jornada, usamos el **total de puntos Fantasy del XI existente** (incluido cualquier bonus de capitán que ya forme parte de ese total), sin cambiar la fórmula:
 
-El saldo no se gasta al alinear: solo limita el coste total del XI. Este límite es deliberadamente pequeño para limitar el efecto acumulativo de los primeros clasificados.
+| Puntos del XI en la jornada | Ajuste del saldo |
+|---|---:|
+| Menos de 10 | −2.000 € |
+| 10–19 | −1.000 € |
+| 20–29 | 0 € |
+| 30–39 | +1.000 € |
+| 40 o más | +2.000 € |
+
+**Jornada 1 oficial:** el saldo de apertura se calcula usando los puntos definitivos de la alineación de esa jornada, una sola vez. Por ejemplo, 35 puntos ⇒ 101.000 € de saldo al comenzar la economía. Si no existía un XI presentado o no hay puntos definitivos, se mantiene en 100.000 € (no se inventa un resultado de cero).
+
+A partir de la segunda jornada, se actualiza con cada partido definitivamente cerrado. Se registra de forma idempotente una única operación por **liga + usuario + partido**, sin permitir que los recálculos o reintentos abonen o descuenten saldo más de una vez. Las jornadas históricas anteriores al inicio de la economía **no cambiarán sus alineaciones ni sus puntuaciones**.
+
+Es imprescindible verificar con datos reales las distribuciones de puntos antes de fijar definitivamente estos umbrales. Los límites evitan pérdidas que hagan inviable competir y subidas demasiado grandes que hagan inalcanzable al líder.
 
 ## Validación de un XI
 
@@ -67,7 +73,7 @@ La futura persistencia debe impedir escrituras parciales o duplicadas cuando dos
 
 ## Activación gradual (pendiente de desarrollo)
 
-1. Simular precios y costes con datos de partidos definitivos de producción **sin escribir en tablas reales**.
+1. Simular **la primera jornada oficial** y varias jornadas posteriores para precios, costes y variaciones positivas/negativas de saldo, sin escribir en tablas reales.
 2. Validar que existe al menos un XI posible por equipo y jornada; calibrar presupuesto/precios con esas cifras.
 3. Crear migraciones con precios globales, snapshots por partido y presupuesto por usuario/liga con historial de movimientos e idempotencia.
 4. Introducir validación del presupuesto exclusivamente para nuevas jornadas, detrás de un flag de activación; no invalidar alineaciones ni resultados anteriores.
