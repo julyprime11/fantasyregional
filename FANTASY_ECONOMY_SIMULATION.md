@@ -48,3 +48,11 @@ npm.cmd run test:fantasy-economy-simulation --workspace=@regional-fantasy/shared
 La función exportada `simulateFantasyEconomy(input)` devolverá el informe al recibir el conjunto de datos. Falta desarrollar un **adaptador de solo lectura** para datos reales, con verificación de permisos y de la disponibilidad de las valoraciones; no se deben añadir claves de servicio ni credenciales al repositorio.
 
 **La economía sigue completamente desactivada en producción.**
+
+## Calibración con primera jornada real
+
+La muestra inicial de una liga mostró 22 XI de 25 participantes; los 22 XI superarían los 100.000 € si se hubieran aplicado retroactivamente los nuevos precios. Es una comparación hipotética, no una invalidación. Los puntos de los XI puntuados estuvieron entre 65 y 83 y la regla anterior concentraba 22 de 25 saldos en 102.000 €.
+
+La regla experimental calibrada ahora usa menos de 65: -2.000 €, 65-69: -1.000 €, 70-74: sin cambio, 75-79: +1.000 €, y 80 o más: +2.000 €. Los miembros sin XI puntuado no reciben penalización. Sigue siendo una calibración provisional basada en una sola jornada.
+
+La pantalla de simulación es un archivo **local no integrado en este PR**; al cambiar umbrales debe actualizarse para que «Actual» refleje la fórmula vigente, sin confundir las comparativas con la regla oficial.
