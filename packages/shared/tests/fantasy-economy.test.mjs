@@ -54,7 +54,7 @@ test("price caps prevent runaway inflation or negative player costs", () => {
   assert.throws(() => getNextFantasyPlayerPrice({ currentPrice: 8000, fantasyPoints: 6, teamAveragePoints: null }), RangeError);
 });
 
-test("budget grows only on finalized matchdays, by at most two credits", () => {
+test("budget grows only on finalized matchdays, by at most 2,000 euros", () => {
   assert.equal(getNextFantasyBudget(100_000, null), 100000);
   assert.equal(getNextFantasyBudget(100_000, -10), 100000);
   assert.equal(getNextFantasyBudget(100_000, 19), 100000);
@@ -81,7 +81,7 @@ test("lineups exceeding the limit or containing duplicate players are rejected",
 
   const duplicate = eleven(8_000);
   duplicate[10] = { ...duplicate[0] };
-  const invalid = validateFantasyLineupBudget(duplicate, 100);
+  const invalid = validateFantasyLineupBudget(duplicate, 100_000);
   assert.equal(invalid.valid, false);
   assert.match(invalid.errors.join(" "), /duplicado/);
 });
