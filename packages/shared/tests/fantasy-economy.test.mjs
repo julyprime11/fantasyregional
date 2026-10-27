@@ -67,7 +67,7 @@ test("budget grows only on finalized matchdays, by at most 2,000 euros", () => {
   assert.throws(() => getNextFantasyBudget(121_000, 100), RangeError);
 });
 
-test("a valid XI can use the full budget, without spending credits", () => {
+test("a valid XI can use the full budget, without deducting money", () => {
   const result = validateFantasyLineupBudget(eleven(8_000), 88_000);
   assert.equal(result.valid, true);
   assert.equal(result.totalCost, 88_000);
