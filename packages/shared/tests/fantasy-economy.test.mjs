@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   FANTASY_ECONOMY,
   getInitialFantasyPlayerPrice,
+  getOpeningFantasyBudget,
   getFantasyTeamPointsAverage,
   getNextFantasyPlayerPrice,
   getNextFantasyBudget,
@@ -20,16 +21,16 @@ test("the economy starts from a 100,000-euro budget with safe limits", () => {
   assert.equal(FANTASY_ECONOMY.maximumPlayerPrice, 18_000);
 });
 
-test("initial prices use up to three latest global final match scores", () => {
-  assert.equal(getInitialFantasyPlayerPrice([]), 8_000);
-  assert.equal(getInitialFantasyPlayerPrice([-3, 0, 0]), 5_000);
-  assert.equal(getInitialFantasyPlayerPrice([1, 2, 3]), 7_000);
-  assert.equal(getInitialFantasyPlayerPrice([4, 5, 6]), 9_000);
-  assert.equal(getInitialFantasyPlayerPrice([6, 7, 8]), 11_000);
-  assert.equal(getInitialFantasyPlayerPrice([8, 9, 10]), 13_000);
-  assert.equal(getInitialFantasyPlayerPrice([11, 12, 13]), 15_000);
-  assert.equal(getInitialFantasyPlayerPrice([100, 0, 0, 0]), 5_000);
-  assert.throws(() => getInitialFantasyPlayerPrice([Number.NaN]), RangeError);
+test("opening prices use the FIRST official final match only", () => {
+  assert.equal(getInitialFantasyPlayerPrice(null), 8_000);
+  assert.equal(getInitialFantasyPlayerPrice(-3), 5_000);
+  assert.equal(getInitialFantasyPlayerPrice(0), 5_000);
+  assert.equal(getInitialFantasyPlayerPrice(3), 7_000);
+  assert.equal(getInitialFantasyPlayerPrice(5), 9_000);
+  assert.equal(getInitialFantasyPlayerPrice(7), 11_000);
+  assert.equal(getInitialFantasyPlayerPrice(9), 13_000);
+  assert.equal(getInitialFantasyPlayerPrice(10), 15_000);
+  assert.throws(() => getInitialFantasyPlayerPrice(Number.NaN), RangeError);
 });
 
 test("team average uses only players with valid global points", () => {
@@ -54,17 +55,34 @@ test("price caps prevent runaway inflation or negative player costs", () => {
   assert.throws(() => getNextFantasyPlayerPrice({ currentPrice: 8000, fantasyPoints: 6, teamAveragePoints: null }), RangeError);
 });
 
-test("budget grows only on finalized matchdays, by at most 2,000 euros", () => {
-  assert.equal(getNextFantasyBudget(100_000, null), 100000);
-  assert.equal(getNextFantasyBudget(100_000, -10), 100000);
-  assert.equal(getNextFantasyBudget(100_000, 19), 100000);
-  assert.equal(getNextFantasyBudget(100_000, 20), 101000);
-  assert.equal(getNextFantasyBudget(100_000, 39), 101000);
-  assert.equal(getNextFantasyBudget(100_000, 40), 102000);
-  assert.equal(getNextFantasyBudget(100_000, 100), 102000);
-  assert.equal(getNextFantasyBudget(119_000, 100), 120000);
-  assert.equal(getNextFantasyBudget(120_000, 100), 120000);
+test("budgets may gain, hold or lose money within a fixed band", () => {
+  assert.equal(FANTASY_ECONOMY.minimumBudget, 90_000);
+  assert.equal(getNextFantasyBudget(100_000, null), 100_000);
+  assert.equal(getNextFantasyBudget(100_000, -10), 98_000);
+  assert.equal(getNextFantasyBudget(100_000, 9), 98_000);
+  assert.equal(getNextFantasyBudget(100_000, 10), 99_000);
+  assert.equal(getNextFantasyBudget(100_000, 19), 99_000);
+  assert.equal(getNextFantasyBudget(100_000, 20), 100_000);
+  assert.equal(getNextFantasyBudget(100_000, 29), 100_000);
+  assert.equal(getNextFantasyBudget(100_000, 30), 101_000);
+  assert.equal(getNextFantasyBudget(100_000, 39), 101_000);
+  assert.equal(getNextFantasyBudget(100_000, 40), 102_000);
+  assert.equal(getNextFantasyBudget(100_000, 100), 102_000);
+  assert.equal(getNextFantasyBudget(91_000, -10), 90_000);
+  assert.equal(getNextFantasyBudget(90_000, -10), 90_000);
+  assert.equal(getNextFantasyBudget(119_000, 100), 120_000);
+  assert.equal(getNextFantasyBudget(120_000, 100), 120_000);
+  assert.throws(() => getNextFantasyBudget(89_000, 10), RangeError);
   assert.throws(() => getNextFantasyBudget(121_000, 100), RangeError);
+});
+
+test("first official lineup points set the opening user budget once", () => {
+  assert.equal(getOpeningFantasyBudget(null), 100_000);
+  assert.equal(getOpeningFantasyBudget(5), 98_000);
+  assert.equal(getOpeningFantasyBudget(15), 99_000);
+  assert.equal(getOpeningFantasyBudget(25), 100_000);
+  assert.equal(getOpeningFantasyBudget(35), 101_000);
+  assert.equal(getOpeningFantasyBudget(45), 102_000);
 });
 
 test("a valid XI can use the full budget, without deducting money", () => {
