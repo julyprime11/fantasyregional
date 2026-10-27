@@ -12,7 +12,7 @@ test("finds the cheapest valid formation rather than the eleven cheapest unrelat
   assert.ok(xi);
   assert.equal(xi.playerIds.length, 11);
   assert.equal(xi.totalCost, 88_000);
-  assert.equal(xi.formation, "3-5-2");
+  assert.equal(xi.formation, "3-4-3");
 });
 
 test("returns null if a valid formation is impossible", () => {
