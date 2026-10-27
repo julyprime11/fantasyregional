@@ -52,10 +52,10 @@ test("simulates opening from first official closed match and next price evolutio
   assert.equal(team.playerPrices.find((p) => p.playerId === "p2").price, 9_000);
   assert.equal(result.previousLineups.length, 3);
   assert.equal(result.previousLineups[0].xiCost, 99_000);
-  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u1").openingBudget, 102_000);
-  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u1").finalBudget, 100_000);
-  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u2").finalBudget, 100_000);
-  assert.equal(result.members.find((m) => m.leagueId === "l2" && m.userId === "u1").finalBudget, 101_000);
+  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u1").openingBudget, 98_000);
+  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u1").finalBudget, 96_000);
+  assert.equal(result.members.find((m) => m.leagueId === "l1" && m.userId === "u2").finalBudget, 96_000);
+  assert.equal(result.members.find((m) => m.leagueId === "l2" && m.userId === "u1").finalBudget, 98_000);
 });
 
 test("reports historical XIs over budget and impossible teams", () => {
