@@ -4,16 +4,19 @@
  * NO se llaman desde el guardado de XI ni desde Supabase todavía.
  * Los puntos Fantasy continúan siendo globales por jugador/partido.
  * La economía futura usará precios globales y presupuestos por usuario/liga.
- * Todas las cantidades son créditos enteros, nunca euros.
+ * Los importes están expresados en euros enteros ficticios (sin céntimos).
  */
 export const FANTASY_ECONOMY = Object.freeze({
-  initialBudget: 100,
-  maximumBudget: 120,
-  budgetPointsPerCredit: 20,
-  maxBudgetGainPerMatchday: 2,
-  minimumPlayerPrice: 4,
-  maximumPlayerPrice: 18,
-  defaultPlayerPrice: 8,
+  currency: "EUR",
+  initialBudget: 100_000,
+  maximumBudget: 120_000,
+  budgetPointsPerTier: 20,
+  budgetGainPerTier: 1_000,
+  maxBudgetGainPerMatchday: 2_000,
+  minimumPlayerPrice: 4_000,
+  maximumPlayerPrice: 18_000,
+  defaultPlayerPrice: 8_000,
+  priceAdjustmentStep: 1_000,
   initialPriceHistorySize: 3,
 });
 
@@ -58,7 +61,8 @@ function assertIntegerRange(
  * Precio de apertura para la primera jornada económica.
  * Los resultados llegan ordenados de más antiguo a más reciente.
  * Únicamente deben pasarse puntuaciones globales definitivas.
- * Si no hay historial, el precio de referencia es 8 créditos.
+ * Si no hay historial, el precio de referencia es 8.000 €. Los precios
+ * se fijan en euros enteros sin céntimos.
  */
 export function getInitialFantasyPlayerPrice(
   recentFinalPoints: readonly number[],
@@ -74,12 +78,12 @@ export function getInitialFantasyPlayerPrice(
 
   const average = latest.reduce((sum, points) => sum + points, 0) / latest.length;
 
-  if (average <= 0) return 5;
-  if (average <= 3) return 7;
-  if (average <= 5) return 9;
-  if (average <= 7) return 11;
-  if (average <= 9) return 13;
-  return 15;
+  if (average <= 0) return 5_000;
+  if (average <= 3) return 7_000;
+  if (average <= 5) return 9_000;
+  if (average <= 7) return 11_000;
+  if (average <= 9) return 13_000;
+  return 15_000;
 }
 
 /**
@@ -126,12 +130,13 @@ export function getNextFantasyPlayerPrice({
   assertFinite(teamAveragePoints, "La media del equipo");
 
   const difference = fantasyPoints - teamAveragePoints;
+  const step = FANTASY_ECONOMY.priceAdjustmentStep;
   let change = 0;
 
-  if (difference >= 4) change = 2;
-  else if (difference >= 2) change = 1;
-  else if (difference <= -4) change = -2;
-  else if (difference <= -2) change = -1;
+  if (difference >= 4) change = 2 * step;
+  else if (difference >= 2) change = step;
+  else if (difference <= -4) change = -2 * step;
+  else if (difference <= -2) change = -step;
 
   return Math.max(
     FANTASY_ECONOMY.minimumPlayerPrice,
@@ -155,7 +160,8 @@ export function getNextFantasyBudget(
 
   const gain = Math.min(
     FANTASY_ECONOMY.maxBudgetGainPerMatchday,
-    Math.floor(Math.max(0, matchdayPoints) / FANTASY_ECONOMY.budgetPointsPerCredit),
+    Math.floor(Math.max(0, matchdayPoints) / FANTASY_ECONOMY.budgetPointsPerTier) *
+      FANTASY_ECONOMY.budgetGainPerTier,
   );
 
   return Math.min(FANTASY_ECONOMY.maximumBudget, currentBudget + gain);
