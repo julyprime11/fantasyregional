@@ -5,6 +5,7 @@ import {
   calculatePanelRating,
   calculatePlayerRating,
   DEFAULT_RATING_CONFIG,
+  LEGACY_RATING_CONFIG,
   getResultsPhase,
   minutesCoefficient,
   selectMatchMvp,
@@ -34,13 +35,13 @@ const near = (actual, expected) =>
     `${actual} != ${expected}`,
   );
 
-test("default group weights are players 20%, directors 30% and coaches 50%", () => {
+test("V2 default group weights are players 30%, directors 35% and coaches 35%", () => {
   assert.deepEqual(
     DEFAULT_RATING_CONFIG.groupWeights,
     {
-      players: 0.2,
-      directors: 0.3,
-      coaches: 0.5,
+      players: 0.3,
+      directors: 0.35,
+      coaches: 0.35,
     },
   );
 
@@ -55,10 +56,24 @@ test("default group weights are players 20%, directors 30% and coaches 50%", () 
   );
 
   assert.equal(result.status, "rated");
-  near(result.final_rating, 8.6);
-  near(result.panel_average, 8.6);
-  assert.equal(result.rounded_rating, 9);
+  near(result.final_rating, 8.1);
+  near(result.panel_average, 8.1);
+  assert.equal(result.rounded_rating, 8);
   assert.equal(result.statistical_score, null);
+});
+
+test("V1 weighting stays available for historic matches", () => {
+  assert.deepEqual(LEGACY_RATING_CONFIG.groupWeights, {
+    players: 0.2, directors: 0.3, coaches: 0.5,
+  });
+  const historical = calculatePlayerRating(player({ votes: [
+    { score: 6, voter_role: "player" },
+    { score: 8, voter_role: "directiva" },
+    { score: 10, voter_role: "entrenador" },
+  ] }), LEGACY_RATING_CONFIG);
+  assert.equal(historical.status, "rated");
+  near(historical.final_rating, 8.6);
+  assert.equal(historical.rounded_rating, 9);
 });
 
 test("votes are averaged inside each group before applying group weights", () => {
@@ -73,7 +88,7 @@ test("votes are averaged inside each group before applying group weights", () =>
   near(panel.groups.players.average, 6);
   near(panel.groups.directors.average, 8);
   near(panel.groups.coaches.average, 8);
-  near(panel.panel_average, 7.6);
+  near(panel.panel_average, 7.4);
   assert.equal(panel.vote_count, 5);
 });
 
@@ -83,10 +98,10 @@ test("missing groups redistribute their configured weight proportionally", () =>
     { score: 8, voter_role: "directiva" },
   ]);
 
-  near(panel.groups.players.applied_weight, 0.4);
-  near(panel.groups.directors.applied_weight, 0.6);
+  near(panel.groups.players.applied_weight, 6 / 13);
+  near(panel.groups.directors.applied_weight, 7 / 13);
   near(panel.groups.coaches.applied_weight, 0);
-  near(panel.panel_average, 7.2);
+  near(panel.panel_average, 92 / 13);
 });
 
 test("legacy jugador votes remain in the players group and unknown roles are ignored", () => {
@@ -220,6 +235,27 @@ test("invalid vote scores cannot produce a normal rating", () => {
 
   assert.equal(result.status, "invalid_data");
   assert.equal(result.final_rating, null);
+});
+
+test("V1 and V2 keep their own MVP winner", () => {
+  const a = player({ player_id: "a", votes: [
+    { score: 10, voter_role: "player" },
+    { score: 5, voter_role: "directiva" },
+    { score: 3, voter_role: "entrenador" },
+  ] });
+  const b = player({ player_id: "b", votes: [
+    { score: 4, voter_role: "player" },
+    { score: 5, voter_role: "directiva" },
+    { score: 8, voter_role: "entrenador" },
+  ] });
+  assert.deepEqual(selectMatchMvp([
+    calculatePlayerRating(a, LEGACY_RATING_CONFIG),
+    calculatePlayerRating(b, LEGACY_RATING_CONFIG),
+  ]).players.map((p) => p.player_id), ["b"]);
+  assert.deepEqual(selectMatchMvp([
+    calculatePlayerRating(a, DEFAULT_RATING_CONFIG),
+    calculatePlayerRating(b, DEFAULT_RATING_CONFIG),
+  ]).players.map((p) => p.player_id), ["a"]);
 });
 
 test("MVP uses the highest unrounded human rating and keeps exact ties", () => {

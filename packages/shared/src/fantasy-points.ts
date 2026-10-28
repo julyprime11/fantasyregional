@@ -11,6 +11,9 @@ export const FANTASY_MVP_POINTS =
 
 export type FantasyRedCardReason = "direct" | "second_yellow";
 
+/** La version se fija por partido en la base de datos. */
+export type FantasyScoringVersion = "v1" | "v2";
+
 export type FantasyPlayerPointsInput = {
   player_id: string;
 
@@ -38,6 +41,9 @@ export type FantasyPlayerPointsInput = {
   goals_conceded_on_field?: number | null;
 
   panel_rating: number | null;
+
+  /** V1 = historica; V2 = nuevos tramos. Por defecto V2. */
+  scoring_version?: FantasyScoringVersion;
 
   is_mvp: boolean;
 };
@@ -348,11 +354,15 @@ export function getCardsFantasyPoints(
 
 export function getRatingFantasyPoints(
   panelRating: number | null,
+  version: FantasyScoringVersion = "v2",
 ): {
   points: number;
   rounded_rating: number | null;
   rateable: boolean;
 } {
+  if (version !== "v1" && version !== "v2") {
+    throw new RangeError("Version Fantasy no valida.");
+  }
   if (
     panelRating === null ||
     !Number.isFinite(
@@ -379,18 +389,21 @@ export function getRatingFantasyPoints(
 
   let points: number;
 
-  if (rounded <= 2) {
-    points = -2;
-  } else if (rounded <= 4) {
-    points = -1;
-  } else if (rounded === 5) {
-    points = 0;
-  } else if (rounded <= 7) {
-    points = 2;
-  } else if (rounded <= 9) {
-    points = 3;
+  if (version === "v1") {
+    // Tabla historica: no recalcular retroactivamente otras jornadas.
+    if (rounded <= 2) points = -2;
+    else if (rounded <= 4) points = -1;
+    else if (rounded === 5) points = 0;
+    else if (rounded <= 7) points = 2;
+    else if (rounded <= 9) points = 3;
+    else points = 4;
   } else {
-    points = 4;
+    // V2: primero se redondea la nota humana a un entero de 0 a 10.
+    if (rounded <= 2) points = -4;
+    else if (rounded <= 4) points = -2;
+    else if (rounded <= 6) points = 2;
+    else if (rounded <= 8) points = 6;
+    else points = 10;
   }
 
   return {
@@ -487,6 +500,7 @@ export function calculateFantasyPlayerPoints(
   const rating =
     getRatingFantasyPoints(
       input.panel_rating,
+      input.scoring_version ?? "v2",
     );
 
   const mvpPoints =

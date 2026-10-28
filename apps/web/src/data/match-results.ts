@@ -7,11 +7,13 @@ import {
   getMatchGoalsConcededOnField,
   calculatePlayerRating,
   DEFAULT_RATING_CONFIG,
+  LEGACY_RATING_CONFIG,
   FANTASY_MVP_POINTS,
   getResultsPhase,
   PLAYER_POSITIONS,
   selectMatchMvp,
   type FantasyPlayerPointsResult,
+  type FantasyScoringVersion,
   type MatchMvpResult,
   type PanelVote,
   type PlayerPosition,
@@ -77,6 +79,8 @@ export type MatchResults =
       phase:
         ResultsPhase;
 
+      scoring_version: FantasyScoringVersion;
+
       minimumVotes:
         number;
 
@@ -118,8 +122,7 @@ function toPlayerPosition(
 // No se cachean puntuaciones entre usuarios, peticiones ni partidos.
 export const getMatchResults = cache(async function getMatchResults(
   matchId: string,
-  config: Partial<RatingConfig> =
-    DEFAULT_RATING_CONFIG,
+  config?: Partial<RatingConfig>,
 ): Promise<MatchResults> {
   const match =
     await getMatchById(
@@ -149,6 +152,19 @@ export const getMatchResults = cache(async function getMatchResults(
       match,
     };
   }
+
+  // El partido define una version inmutable para mantener su historico.
+  if (
+    match.fantasy_scoring_version !== "v1" &&
+    match.fantasy_scoring_version !== "v2"
+  ) {
+    throw new Error("Version Fantasy del partido no valida.");
+  }
+  const scoringVersion: FantasyScoringVersion = match.fantasy_scoring_version;
+  const ratingConfig: RatingConfig = {
+    ...(scoringVersion === "v1" ? LEGACY_RATING_CONFIG : DEFAULT_RATING_CONFIG),
+    ...config,
+  };
 
   const squad =
     await getMatchPlayers(
@@ -341,7 +357,7 @@ export const getMatchResults = cache(async function getMatchResults(
                 ) ??
                 [],
             },
-            config,
+            ratingConfig,
           );
 
         /*
@@ -395,6 +411,8 @@ export const getMatchResults = cache(async function getMatchResults(
                  */
                 panel_rating:
                   rating.final_rating,
+
+                scoring_version: scoringVersion,
 
                 /*
                  * El MVP todavía no se conoce.
@@ -499,9 +517,9 @@ export const getMatchResults = cache(async function getMatchResults(
 
     phase,
 
-    minimumVotes:
-      config.minimumVotes ??
-      DEFAULT_RATING_CONFIG.minimumVotes,
+    minimumVotes: ratingConfig.minimumVotes,
+
+    scoring_version: scoringVersion,
 
     match,
 
