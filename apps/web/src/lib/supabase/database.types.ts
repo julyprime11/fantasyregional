@@ -377,6 +377,7 @@ export type Database = {
       }
       matches: {
         Row: {
+          fantasy_scoring_version: string
           away_score: number | null
           away_team_id: string
           competition_id: string | null
@@ -395,6 +396,7 @@ export type Database = {
           voting_opens_at: string | null
         }
         Insert: {
+          fantasy_scoring_version?: string
           away_score?: number | null
           away_team_id: string
           competition_id?: string | null
@@ -413,6 +415,7 @@ export type Database = {
           voting_opens_at?: string | null
         }
         Update: {
+          fantasy_scoring_version?: string
           away_score?: number | null
           away_team_id?: string
           competition_id?: string | null

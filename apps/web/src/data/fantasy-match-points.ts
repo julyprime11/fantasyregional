@@ -303,6 +303,8 @@ export async function getFantasyMatchPoints(
               result.rating
                 .final_rating,
 
+            scoring_version: results.scoring_version,
+
             is_mvp:
               mvpPlayerIds.has(
                 lineupEntry.player_id,

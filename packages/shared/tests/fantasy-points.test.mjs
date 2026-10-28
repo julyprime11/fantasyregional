@@ -32,19 +32,19 @@ function createPlayerInput(
   };
 }
 
-test("rating fantasy points use the updated modifier table", () => {
+test("V2 rating fantasy points use the new modifier table", () => {
   const cases = [
-    [0, -2],
-    [1, -2],
-    [2, -2],
-    [3, -1],
-    [4, -1],
-    [5, 0],
+    [0, -4],
+    [1, -4],
+    [2, -4],
+    [3, -2],
+    [4, -2],
+    [5, 2],
     [6, 2],
-    [7, 2],
-    [8, 3],
-    [9, 3],
-    [10, 4],
+    [7, 6],
+    [8, 6],
+    [9, 10],
+    [10, 10],
   ];
 
   for (const [rating, expectedPoints] of cases) {
@@ -71,17 +71,37 @@ test("rating fantasy points use the updated modifier table", () => {
   }
 });
 
+test("V1 points remain identical for all rounded ratings", () => {
+  const expected = [-2,-2,-2,-1,-1,0,2,2,3,3,4];
+  expected.forEach((value, rating) => {
+    assert.equal(getRatingFantasyPoints(rating, "v1").points, value);
+  });
+  assert.equal(getRatingFantasyPoints(7.5, "v1").points, 3);
+  assert.equal(getRatingFantasyPoints(null, "v1").points, 0);
+  assert.throws(() => getRatingFantasyPoints(7, "unsupported"), RangeError);
+});
+
+test("V1 and V2 calculate different totals for the same played match", () => {
+  const input = createPlayerInput({ minutes_played: 90, panel_rating: 8 });
+  const historic = calculateFantasyPlayerPoints({ ...input, scoring_version: "v1" });
+  const current = calculateFantasyPlayerPoints({ ...input, scoring_version: "v2" });
+  assert.equal(historic.breakdown.rating, 3);
+  assert.equal(current.breakdown.rating, 6);
+  assert.equal(historic.points, 6);
+  assert.equal(current.points, 9);
+});
+
 test("rating uses standard rounding before applying fantasy points", () => {
   const cases = [
-    [2.4, 2, -2],
-    [2.5, 3, -1],
-    [4.4, 4, -1],
-    [4.5, 5, 0],
+    [2.4, 2, -4],
+    [2.5, 3, -2],
+    [4.4, 4, -2],
+    [4.5, 5, 2],
     [5.5, 6, 2],
-    [6.5, 7, 2],
-    [7.5, 8, 3],
-    [8.5, 9, 3],
-    [9.5, 10, 4],
+    [6.5, 7, 6],
+    [7.5, 8, 6],
+    [8.5, 9, 10],
+    [9.5, 10, 10],
   ];
 
   for (
@@ -120,7 +140,7 @@ test("rating is limited to the 0 to 10 range", () => {
   );
   assert.equal(
     belowZero.points,
-    -2,
+    -4,
   );
 
   const aboveTen =
@@ -134,7 +154,7 @@ test("rating is limited to the 0 to 10 range", () => {
   );
   assert.equal(
     aboveTen.points,
-    4,
+    10,
   );
 });
 
@@ -160,9 +180,9 @@ test("player total includes the updated rating modifier", () => {
     );
 
   assert.equal(result.breakdown.minutes, 3);
-  assert.equal(result.breakdown.rating, 2);
+  assert.equal(result.breakdown.rating, 6);
   assert.equal(result.rounded_rating, 7);
-  assert.equal(result.points, 5);
+  assert.equal(result.points, 9);
   assert.equal(result.rateable, true);
 });
 
@@ -188,7 +208,7 @@ test("MVP bonus is centralized and worth two points", () => {
 
   assert.equal(
     result.points,
-    8,
+    11,
   );
 });
 
@@ -217,10 +237,10 @@ test("lineup total is the sum of every player fantasy score", () => {
     ]);
 
   assert.equal(result.players[0].points, 2);
-  assert.equal(result.players[1].points, 2);
-  assert.equal(result.players[2].points, 3);
+  assert.equal(result.players[1].points, 6);
+  assert.equal(result.players[2].points, 6);
   assert.equal(result.players[3].points, 0);
-  assert.equal(result.total_points, 7);
+  assert.equal(result.total_points, 14);
 });
 
 test("clean sheet points scale from forward to goalkeeper", () => {
@@ -299,15 +319,15 @@ test("captain bonus includes positive, negative and zero final points", () => {
     }),
   ]);
 
-  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-positive"), 6);
-  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-negative"), -2);
+  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-positive"), 12);
+  assert.equal(getFantasyCaptainBonus(lineup.players, "captain-negative"), -4);
   assert.equal(getFantasyCaptainBonus(lineup.players, "captain-zero"), 0);
   assert.equal(getFantasyCaptainBonus(lineup.players, null), 0);
   assert.equal(getFantasyCaptainBonus(lineup.players, "not-in-xi"), 0);
 
-  assert.equal(lineup.total_points, 4);
-  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-positive"), 10);
-  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-negative"), 2);
+  assert.equal(lineup.total_points, 8);
+  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-positive"), 20);
+  assert.equal(lineup.total_points + getFantasyCaptainBonus(lineup.players, "captain-negative"), 4);
 });
 
 test("players with zero minutes always receive zero including captain", () => {

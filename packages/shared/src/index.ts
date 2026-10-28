@@ -2,7 +2,7 @@ export type { PlayerPosition, Player, Team } from "./domain";
 
 export { PLAYER_POSITIONS } from "./domain";
 export { calculatePlayerRating, selectMatchMvp, minutesCoefficient } from "./ratings";
-export { DEFAULT_RATING_CONFIG, getResultsPhase } from "./ratings";
+export { DEFAULT_RATING_CONFIG, LEGACY_RATING_CONFIG, getResultsPhase } from "./ratings";
 export type { RatingConfig, RatingGroupKey, RatingBreakdown, ResultsPhase, MatchMvpResult } from "./ratings";
 export type { PlayerRatingInput, PlayerRatingResult, RatedPlayer, PanelVote } from "./ratings";
 export { parseRatingInput } from "./master-data";

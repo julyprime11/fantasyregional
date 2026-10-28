@@ -13,22 +13,26 @@ export interface RatingConfig {
   >;
 }
 
+/** Reglas originales: preservar los partidos historicos (V1). */
+export const LEGACY_RATING_CONFIG: Readonly<RatingConfig> =
+  Object.freeze({
+    minimumVotes: 1,
+    groupWeights: Object.freeze({
+      players: 0.2,
+      directors: 0.3,
+      coaches: 0.5,
+    }),
+  });
+
+/** Reglas V2 para los proximos partidos. */
 export const DEFAULT_RATING_CONFIG: Readonly<RatingConfig> =
   Object.freeze({
-    minimumVotes:
-      1,
-
-    groupWeights:
-      Object.freeze({
-        players:
-          0.2,
-
-        directors:
-          0.3,
-
-        coaches:
-          0.5,
-      }),
+    minimumVotes: 1,
+    groupWeights: Object.freeze({
+      players: 0.3,
+      directors: 0.35,
+      coaches: 0.35,
+    }),
   });
 
 export type ResultsPhase =
