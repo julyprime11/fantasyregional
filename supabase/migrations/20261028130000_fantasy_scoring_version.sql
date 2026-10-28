@@ -10,10 +10,11 @@ alter table public.matches
 
 -- Los partidos ya iniciados/finalizados mantienen V1; los antiguos
 -- programados en el pasado tambien. Solo futuros programados pasan a V2.
+-- Los partidos que ya han comenzado conservan V1.
+-- Los partidos programados utilizan V2.
 update public.matches
 set fantasy_scoring_version = 'v1'
-where status <> 'scheduled'
-   or match_date < now();
+where status <> 'scheduled';
 
 -- Impedir que una modificacion posterior de la fecha cambie las reglas
 -- de un partido que ya empezo. Esta proteccion es independiente del frontend.
