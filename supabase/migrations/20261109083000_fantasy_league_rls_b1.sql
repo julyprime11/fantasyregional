@@ -158,6 +158,97 @@ CREATE POLICY fantasy_lineup_players_remove_b1 ON public.fantasy_lineup_players
 FOR DELETE TO authenticated
 USING ((SELECT fantasy_private.can_edit_lineup(lineup_id)));
 
+-- El usuario no puede reescribir la identidad de una alineacion,
+-- ni su XI fuera de plazo, ni liberar una alineacion bloqueada.
+-- Se permite bloquear la alineacion existente sin modificar otros campos.
+CREATE OR REPLACE FUNCTION public.guard_fantasy_lineup_write()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $
+DECLARE
+  v_is_active boolean;
+  v_match_at timestamptz;
+BEGIN
+  SELECT l.moderation_status = 'active', mt.match_date
+    INTO v_is_active, v_match_at
+  FROM public.fantasy_leagues l
+  JOIN public.matches mt ON mt.id = NEW.match_id
+  WHERE l.id = NEW.league_id
+  FOR SHARE OF l;
+
+  IF NOT FOUND OR NOT v_is_active THEN
+    RAISE EXCEPTION 'Liga no disponible.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF NEW.league_id IS DISTINCT FROM OLD.league_id
+      OR NEW.user_id IS DISTINCT FROM OLD.user_id
+      OR NEW.match_id IS DISTINCT FROM OLD.match_id
+      OR NEW.created_at IS DISTINCT FROM OLD.created_at
+    THEN
+      RAISE EXCEPTION 'No se puede cambiar la identidad de la alineacion.'
+        USING ERRCODE = '42501';
+    END IF;
+
+    IF OLD.locked_at IS NOT NULL THEN
+      RAISE EXCEPTION 'La alineacion ya esta bloqueada.'
+        USING ERRCODE = '42501';
+    END IF;
+
+    IF NEW.captain_player_id IS DISTINCT FROM OLD.captain_player_id
+      AND v_match_at <= now() + interval '2 hours'
+    THEN
+      RAISE EXCEPTION 'El plazo para editar la alineacion ha terminado.'
+        USING ERRCODE = '42501';
+    END IF;
+  ELSIF v_match_at <= now() + interval '2 hours' THEN
+    RAISE EXCEPTION 'El plazo para crear la alineacion ha terminado.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS fantasy_lineup_guard_write ON public.fantasy_lineups;
+CREATE TRIGGER fantasy_lineup_guard_write
+BEFORE INSERT OR UPDATE ON public.fantasy_lineups
+FOR EACH ROW EXECUTE FUNCTION public.guard_fantasy_lineup_write();
+
+-- Fijar cambios de miembros frente a carreras con suspension.
+-- El bloqueo SHARE de la liga coordina con el UPDATE de moderacion.
+CREATE OR REPLACE FUNCTION public.guard_fantasy_membership_insert()
+RETURNS trigger LANGUAGE plpgsql SET search_path = ''
+AS $
+DECLARE
+  v_status text;
+BEGIN
+  SELECT moderation_status INTO v_status
+  FROM public.fantasy_leagues
+  WHERE id = NEW.league_id
+  FOR SHARE;
+
+  IF NOT FOUND OR v_status <> 'active' THEN
+    RAISE EXCEPTION 'La liga no admite inscripciones.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF NEW.user_id IS DISTINCT FROM auth.uid()
+     AND current_user NOT IN ('postgres', 'service_role') THEN
+    RAISE EXCEPTION 'No autorizado para inscribir a otro usuario.'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS fantasy_membership_guard_insert ON public.fantasy_league_members;
+CREATE TRIGGER fantasy_membership_guard_insert
+BEFORE INSERT ON public.fantasy_league_members
+FOR EACH ROW EXECUTE FUNCTION public.guard_fantasy_membership_insert();
+
 -- La eliminacion de una inscripcion NO debe borrar alineaciones en cascada.
 CREATE OR REPLACE FUNCTION public.guard_fantasy_membership_delete()
 RETURNS trigger LANGUAGE plpgsql SET search_path = ''
