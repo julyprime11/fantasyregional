@@ -74,4 +74,89 @@ ALTER TABLE public.fantasy_league_moderation_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.fantasy_league_moderation_events FROM anon, authenticated;
 GRANT ALL ON public.fantasy_league_moderation_events TO service_role;
 
+
+-- Una retirada solicitada por el propio creador se realiza dentro de una
+-- sola transaccion: se comprueba la identidad real, se cambia el estado
+-- y se registra el evento. Nunca se borran miembros ni alineaciones.
+CREATE OR REPLACE FUNCTION public.withdraw_own_fantasy_league(
+  p_league_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_actor uuid := auth.uid();
+  v_old_status text;
+BEGIN
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION 'Es necesario iniciar sesion.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  SELECT moderation_status INTO v_old_status
+  FROM public.fantasy_leagues
+  WHERE id = p_league_id AND created_by = v_actor
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Liga no encontrada o sin permisos.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF v_old_status <> 'active' THEN
+    RAISE EXCEPTION 'La liga no esta activa.'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  UPDATE public.fantasy_leagues
+  SET moderation_status = 'removed'
+  WHERE id = p_league_id;
+
+  INSERT INTO public.fantasy_league_moderation_events (
+    league_id, actor_user_id, previous_status, new_status, reason
+  )
+  VALUES (
+    p_league_id, v_actor, v_old_status, 'removed',
+    'Retirada solicitada por el creador de la liga.'
+  );
+
+  RETURN true;
+END;
+$$;
+
+-- SECURITY DEFINER en public necesita permisos de ejecucion explicitos.
+REVOKE ALL ON FUNCTION public.withdraw_own_fantasy_league(uuid)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.withdraw_own_fantasy_league(uuid)
+  TO authenticated;
+
+-- Nunca borrar fisicamente ligas con miembros o alineaciones. El rollback
+-- de una creacion fallida (liga vacia) puede seguir eliminando su registro.
+CREATE OR REPLACE FUNCTION public.guard_fantasy_league_delete()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.fantasy_league_members WHERE league_id = OLD.id
+  ) OR EXISTS (
+    SELECT 1 FROM public.fantasy_lineups WHERE league_id = OLD.id
+  ) THEN
+    RAISE EXCEPTION 'La liga contiene historial; usa retirada logica.'
+      USING ERRCODE = '23503';
+  END IF;
+  RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS fantasy_leagues_guard_delete
+  ON public.fantasy_leagues;
+
+CREATE TRIGGER fantasy_leagues_guard_delete
+BEFORE DELETE ON public.fantasy_leagues
+FOR EACH ROW EXECUTE FUNCTION public.guard_fantasy_league_delete();
+
 COMMIT;
