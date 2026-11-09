@@ -6,6 +6,10 @@ import { currentUserIsAdmin } from "@/lib/admin-auth";
 import { currentUserCanViewLeagueEmails } from "@/lib/platform-admin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  getFantasyLeagueStandings,
+  type FantasyStandingEntry,
+} from "@/data/fantasy-standings";
 
 export type AdminLeagueMember = {
   userId: string;
@@ -143,4 +147,29 @@ export async function getAdminFantasyLeagueAudit(): Promise<AdminLeagueAudit> {
       members: membersByLeague.get(league.id) ?? [],
     })),
   };
+}
+
+/**
+ * Clasificacion Fantasy global para una liga concreta, accesible
+ * exclusivamente desde el contexto administrativo.
+ * Evita calcular los puntos de todas las ligas en cada carga del listado.
+ */
+export async function getAdminFantasyLeagueStandings(
+  leagueId: string,
+): Promise<FantasyStandingEntry[]> {
+  if (!(await currentUserIsAdmin())) {
+    redirect("/post-login");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data: league, error } = await supabase
+    .from("fantasy_leagues")
+    .select("id")
+    .eq("id", leagueId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!league) return [];
+
+  return getFantasyLeagueStandings(league.id);
 }
