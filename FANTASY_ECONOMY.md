@@ -53,13 +53,13 @@ Tras cerrar las votaciones de una jornada, usamos el **total de puntos Fantasy d
 
 | Puntos del XI en la jornada | Ajuste del saldo |
 |---|---:|
-| Menos de 10 | −2.000 € |
-| 10–19 | −1.000 € |
-| 20–29 | 0 € |
-| 30–39 | +1.000 € |
-| 40 o más | +2.000 € |
+| Menos de 65 | −2.000 € |
+| 65–69 | −1.000 € |
+| 70–74 | 0 € |
+| 75–79 | +1.000 € |
+| 80 o más | +2.000 € |
 
-**Jornada 1 oficial:** el saldo de apertura se calcula usando los puntos definitivos de la alineación de esa jornada, una sola vez. Por ejemplo, 35 puntos ⇒ 101.000 € de saldo al comenzar la economía. Si no existía un XI presentado o no hay puntos definitivos, se mantiene en 100.000 € (no se inventa un resultado de cero).
+**Jornada 1 oficial:** el saldo de apertura se calcula usando los puntos definitivos de la alineación de esa jornada, una sola vez. Por ejemplo, 75 puntos ⇒ 101.000 € de saldo al comenzar la economía. Si no existía un XI presentado o no hay puntos definitivos, se mantiene en 100.000 € (no se inventa un resultado de cero).
 
 A partir de la segunda jornada, se actualiza con cada partido definitivamente cerrado. Se registra de forma idempotente una única operación por **liga + usuario + partido**, sin permitir que los recálculos o reintentos abonen o descuenten saldo más de una vez. Las jornadas históricas anteriores al inicio de la economía **no cambiarán sus alineaciones ni sus puntuaciones**.
 

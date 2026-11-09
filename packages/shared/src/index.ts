@@ -12,3 +12,5 @@ export { InputError, parseClubInput, parseTeamInput, parsePlayerInput, parsePlay
 export * from "./fantasy-lineup";
 export * from "./fantasy-points";
 export * from "./fantasy-economy";
+export * from "./fantasy-economy-simulation";
+export * from "./fantasy-economy-analysis";

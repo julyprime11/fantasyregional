@@ -55,34 +55,32 @@ test("price caps prevent runaway inflation or negative player costs", () => {
   assert.throws(() => getNextFantasyPlayerPrice({ currentPrice: 8000, fantasyPoints: 6, teamAveragePoints: null }), RangeError);
 });
 
-test("budgets may gain, hold or lose money within a fixed band", () => {
+test("budgets use the calibrated 65/70/75/80 thresholds", () => {
   assert.equal(FANTASY_ECONOMY.minimumBudget, 90_000);
-  assert.equal(getNextFantasyBudget(100_000, null), 100_000);
-  assert.equal(getNextFantasyBudget(100_000, -10), 98_000);
-  assert.equal(getNextFantasyBudget(100_000, 9), 98_000);
-  assert.equal(getNextFantasyBudget(100_000, 10), 99_000);
-  assert.equal(getNextFantasyBudget(100_000, 19), 99_000);
-  assert.equal(getNextFantasyBudget(100_000, 20), 100_000);
-  assert.equal(getNextFantasyBudget(100_000, 29), 100_000);
-  assert.equal(getNextFantasyBudget(100_000, 30), 101_000);
-  assert.equal(getNextFantasyBudget(100_000, 39), 101_000);
-  assert.equal(getNextFantasyBudget(100_000, 40), 102_000);
-  assert.equal(getNextFantasyBudget(100_000, 100), 102_000);
-  assert.equal(getNextFantasyBudget(91_000, -10), 90_000);
-  assert.equal(getNextFantasyBudget(90_000, -10), 90_000);
+  const cases = [
+    [null, 100_000], [-10, 98_000], [64, 98_000], [65, 99_000],
+    [69, 99_000], [70, 100_000], [74, 100_000],
+    [75, 101_000], [79, 101_000], [80, 102_000],
+    [100, 102_000],
+  ];
+  for (const [points, expected] of cases) {
+    assert.equal(getNextFantasyBudget(100_000, points), expected);
+  }
+  assert.equal(getNextFantasyBudget(91_000, 30), 90_000);
+  assert.equal(getNextFantasyBudget(90_000, 30), 90_000);
   assert.equal(getNextFantasyBudget(119_000, 100), 120_000);
   assert.equal(getNextFantasyBudget(120_000, 100), 120_000);
   assert.throws(() => getNextFantasyBudget(89_000, 10), RangeError);
   assert.throws(() => getNextFantasyBudget(121_000, 100), RangeError);
 });
 
-test("first official lineup points set the opening user budget once", () => {
+test("opening budget uses the same bands and missing XI does not lose money", () => {
   assert.equal(getOpeningFantasyBudget(null), 100_000);
-  assert.equal(getOpeningFantasyBudget(5), 98_000);
-  assert.equal(getOpeningFantasyBudget(15), 99_000);
-  assert.equal(getOpeningFantasyBudget(25), 100_000);
-  assert.equal(getOpeningFantasyBudget(35), 101_000);
-  assert.equal(getOpeningFantasyBudget(45), 102_000);
+  assert.equal(getOpeningFantasyBudget(64), 98_000);
+  assert.equal(getOpeningFantasyBudget(65), 99_000);
+  assert.equal(getOpeningFantasyBudget(70), 100_000);
+  assert.equal(getOpeningFantasyBudget(75), 101_000);
+  assert.equal(getOpeningFantasyBudget(80), 102_000);
 });
 
 test("a valid XI can use the full budget, without deducting money", () => {

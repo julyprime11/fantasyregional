@@ -11,10 +11,10 @@ export const FANTASY_ECONOMY = Object.freeze({
   initialBudget: 100_000,
   minimumBudget: 90_000,
   maximumBudget: 120_000,
-  budgetLossThreshold: 10,
-  budgetNeutralThreshold: 20,
-  budgetGainThreshold: 30,
-  budgetStrongGainThreshold: 40,
+  budgetLossThreshold: 65,
+  budgetNeutralThreshold: 70,
+  budgetGainThreshold: 75,
+  budgetStrongGainThreshold: 80,
   budgetAdjustmentStep: 1_000,
   maxBudgetGainPerMatchday: 2_000,
   maxBudgetLossPerMatchday: 2_000,
@@ -150,11 +150,11 @@ export function getNextFantasyPlayerPrice({
  * Usamos el total Fantasy del XI ya calculado por la lógica actual:
  * NO volvemos a calcular las puntuaciones de cada futbolista.
  *
- * - Menos de 10 puntos: -2.000 €.
- * - De 10 a 19: -1.000 €.
- * - De 20 a 29: sin cambio.
- * - De 30 a 39: +1.000 €.
- * - 40 o más: +2.000 €.
+ * - Menos de 65 puntos: -2.000 €.
+ * - De 65 a 69: -1.000 €.
+ * - De 70 a 74: sin cambio.
+ * - De 75 a 79: +1.000 €.
+ * - 80 o más: +2.000 €.
  *
  * null = no existe una alineación con puntuación definitiva: sin cambio.
  * El saldo limita el coste de un nuevo XI pero no se gasta al alinearlo.
