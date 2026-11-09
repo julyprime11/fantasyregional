@@ -37,6 +37,13 @@ const adminItems = [
       "Crear y editar partidos y jornadas.",
   },
   {
+    href: "/admin/leagues",
+    icon: "🏆",
+    title: "Ligas Fantasy",
+    description:
+      "Consultar ligas, creadores y participantes.",
+  },
+  {
     href: "/admin/users",
     icon: "🔐",
     title: "Usuarios y roles",
