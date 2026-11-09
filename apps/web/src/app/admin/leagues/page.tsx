@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   getAdminFantasyLeagueAudit,
+  getAdminFantasyLeagueStandings,
   type AdminLeagueOverview,
 } from "@/data/admin-fantasy-leagues";
 
@@ -40,13 +41,32 @@ function matchesSearch(league: AdminLeagueOverview, term: string): boolean {
 export default async function AdminLeaguesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string | string[] }>;
+  searchParams: Promise<{
+    q?: string | string[];
+    standing?: string | string[];
+  }>;
 }) {
-  const { q } = await searchParams;
+  const { q, standing } = await searchParams;
   const query = (typeof q === "string" ? q : "").trim().slice(0, 120);
   const search = normalize(query);
   const { leagues, canSeeEmails } = await getAdminFantasyLeagueAudit();
   const filtered = leagues.filter((league) => matchesSearch(league, search));
+
+  // Calculamos solo la clasificacion solicitada, nunca todas las del listado.
+  const requestedStandingId = typeof standing === "string" ? standing : "";
+  const selectedLeague = filtered.find((league) => league.id === requestedStandingId);
+  const leagueStandings = selectedLeague
+    ? await getAdminFantasyLeagueStandings(selectedLeague.id)
+    : null;
+
+  function standingsHref(leagueId: string | null): string {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    if (leagueId) params.set("standing", leagueId);
+    const searchParamsString = params.toString();
+    const hash = leagueId ? `#liga-${leagueId}` : selectedLeague ? `#liga-${selectedLeague.id}` : "";
+    return `/admin/leagues${searchParamsString ? `?${searchParamsString}` : ""}${hash}`;
+  }
 
   return (
     <main className="app-screen mx-auto min-h-screen max-w-xl bg-[#f2f4f2] pb-12">
@@ -129,7 +149,7 @@ export default async function AdminLeaguesPage({
             </div>
           ) : (
             filtered.map((league) => (
-              <article key={league.id} className="overflow-hidden rounded-[1.2rem] bg-white shadow-sm ring-1 ring-black/5">
+              <article id={`liga-${league.id}`} key={league.id} className="scroll-mt-4 overflow-hidden rounded-[1.2rem] bg-white shadow-sm ring-1 ring-black/5">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -166,6 +186,63 @@ export default async function AdminLeaguesPage({
                     )}
                   </div>
                 </div>
+
+                <div className="border-t border-zinc-100 px-4 py-3">
+                  <Link
+                    href={standingsHref(selectedLeague?.id === league.id ? null : league.id)}
+                    aria-expanded={selectedLeague?.id === league.id}
+                    className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-[#e8f2ed] px-4 py-3 text-xs font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+                  >
+                    <span>{selectedLeague?.id === league.id ? "Ocultar clasificación" : "Ver clasificación"}</span>
+                    <span aria-hidden="true">{selectedLeague?.id === league.id ? "−" : "→"}</span>
+                  </Link>
+                </div>
+
+                {selectedLeague?.id === league.id && leagueStandings && (
+                  <section
+                    aria-label={`Clasificación de ${league.name}`}
+                    className="border-t border-zinc-100 bg-[#f5f8f6] p-4"
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-base font-black text-[#0b2f23]">Clasificación Fantasy</h3>
+                      <p className="mt-1 text-[11px] leading-5 text-zinc-500">
+                        Puntos acumulados de las jornadas con resultados definitivos.
+                      </p>
+                    </div>
+                    {leagueStandings.length === 0 ? (
+                      <p className="rounded-xl bg-white p-4 text-xs text-zinc-500">
+                        Todavía no hay participantes con clasificación.
+                      </p>
+                    ) : (
+                      <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-200">
+                        <div className="grid grid-cols-[2rem_minmax(0,1fr)_4.8rem] gap-2 bg-zinc-100 px-3 py-2 text-[10px] font-black text-zinc-500">
+                          <span>Pos.</span>
+                          <span>Participante</span>
+                          <span className="text-right">Puntos</span>
+                        </div>
+                        <ol>
+                          {leagueStandings.map((entry, index) => (
+                            <li
+                              key={entry.user_id}
+                              className="grid grid-cols-[2rem_minmax(0,1fr)_4.8rem] items-center gap-2 border-t border-zinc-100 px-3 py-3"
+                            >
+                              <span className="text-sm font-black text-[#0f3d2e]">{index + 1}.</span>
+                              <div className="min-w-0">
+                                <p className="break-words text-xs font-bold text-zinc-900">{entry.display_name}</p>
+                                <p className="mt-1 text-[10px] text-zinc-500">
+                                  {entry.played_matches} {entry.played_matches === 1 ? "jornada puntuada" : "jornadas puntuadas"}
+                                </p>
+                              </div>
+                              <span className="text-right text-base font-black tabular-nums text-[#0f3d2e]">
+                                {entry.total_points}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                  </section>
+                )}
 
                 <details className="group border-t border-zinc-100">
                   <summary className="cursor-pointer list-none px-4 py-4 text-xs font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]">
