@@ -45,7 +45,7 @@ export function DeleteLeagueButton({
       ) => {
         const confirmed =
           window.confirm(
-            `¿Seguro que quieres eliminar la liga "${leagueName}"? Se eliminarán sus miembros y alineaciones Fantasy. Esta acción no se puede deshacer.`,
+            `¿Seguro que quieres retirar la liga "${leagueName}"? Dejará de estar disponible, pero se conservarán sus miembros, alineaciones y resultados históricos.`,
           );
 
         if (!confirmed) {
