@@ -678,6 +678,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_own_fantasy_lineup: {
+        Args: {
+          p_league_id: string
+          p_match_id: string
+          p_player_ids: string[]
+          p_captain_player_id: string
+        }
+        Returns: Database["public"]["Tables"]["fantasy_lineups"]["Row"]
+      }
       withdraw_own_fantasy_league: {
         Args: { p_league_id: string }
         Returns: boolean
