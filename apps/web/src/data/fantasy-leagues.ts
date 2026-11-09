@@ -6,6 +6,7 @@ import {
 
 import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isFantasyLeagueActive } from "@/lib/fantasy-league-moderation";
 
 export type FantasyLeagueRow =
   Database["public"]["Tables"]["fantasy_leagues"]["Row"];
@@ -89,6 +90,7 @@ export async function getFantasyLeagues(): Promise<
           name
         )
       `)
+      .eq("moderation_status", "active")
       .order("created_at", {
         ascending: false,
       });
@@ -117,6 +119,7 @@ export async function getFantasyLeagueById(
         )
       `)
       .eq("id", leagueId)
+      .eq("moderation_status", "active")
       .maybeSingle();
 
   if (error) {
@@ -146,6 +149,7 @@ export async function getFantasyLeagueByCode(
         )
       `)
       .eq("code", normalizedCode)
+      .eq("moderation_status", "active")
       .maybeSingle();
 
   if (error) {
@@ -298,6 +302,17 @@ export async function joinFantasyLeague(
 ): Promise<FantasyLeagueMemberRow> {
   const supabase =
     await createServerSupabaseClient();
+
+  const { data: league, error: leagueError } = await supabase
+    .from("fantasy_leagues")
+    .select("moderation_status")
+    .eq("id", input.leagueId)
+    .maybeSingle();
+
+  if (leagueError) throw leagueError;
+  if (!league || !isFantasyLeagueActive(league.moderation_status)) {
+    throw new Error("La liga Fantasy no está disponible para nuevas inscripciones.");
+  }
 
   const { data, error } =
     await supabase
