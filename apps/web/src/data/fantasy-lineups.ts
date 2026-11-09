@@ -9,6 +9,7 @@ import {
 
 import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isFantasyLeagueActive } from "@/lib/fantasy-league-moderation";
 
 export type FantasyLineupRow =
   Database["public"]["Tables"]["fantasy_lineups"]["Row"];
@@ -129,7 +130,7 @@ async function assertFantasyContext(
     await supabase
       .from("fantasy_leagues")
       .select(
-        "id, team_id, created_at",
+        "id, team_id, created_at, moderation_status",
       )
       .eq("id", input.leagueId)
       .maybeSingle();
@@ -141,6 +142,12 @@ async function assertFantasyContext(
   if (!league) {
     throw new InputError(
       "La liga Fantasy ya no está disponible.",
+    );
+  }
+
+  if (!isFantasyLeagueActive(league.moderation_status)) {
+    throw new InputError(
+      "La liga Fantasy está suspendida o retirada.",
     );
   }
 
