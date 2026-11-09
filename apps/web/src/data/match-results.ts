@@ -156,7 +156,8 @@ export const getMatchResults = cache(async function getMatchResults(
   // El partido define una version inmutable para mantener su historico.
   if (
     match.fantasy_scoring_version !== "v1" &&
-    match.fantasy_scoring_version !== "v2"
+    match.fantasy_scoring_version !== "v2" &&
+    match.fantasy_scoring_version !== "v3"
   ) {
     throw new Error("Version Fantasy del partido no valida.");
   }
