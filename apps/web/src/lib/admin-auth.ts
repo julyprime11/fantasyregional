@@ -27,3 +27,20 @@ export async function currentUserIsAdmin(): Promise<boolean> {
     profile.voter_role,
   );
 }
+
+/**
+ * La Directiva puede gestionar la aplicación, pero consultar correos
+ * privados de todos los participantes exige, además, autorización
+ * de plataforma en app_metadata (no editable por el propio usuario).
+ *
+ * Se verifica en servidor sobre auth.getUser(), nunca desde el navegador.
+ */
+export async function currentUserCanReviewLeagueEmails(): Promise<boolean> {
+  const user = await requireUser();
+
+  if (!(await currentUserIsAdmin())) {
+    return false;
+  }
+
+  return user.app_metadata?.platform_admin === true;
+}
