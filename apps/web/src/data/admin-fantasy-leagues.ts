@@ -2,7 +2,8 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 
-import { currentUserIsAdmin, currentUserCanReviewLeagueEmails } from "@/lib/admin-auth";
+import { currentUserIsAdmin } from "@/lib/admin-auth";
+import { currentUserCanViewLeagueEmails } from "@/lib/platform-admin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 
 export type AdminLeagueMember = {
@@ -72,7 +73,7 @@ export async function getAdminFantasyLeagueAudit(): Promise<AdminLeagueAudit> {
     redirect("/post-login");
   }
 
-  const canSeeEmails = await currentUserCanReviewLeagueEmails();
+  const canSeeEmails = await currentUserCanViewLeagueEmails();
   const admin = createAdminSupabaseClient();
 
   const [leaguesResult, membershipsResult, profilesResult] = await Promise.all([
