@@ -109,6 +109,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          moderation_status: "active" | "suspended" | "removed"
           name: string
           team_id: string
         }
@@ -117,6 +118,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          moderation_status?: "active" | "suspended" | "removed"
           name: string
           team_id: string
         }
@@ -125,6 +127,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          moderation_status?: "active" | "suspended" | "removed"
           name?: string
           team_id?: string
         }
