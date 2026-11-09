@@ -12,7 +12,7 @@ export const FANTASY_MVP_POINTS =
 export type FantasyRedCardReason = "direct" | "second_yellow";
 
 /** La version se fija por partido en la base de datos. */
-export type FantasyScoringVersion = "v1" | "v2";
+export type FantasyScoringVersion = "v1" | "v2" | "v3";
 
 export type FantasyPlayerPointsInput = {
   player_id: string;
@@ -42,7 +42,7 @@ export type FantasyPlayerPointsInput = {
 
   panel_rating: number | null;
 
-  /** V1 = historica; V2 = nuevos tramos. Por defecto V2. */
+  /** V1/V2 historicas; V3 incluye porterias automaticas y nueva regla GK. */
   scoring_version?: FantasyScoringVersion;
 
   is_mvp: boolean;
@@ -187,6 +187,7 @@ export function getCleanSheetFantasyPoints(
 export function getGoalsConcededFantasyPoints(
   position: PlayerPosition,
   goalsConcededOnField: number,
+  version: FantasyScoringVersion = "v2",
 ): number {
   if (!validateNonNegativeInteger(goalsConcededOnField)) {
     throw new RangeError("Goles encajados no válidos.");
@@ -200,8 +201,14 @@ export function getGoalsConcededFantasyPoints(
     MID: 3,
     FWD: 4,
   };
+  // V3: el primer gol encajado por el portero mientras juega no resta.
+  // A partir del segundo, cada gol adicional penaliza -1.
+  const concededForPenalty =
+    version === "v3" && getFantasyLine(position) === "GK"
+      ? Math.max(0, goalsConcededOnField - 1)
+      : goalsConcededOnField;
   const penaltyGroups = Math.floor(
-    goalsConcededOnField / goalsPerPenalty[getFantasyLine(position)],
+    concededForPenalty / goalsPerPenalty[getFantasyLine(position)],
   );
   return penaltyGroups === 0 ? 0 : -penaltyGroups;
 }
@@ -360,7 +367,7 @@ export function getRatingFantasyPoints(
   rounded_rating: number | null;
   rateable: boolean;
 } {
-  if (version !== "v1" && version !== "v2") {
+  if (version !== "v1" && version !== "v2" && version !== "v3") {
     throw new RangeError("Version Fantasy no valida.");
   }
   if (
@@ -477,18 +484,27 @@ export function calculateFantasyPlayerPoints(
     input.assists *
     3;
 
+  // V3: porteria a cero por los goles realmente encajados mientras
+  // estaba en el terreno de juego. Cronologia incompleta = sin bonus.
+  const cleanSheet = input.scoring_version === "v3"
+    ? input.goals_conceded_on_field === 0
+    : input.clean_sheet;
   const cleanSheetPoints =
     getCleanSheetFantasyPoints(
       input.position,
       input.minutes_played,
       input.match_minutes,
       input.starter,
-      input.clean_sheet,
+      cleanSheet,
     );
 
   const concededPoints = input.goals_conceded_on_field == null
     ? 0
-    : getGoalsConcededFantasyPoints(input.position, input.goals_conceded_on_field);
+    : getGoalsConcededFantasyPoints(
+        input.position,
+        input.goals_conceded_on_field,
+        input.scoring_version ?? "v2",
+      );
 
   const cardsPoints =
     getCardsFantasyPoints(
