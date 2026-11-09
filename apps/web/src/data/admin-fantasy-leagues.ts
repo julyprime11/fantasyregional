@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { currentUserIsAdmin } from "@/lib/admin-auth";
 import { currentUserCanViewLeagueEmails } from "@/lib/platform-admin";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type AdminLeagueMember = {
   userId: string;
@@ -74,18 +75,20 @@ export async function getAdminFantasyLeagueAudit(): Promise<AdminLeagueAudit> {
   }
 
   const canSeeEmails = await currentUserCanViewLeagueEmails();
-  const admin = createAdminSupabaseClient();
+  // Para datos no sensibles, usamos la sesión autenticada y sus RLS.
+  // La clave privilegiada queda reservada a Auth (correos).
+  const supabase = await createServerSupabaseClient();
 
   const [leaguesResult, membershipsResult, profilesResult] = await Promise.all([
-    admin
+    supabase
       .from("fantasy_leagues")
       .select("id, name, code, team_id, created_by, created_at, team:teams(id, name)")
       .order("created_at", { ascending: false }),
-    admin
+    supabase
       .from("fantasy_league_members")
       .select("league_id, user_id, joined_at")
       .order("joined_at", { ascending: true }),
-    admin
+    supabase
       .from("profiles")
       .select("id, display_name"),
   ]);
