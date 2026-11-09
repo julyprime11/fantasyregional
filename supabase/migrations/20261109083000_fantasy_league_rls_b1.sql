@@ -165,7 +165,7 @@ CREATE OR REPLACE FUNCTION public.guard_fantasy_lineup_write()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = ''
-AS $
+AS $$
 DECLARE
   v_is_active boolean;
   v_match_at timestamptz;
@@ -210,7 +210,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS fantasy_lineup_guard_write ON public.fantasy_lineups;
 CREATE TRIGGER fantasy_lineup_guard_write
@@ -221,7 +221,7 @@ FOR EACH ROW EXECUTE FUNCTION public.guard_fantasy_lineup_write();
 -- El bloqueo SHARE de la liga coordina con el UPDATE de moderacion.
 CREATE OR REPLACE FUNCTION public.guard_fantasy_membership_insert()
 RETURNS trigger LANGUAGE plpgsql SET search_path = ''
-AS $
+AS $$
 DECLARE
   v_status text;
 BEGIN
@@ -242,7 +242,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS fantasy_membership_guard_insert ON public.fantasy_league_members;
 CREATE TRIGGER fantasy_membership_guard_insert
