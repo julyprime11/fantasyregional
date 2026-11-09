@@ -9,6 +9,15 @@ BEGIN;
 -- exclusivamente para el usuario autenticado dueno de la alineacion.
 REVOKE INSERT, UPDATE, DELETE ON public.fantasy_lineup_players FROM anon, authenticated;
 
+-- Los clientes solo pueden crear el esqueleto de su XI y marcarlo
+-- como bloqueado. El capitan, jugadores e identidad del XI se
+-- escriben exclusivamente desde la RPC validada.
+REVOKE INSERT, UPDATE, DELETE ON public.fantasy_lineups FROM anon, authenticated;
+GRANT INSERT (league_id, user_id, match_id)
+  ON public.fantasy_lineups TO authenticated;
+GRANT UPDATE (locked_at, updated_at)
+  ON public.fantasy_lineups TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.save_own_fantasy_lineup(
   p_league_id uuid,
   p_match_id uuid,
