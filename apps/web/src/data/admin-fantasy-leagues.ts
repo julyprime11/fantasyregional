@@ -18,6 +18,7 @@ export type AdminLeagueOverview = {
   id: string;
   name: string;
   code: string;
+  moderationStatus: "active" | "suspended" | "removed";
   teamName: string;
   createdAt: string;
   creator: {
@@ -82,7 +83,7 @@ export async function getAdminFantasyLeagueAudit(): Promise<AdminLeagueAudit> {
   const [leaguesResult, membershipsResult, profilesResult] = await Promise.all([
     supabase
       .from("fantasy_leagues")
-      .select("id, name, code, team_id, created_by, created_at, team:teams(id, name)")
+      .select("id, name, code, moderation_status, team_id, created_by, created_at, team:teams(id, name)")
       .order("created_at", { ascending: false }),
     supabase
       .from("fantasy_league_members")
@@ -133,6 +134,7 @@ export async function getAdminFantasyLeagueAudit(): Promise<AdminLeagueAudit> {
       id: league.id,
       name: league.name,
       code: league.code,
+      moderationStatus: league.moderation_status,
       teamName: league.team?.name ?? "Equipo no disponible",
       createdAt: league.created_at,
       creator: {
