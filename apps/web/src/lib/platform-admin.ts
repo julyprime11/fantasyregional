@@ -4,11 +4,13 @@ import { requireUser } from "@/lib/auth";
 import { currentUserIsAdmin } from "@/lib/admin-auth";
 
 /**
- * El acceso a datos personales de participantes es un permiso de plataforma,
- * adicional al rol interno "directiva". Los UUID autorizados se configuran
- * exclusivamente en el servidor con PLATFORM_ADMIN_USER_IDS.
+ * Los correos de participantes son datos personales. Su consulta exige
+ * rol administrativo más una autorización explícita de plataforma.
+ *
+ * PLATFORM_ADMIN_USER_IDS contiene UUID separados por comas y solo
+ * existe en el servidor (nunca con prefijo NEXT_PUBLIC_).
  */
-export async function currentUserCanAuditFantasyLeagues(): Promise<boolean> {
+export async function currentUserCanViewLeagueEmails(): Promise<boolean> {
   const allowedIds = new Set(
     (process.env.PLATFORM_ADMIN_USER_IDS ?? "")
       .split(",")
@@ -16,7 +18,6 @@ export async function currentUserCanAuditFantasyLeagues(): Promise<boolean> {
       .filter(Boolean),
   );
 
-  // Si no se ha configurado el permiso, el acceso queda denegado.
   if (allowedIds.size === 0) {
     return false;
   }
@@ -28,10 +29,4 @@ export async function currentUserCanAuditFantasyLeagues(): Promise<boolean> {
   }
 
   return currentUserIsAdmin();
-}
-
-export async function assertCanAuditFantasyLeagues(): Promise<void> {
-  if (!(await currentUserCanAuditFantasyLeagues())) {
-    throw new Error("No tienes permisos para consultar las ligas Fantasy.");
-  }
 }
