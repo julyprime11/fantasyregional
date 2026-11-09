@@ -156,7 +156,8 @@ export const getMatchResults = cache(async function getMatchResults(
   // El partido define una version inmutable para mantener su historico.
   if (
     match.fantasy_scoring_version !== "v1" &&
-    match.fantasy_scoring_version !== "v2"
+    match.fantasy_scoring_version !== "v2" &&
+    match.fantasy_scoring_version !== "v3"
   ) {
     throw new Error("Version Fantasy del partido no valida.");
   }
@@ -325,6 +326,19 @@ export const getMatchResults = cache(async function getMatchResults(
               ?.position,
           );
 
+        // Si el rival termino con 0 goles, el marcador confirma que
+        // este jugador no encajo ninguno, aunque falte cronologia de
+        // sustituciones. Para marcadores con goles exigimos el timeline.
+        const teamGoalsAgainst =
+          entry.team_id === match.home_team_id
+            ? match.away_score
+            : entry.team_id === match.away_team_id
+              ? match.home_score
+              : null;
+        const goalsConcededOnField =
+          goalsConceded?.get(entry.player_id) ??
+          (scoringVersion === "v3" && teamGoalsAgainst === 0 ? 0 : null);
+
         const rating =
           calculatePlayerRating(
             {
@@ -400,7 +414,7 @@ export const getMatchResults = cache(async function getMatchResults(
                 match_minutes:
                   matchMinutes,
 
-                goals_conceded_on_field: goalsConceded?.get(entry.player_id) ?? null,
+                goals_conceded_on_field: goalsConcededOnField,
 
                 /*
                  * final_rating contiene ahora
@@ -429,7 +443,7 @@ export const getMatchResults = cache(async function getMatchResults(
           entry,
           rating,
           fantasy,
-          goalsConcededOnField: goalsConceded?.get(entry.player_id) ?? null,
+          goalsConcededOnField: goalsConcededOnField,
         };
       },
     );

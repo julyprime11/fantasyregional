@@ -507,3 +507,95 @@ test("incomplete goals or unknown participation never produce speculative penalt
     null,
   );
 });
+
+test("V3 goalkeeper ignores first on-field conceded goal, then loses one point per additional goal", () => {
+  const expected = [0, 0, -1, -2, -3];
+  expected.forEach((points, goals) => {
+    assert.equal(getGoalsConcededFantasyPoints("GK", goals, "v3"), points);
+  });
+
+  assert.equal(getGoalsConcededFantasyPoints("GK", 1, "v1"), -1);
+  assert.equal(getGoalsConcededFantasyPoints("GK", 1, "v2"), -1);
+  assert.equal(getGoalsConcededFantasyPoints("CB", 2, "v3"), -1);
+  assert.equal(getGoalsConcededFantasyPoints("CM", 3, "v3"), -1);
+});
+
+test("V3 derives clean sheets from on-field goals instead of manual clean_sheet flag", () => {
+  const base = createPlayerInput({
+    position: "CB",
+    minutes_played: 60,
+    starter: true,
+    clean_sheet: false,
+    goals_conceded_on_field: 0,
+    scoring_version: "v3",
+  });
+  assert.equal(calculateFantasyPlayerPoints(base).breakdown.clean_sheet, 3);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, clean_sheet: true, goals_conceded_on_field: 1,
+  }).breakdown.clean_sheet, 0);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, clean_sheet: true, goals_conceded_on_field: null,
+  }).breakdown.clean_sheet, 0);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, scoring_version: "v2",
+  }).breakdown.clean_sheet, 0);
+});
+
+test("V3 goalkeeper still needs to play the whole match for clean-sheet bonus", () => {
+  const keeper = createPlayerInput({
+    position: "GK", minutes_played: 90, match_minutes: 90,
+    starter: true, clean_sheet: false,
+    goals_conceded_on_field: 0, scoring_version: "v3",
+  });
+  assert.equal(calculateFantasyPlayerPoints(keeper).breakdown.clean_sheet, 4);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...keeper, minutes_played: 60,
+  }).breakdown.clean_sheet, 0);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...keeper, goals_conceded_on_field: 1,
+  }).breakdown.clean_sheet, 0);
+});
+
+test("V3 counts on-field goals across substitutions and excludes goals after the player leaves", () => {
+  const match = { ...matchForConceded, away_score: 1 };
+  const squad = [
+    participant("starter", { minutes_played: 60 }),
+    participant("substitute", { starter: false, minutes_played: 30, entered_minute: 60 }),
+  ];
+  const timeline = [
+    event("substitution", 60, {
+      player_id: "starter",
+      secondary_player_id: "substitute",
+    }, 1),
+    concedingGoal(80, 2),
+  ];
+  const conceded = getMatchGoalsConcededOnField(match, squad, timeline);
+  assert.equal(conceded?.get("starter"), 0);
+  assert.equal(conceded?.get("substitute"), 1);
+
+  const starter = calculateFantasyPlayerPoints(createPlayerInput({
+    player_id: "starter", position: "CB", minutes_played: 60,
+    starter: true, clean_sheet: false,
+    goals_conceded_on_field: conceded.get("starter"), scoring_version: "v3",
+  }));
+  const substitute = calculateFantasyPlayerPoints(createPlayerInput({
+    player_id: "substitute", position: "CB", minutes_played: 30,
+    starter: false, clean_sheet: true,
+    goals_conceded_on_field: conceded.get("substitute"), scoring_version: "v3",
+  }));
+  assert.equal(starter.breakdown.clean_sheet, 3);
+  assert.equal(substitute.breakdown.clean_sheet, 0);
+});
+
+test("V3 preserves V2 human rating and forbids speculative clean-sheet bonuses", () => {
+  assert.equal(getRatingFantasyPoints(8, "v3").points, getRatingFantasyPoints(8, "v2").points);
+
+  const keeper = createPlayerInput({
+    position: "GK", minutes_played: 90, match_minutes: 90,
+    starter: true, clean_sheet: true, goals_conceded_on_field: null,
+    scoring_version: "v3",
+  });
+  const points = calculateFantasyPlayerPoints(keeper);
+  assert.equal(points.breakdown.clean_sheet, 0);
+  assert.equal(points.breakdown.goals_conceded, 0);
+});
