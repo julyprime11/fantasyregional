@@ -678,6 +678,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      withdraw_own_fantasy_league: {
+        Args: { p_league_id: string }
+        Returns: boolean
+      }
       register_live_goal_without_player: {
         Args: { p_match_id: string; p_scoring_team_id: string; p_is_own_goal?: boolean }
         Returns: number
