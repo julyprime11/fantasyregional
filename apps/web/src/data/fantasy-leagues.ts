@@ -290,30 +290,33 @@ export async function createFantasyLeague(
   return league;
 }
 
+/**
+ * La clave de invitación se valida en PostgreSQL.
+ * No aceptamos IDs de liga ni de usuario suministrados por el cliente.
+ */
 export async function joinFantasyLeague(
-  input: {
-    leagueId: string;
-    userId: string;
-  },
-): Promise<FantasyLeagueMemberRow> {
-  const supabase =
-    await createServerSupabaseClient();
-
-  const { data, error } =
-    await supabase
-      .from("fantasy_league_members")
-      .insert({
-        league_id: input.leagueId,
-        user_id: input.userId,
-      })
-      .select("*")
-      .single();
+  code: string,
+): Promise<{ leagueId: string; alreadyMember: boolean }> {
+  const normalizedCode = code.trim().toUpperCase();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "join_fantasy_league_by_code",
+    { p_code: normalizedCode },
+  );
 
   if (error) {
     throw error;
   }
 
-  return data;
+  const result = data?.[0];
+  if (!result) {
+    throw new Error("No se pudo entrar en la liga.");
+  }
+
+  return {
+    leagueId: result.joined_league_id,
+    alreadyMember: result.already_member,
+  };
 }
 
 export async function getUserFantasyLeagues(
