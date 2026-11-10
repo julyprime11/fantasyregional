@@ -160,6 +160,11 @@ CREATE POLICY ratings_delete_voter ON public.ratings
     )
   );
 
+-- La creación de perfiles se ejecuta automáticamente mediante el trigger
+-- de auth.users, no como RPC pública.
+REVOKE ALL ON FUNCTION public.handle_new_user()
+  FROM PUBLIC, anon, authenticated;
+
 -- Reducir superficie RPC: estas funciones solo deben ser utilizadas por
 -- cuentas autenticadas, además de las comprobaciones RLS sobre sus tablas.
 REVOKE ALL ON FUNCTION public.increment_match_player_stat(uuid,uuid,text,integer)
