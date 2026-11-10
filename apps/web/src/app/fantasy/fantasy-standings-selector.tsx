@@ -63,7 +63,7 @@ export default function FantasyStandingsSelector({
     4,
     ...fixtures.map((fixture) => fixture.matchday_number ?? 0),
   );
-  const rounds = Array.from({ length: maxRound }, (_, i) => i + 1);
+  const rounds = Array.from({ length: maxRound }, (_, i) => maxRound - i);
   const selectedRound = selectedView === "total" ? null : Number(selectedView);
   const roundFixtures = selectedRound === null
     ? []
