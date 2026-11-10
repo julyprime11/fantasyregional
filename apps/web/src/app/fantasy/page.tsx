@@ -3817,6 +3817,7 @@ export default async function FantasyPage({
           {/* CLASIFICACIÓN POR JORNADA Y TOTAL */}
           <FantasyStandingsSelector
             key={activeLeague.id}
+            leagueId={activeLeague.id}
             standings={standings}
             currentUserId={user.id}
             serverNow={now}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getAutomaticFantasyStandingView } from "@regional-fantasy/shared";
 
 import type { FantasyStandingEntry } from "@/data/fantasy-standings";
@@ -14,6 +15,7 @@ export type StandingFixture = {
 };
 
 type Props = {
+  leagueId: string;
   standings: readonly FantasyStandingEntry[];
   fixtures: readonly StandingFixture[];
   currentUserId: string;
@@ -23,6 +25,7 @@ type Props = {
 const LOCK_BEFORE_MATCH_MS = 2 * 60 * 60 * 1000;
 
 export default function FantasyStandingsSelector({
+  leagueId,
   standings,
   fixtures,
   currentUserId,
@@ -70,6 +73,10 @@ export default function FantasyStandingsSelector({
     : fixtures.filter((fixture) => fixture.matchday_number === selectedRound);
   const hasRound = roundFixtures.length > 0;
   const roundClosed = hasRound && roundFixtures.every((fixture) => fixture.status === "closed");
+  // Una jornada cerrada con un solo partido tiene una vista de XI inequívoca.
+  const detailMatchId = roundClosed && roundFixtures.length === 1
+    ? roundFixtures[0].id
+    : null;
   const roundMatchIds = new Set(roundFixtures.map((fixture) => fixture.id));
   const isTotal = selectedRound === null;
   const readyToDisplay = isTotal || roundClosed;
@@ -194,8 +201,9 @@ export default function FantasyStandingsSelector({
                 className={(isTotal
                   ? "grid grid-cols-[32px_minmax(0,1fr)_48px_48px]"
                   : "grid grid-cols-[32px_minmax(0,1fr)_60px]"
-                ) + " items-center gap-2 border-b border-zinc-100 px-3 py-3 last:border-b-0 " +
-                  (entry.user_id === currentUserId ? "bg-[#edf5f1]" : "bg-white")}
+                ) + " relative items-center gap-2 border-b border-zinc-100 px-3 py-3 last:border-b-0 " +
+                  (entry.user_id === currentUserId ? "bg-[#edf5f1]" : "bg-white") +
+                  (detailMatchId && !isTotal ? " group transition-colors hover:bg-[#e8f2ed]" : "")}
               >
                 <span className={"flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-black " +
                   (index === 0 ? "bg-[#0f3d2e] text-white" : index < 3
@@ -225,6 +233,9 @@ export default function FantasyStandingsSelector({
                     <span className="text-zinc-400">
                       {index === 0 ? "Líder" : "-" + ((leader?.total_points ?? 0) - entry.total_points) + " pts"}
                     </span>
+                    {detailMatchId && !isTotal && (
+                      <span aria-hidden="true" className="text-[#0f3d2e] group-hover:underline">Ver XI →</span>
+                    )}
                   </div>
                 </div>
                 {isTotal && (
@@ -233,6 +244,13 @@ export default function FantasyStandingsSelector({
                   </p>
                 )}
                 <p className="text-right text-sm font-black text-zinc-950">{entry.total_points}</p>
+                {detailMatchId && !isTotal && (
+                  <Link
+                    href={`/fantasy/leagues/${leagueId}/matches/${detailMatchId}?user=${entry.user_id}`}
+                    aria-label={`Ver XI de ${entry.display_name} de la jornada ${selectedRound}`}
+                    className="absolute inset-0 z-10 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#0f3d2e]"
+                  />
+                )}
               </div>
             ))}
           </div>
