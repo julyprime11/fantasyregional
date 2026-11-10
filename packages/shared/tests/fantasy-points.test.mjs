@@ -345,7 +345,7 @@ test("players with zero minutes always receive zero including captain", () => {
   assert.equal(result.points, 0);
   assert.deepEqual(result.breakdown, {
     minutes: 0, goals: 0, assists: 0,
-    clean_sheet: 0, goals_conceded: 0, cards: 0, rating: 0, mvp: 0,
+    clean_sheet: 0, goals_conceded: 0, cards: 0, extra_stats: 0, rating: 0, mvp: 0,
   });
   assert.equal(result.rateable, false);
   assert.equal(result.rounded_rating, null);
