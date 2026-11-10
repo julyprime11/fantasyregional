@@ -292,6 +292,14 @@ export type Database = {
       }
       match_players: {
         Row: {
+          penalties_won: number
+          penalties_conceded: number
+          penalties_missed: number
+          penalties_saved: number
+          errors_leading_to_goal: number
+          errors_leading_to_chance: number
+          big_chances_missed: number
+          own_goals: number
           assists: number
           card_dismissed: boolean
           clean_sheet: boolean
@@ -312,6 +320,14 @@ export type Database = {
           yellow_cards: number
         }
         Insert: {
+          penalties_won?: number
+          penalties_conceded?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          errors_leading_to_goal?: number
+          errors_leading_to_chance?: number
+          big_chances_missed?: number
+          own_goals?: number
           assists?: number
           card_dismissed?: boolean
           clean_sheet?: boolean
@@ -332,6 +348,14 @@ export type Database = {
           yellow_cards?: number
         }
         Update: {
+          penalties_won?: number
+          penalties_conceded?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          errors_leading_to_goal?: number
+          errors_leading_to_chance?: number
+          big_chances_missed?: number
+          own_goals?: number
           assists?: number
           card_dismissed?: boolean
           clean_sheet?: boolean
