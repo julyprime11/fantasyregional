@@ -2214,7 +2214,7 @@ export default function StatsManager({
 
                 <div>
 
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                  <p className="sr-only">
 
                     Estadísticas
 
@@ -2306,10 +2306,30 @@ export default function StatsManager({
 
                     )}
 
-
-
-
-
+                    {!matchStarted && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        aria-label={selectedPlayer.starter
+                          ? "Quitar del once inicial"
+                          : "Añadir al once inicial"}
+                        onClick={() => {
+                          if (selectedPlayer.starter) {
+                            removeStarter(selectedPlayer);
+                          } else {
+                            addStarter(selectedPlayer);
+                          }
+                          setSelectedEntryId(null);
+                        }}
+                        className={`inline-flex min-h-10 items-center justify-center rounded-lg px-2 text-[10px] font-black disabled:opacity-50 ${
+                          selectedPlayer.starter
+                            ? "bg-red-50 text-red-700"
+                            : "bg-[#e8f2ed] text-[#0f3d2e]"
+                        }`}
+                      >
+                        {selectedPlayer.starter ? "− Quitar del XI" : "＋ Añadir al XI"}
+                      </button>
+                    )}
                   </div>
 
                 </div>
@@ -2345,94 +2365,6 @@ export default function StatsManager({
             </div>
 
 
-
-            {/* EDICIÓN DEL XI SOLO ANTES DEL PARTIDO */}
-
-            {!matchStarted &&
-
-              selectedPlayer.starter && (
-
-                <button
-
-                  type="button"
-
-                  disabled={
-
-                    pending
-
-                  }
-
-                  onClick={() => {
-
-                    removeStarter(
-
-                      selectedPlayer,
-
-                    );
-
-
-
-                    setSelectedEntryId(
-
-                      null,
-
-                    );
-
-                  }}
-
-                  className="mt-1.5 min-h-10 w-full rounded-lg bg-red-50 px-3 text-xs font-black text-red-700 disabled:opacity-50"
-
-                >
-
-                  Quitar del once inicial
-
-                </button>
-
-              )}
-
-
-
-            {!matchStarted &&
-
-              !selectedPlayer.starter && (
-
-                <button
-
-                  type="button"
-
-                  disabled={
-
-                    pending
-
-                  }
-
-                  onClick={() => {
-
-                    addStarter(
-
-                      selectedPlayer,
-
-                    );
-
-
-
-                    setSelectedEntryId(
-
-                      null,
-
-                    );
-
-                  }}
-
-                  className="mt-1.5 min-h-10 w-full rounded-lg bg-zinc-100 px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
-
-                >
-
-                  Añadir al once inicial
-
-                </button>
-
-              )}
 
             {/* SUSTITUCIÓN */}
 
