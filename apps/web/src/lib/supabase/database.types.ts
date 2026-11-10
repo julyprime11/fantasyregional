@@ -702,6 +702,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      join_fantasy_league_by_code: {
+        Args: { p_code: string }
+        Returns: { joined_league_id: string; already_member: boolean }[]
+      }
       increment_match_player_extra_stat: {
         Args: {
           p_match_id: string
