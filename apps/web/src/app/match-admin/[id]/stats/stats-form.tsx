@@ -1014,13 +1014,10 @@ function ExtraStatControl({
   const pointsLabel = `${stat.points > 0 ? "+" : ""}${stat.points} pts`;
 
   return (
-    <div className="min-w-0 rounded-lg bg-zinc-50 px-2 py-1.5 ring-1 ring-black/5">
-      <div className="flex min-h-8 min-w-0 items-start gap-1">
+    <div className="min-w-0 rounded-lg bg-zinc-50 px-1.5 py-1 ring-1 ring-black/5">
+      <div className="flex min-h-7 min-w-0 items-center gap-1">
         <span aria-hidden="true" className="shrink-0 text-sm leading-4">{stat.icon}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black leading-3 text-zinc-800">{stat.label}</p>
-          <p className="text-[9px] font-semibold leading-3 text-zinc-500">{pointsLabel}</p>
-        </div>
+        <p className="min-w-0 flex-1 text-[10px] font-black leading-3 text-zinc-800">{stat.label}</p>
         <button
           type="button"
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
@@ -1033,7 +1030,7 @@ function ExtraStatControl({
         </button>
       </div>
 
-      <div className="mt-0.5 flex items-center justify-between gap-1">
+      <div className="flex items-center justify-between gap-1">
         <button
           type="button"
           aria-label={`Restar ${stat.label}`}
@@ -1059,6 +1056,7 @@ function ExtraStatControl({
 
       {showInfo && (
         <p id={infoId} role="note" className="mt-1 rounded-md bg-white px-2 py-1.5 text-[10px] leading-4 text-zinc-600">
+          <span className="font-bold text-[#0f3d2e]">Puntuación Fantasy: {pointsLabel}.</span>{" "}
           {stat.description}
           {stat.field === "own_goals" && (
             <> Registra también el gol en los eventos del partido para actualizar el marcador.</>
