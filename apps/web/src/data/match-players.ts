@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   InputError,
+  type FantasyExtraStatField,
 } from "@regional-fantasy/shared";
 
 import type {
@@ -16,6 +17,9 @@ import {
   getMatchById,
   type MatchRow,
 } from "./matches";
+
+import { createAdminSupabaseClient } from "@/lib/supabase/admin";
+import { currentUserIsAdmin } from "@/lib/admin-auth";
 
 import type {
   PlayerRow,
@@ -392,6 +396,37 @@ export async function updateMatchPlayerQuickStat(
  * Fantasy podrá después decidir qué
  * posiciones reciben puntos.
  */
+
+/**
+ * Estadísticas V3: guardado atómico autorizado exclusivamente desde
+ * la capa de servidor. El navegador nunca recibe credenciales elevadas.
+ */
+export async function updateMatchPlayerExtraStat(
+  matchId: string,
+  entryId: string,
+  field: FantasyExtraStatField,
+  delta: 1 | -1,
+): Promise<number> {
+  if (!(await currentUserIsAdmin())) {
+    throw new InputError("No tienes permisos para modificar las estadísticas.");
+  }
+  const supabase = createAdminSupabaseClient();
+  const { data, error } = await supabase.rpc(
+    "increment_match_player_extra_stat",
+    {
+      p_match_id: matchId,
+      p_entry_id: entryId,
+      p_field: field,
+      p_delta: delta,
+    },
+  );
+  if (error) throw error;
+  if (typeof data !== "number") {
+    throw new InputError("No se pudo actualizar la estadística.");
+  }
+  return data;
+}
+
 export async function updateTeamCleanSheet(
   matchId: string,
   teamId: string,
