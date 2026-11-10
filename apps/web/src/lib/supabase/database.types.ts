@@ -109,6 +109,7 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          moderation_status: "active" | "suspended" | "removed"
           name: string
           team_id: string
         }
@@ -117,6 +118,7 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          moderation_status?: "active" | "suspended" | "removed"
           name: string
           team_id: string
         }
@@ -125,6 +127,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          moderation_status?: "active" | "suspended" | "removed"
           name?: string
           team_id?: string
         }
@@ -678,6 +681,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_own_fantasy_lineup: {
+        Args: {
+          p_league_id: string
+          p_match_id: string
+          p_player_ids: string[]
+          p_captain_player_id: string
+        }
+        Returns: Database["public"]["Tables"]["fantasy_lineups"]["Row"]
+      }
+      withdraw_own_fantasy_league: {
+        Args: { p_league_id: string }
+        Returns: boolean
+      }
       register_live_goal_without_player: {
         Args: { p_match_id: string; p_scoring_team_id: string; p_is_own_goal?: boolean }
         Returns: number

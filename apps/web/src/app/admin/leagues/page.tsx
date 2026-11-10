@@ -25,6 +25,7 @@ function matchesSearch(league: AdminLeagueOverview, term: string): boolean {
 
   const values = [
     league.name,
+    league.moderationStatus,
     league.code,
     league.teamName,
     league.creator.displayName,
@@ -157,6 +158,19 @@ export default async function AdminLeaguesPage({
                         {league.name}
                       </h2>
                       <p className="mt-1 text-xs leading-5 text-zinc-500">{league.teamName}</p>
+                      <p className={`mt-2 inline-flex rounded-lg px-2 py-1 text-[10px] font-black ${
+                        league.moderationStatus === "active"
+                          ? "bg-emerald-50 text-emerald-800"
+                          : league.moderationStatus === "suspended"
+                            ? "bg-amber-50 text-amber-900"
+                            : "bg-red-50 text-red-800"
+                      }`}>
+                        {league.moderationStatus === "active"
+                          ? "Activa"
+                          : league.moderationStatus === "suspended"
+                            ? "Suspendida"
+                            : "Retirada"}
+                      </p>
                     </div>
                     <span className="shrink-0 rounded-xl bg-[#e8f2ed] px-3 py-2 text-xs font-black text-[#0f3d2e]">
                       {league.members.length} 👥

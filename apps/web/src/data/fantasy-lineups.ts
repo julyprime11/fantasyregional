@@ -9,6 +9,7 @@ import {
 
 import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isFantasyLeagueActive } from "@/lib/fantasy-league-moderation";
 
 export type FantasyLineupRow =
   Database["public"]["Tables"]["fantasy_lineups"]["Row"];
@@ -129,7 +130,7 @@ async function assertFantasyContext(
     await supabase
       .from("fantasy_leagues")
       .select(
-        "id, team_id, created_at",
+        "id, team_id, created_at, moderation_status",
       )
       .eq("id", input.leagueId)
       .maybeSingle();
@@ -141,6 +142,12 @@ async function assertFantasyContext(
   if (!league) {
     throw new InputError(
       "La liga Fantasy ya no está disponible.",
+    );
+  }
+
+  if (!isFantasyLeagueActive(league.moderation_status)) {
+    throw new InputError(
+      "La liga Fantasy está suspendida o retirada.",
     );
   }
 
@@ -291,15 +298,6 @@ export async function saveFantasyLineup(
     );
   }
 
-  const lineup =
-    await getOrCreateFantasyLineup(input);
-
-  if (lineup.locked_at !== null) {
-    throw new InputError(
-      "Esta alineación está bloqueada y ya no se puede modificar.",
-    );
-  }
-
   const uniquePlayerIds = [
     ...new Set(input.playerIds),
   ];
@@ -386,120 +384,24 @@ export async function saveFantasyLineup(
     );
   }
 
-  const currentPlayers =
-    await getFantasyLineupPlayers(
-      lineup.id,
-    );
+  // La base de datos vuelve a verificar miembro, partido, plazo,
+  // jugadores, formación y capitán y escribe el XI en una transacción.
+  const { data: savedLineup, error: saveError } = await supabase.rpc(
+    "save_own_fantasy_lineup",
+    {
+      p_league_id: input.leagueId,
+      p_match_id: input.matchId,
+      p_player_ids: uniquePlayerIds,
+      p_captain_player_id: input.captainPlayerId,
+    },
+  );
 
-  const currentIds =
-    new Set(
-      currentPlayers.map(
-        (entry) =>
-          entry.player_id,
-      ),
-    );
-
-  const nextIds =
-    new Set(
-      uniquePlayerIds,
-    );
-
-  const playersToInsert =
-    uniquePlayerIds.filter(
-      (playerId) =>
-        !currentIds.has(
-          playerId,
-        ),
-    );
-
-  const entriesToDelete =
-    currentPlayers.filter(
-      (entry) =>
-        !nextIds.has(
-          entry.player_id,
-        ),
-    );
-
-  /*
-   * Insertamos primero los nuevos jugadores.
-   * Así, si el INSERT falla, conservamos la
-   * alineación anterior.
-   */
-  if (
-    playersToInsert.length >
-    0
-  ) {
-    const {
-      error: insertError,
-    } =
-      await supabase
-        .from(
-          "fantasy_lineup_players",
-        )
-        .insert(
-          playersToInsert.map(
-            (playerId) => ({
-              lineup_id:
-                lineup.id,
-              player_id:
-                playerId,
-            }),
-          ),
-        );
-
-    if (insertError) {
-      throw insertError;
-    }
+  if (saveError) throw saveError;
+  if (!savedLineup) {
+    throw new Error("No se pudo guardar la alineación Fantasy.");
   }
 
-  if (
-    entriesToDelete.length >
-    0
-  ) {
-    const {
-      error: deleteError,
-    } =
-      await supabase
-        .from(
-          "fantasy_lineup_players",
-        )
-        .delete()
-        .in(
-          "id",
-          entriesToDelete.map(
-            (entry) =>
-              entry.id,
-          ),
-        );
-
-    if (deleteError) {
-      throw deleteError;
-    }
-  }
-
-  const {
-    data: updatedLineup,
-    error: updateError,
-  } =
-    await supabase
-      .from("fantasy_lineups")
-      .update({
-        captain_player_id: input.captainPlayerId,
-        updated_at:
-          new Date().toISOString(),
-      })
-      .eq(
-        "id",
-        lineup.id,
-      )
-      .select("*")
-      .single();
-
-  if (updateError) {
-    throw updateError;
-  }
-
-  return updatedLineup;
+  return savedLineup;
 }
 
 export async function lockFantasyLineup(

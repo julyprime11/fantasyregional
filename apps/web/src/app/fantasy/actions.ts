@@ -17,10 +17,6 @@ import {
   requireUser,
 } from "@/lib/auth";
 
-import {
-  currentUserIsAdmin,
-} from "@/lib/admin-auth";
-
 export type DeleteLeagueState = {
   status:
     | "idle"
@@ -50,27 +46,14 @@ export async function deleteFantasyLeagueAction(
           "error",
 
         message:
-          "La liga ya no existe.",
+          "La liga no existe o ya ha sido retirada.",
       };
     }
 
-    const isAdmin =
-      await currentUserIsAdmin();
-
-    const isCreator =
-      league.created_by ===
-      user.id;
-
-    if (
-      !isCreator &&
-      !isAdmin
-    ) {
+    if (league.created_by !== user.id) {
       return {
-        status:
-          "error",
-
-        message:
-          "Solo el creador de la liga o Directiva puede eliminarla.",
+        status: "error",
+        message: "Solo el creador puede retirar su propia liga.",
       };
     }
 
@@ -95,7 +78,7 @@ export async function deleteFantasyLeagueAction(
         "error",
 
       message:
-        "No se pudo eliminar la liga.",
+        "No se pudo retirar la liga.",
     };
   }
 
