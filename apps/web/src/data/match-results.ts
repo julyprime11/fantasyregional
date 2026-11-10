@@ -405,6 +405,15 @@ export const getMatchResults = cache(async function getMatchResults(
                 red_card_reason:
                   entry.red_card_reason as "direct" | "second_yellow" | null,
 
+                penalties_won: entry.penalties_won,
+                penalties_conceded: entry.penalties_conceded,
+                penalties_missed: entry.penalties_missed,
+                penalties_saved: entry.penalties_saved,
+                errors_leading_to_goal: entry.errors_leading_to_goal,
+                errors_leading_to_chance: entry.errors_leading_to_chance,
+                big_chances_missed: entry.big_chances_missed,
+                own_goals: entry.own_goals,
+
                 clean_sheet:
                   entry.clean_sheet,
 
