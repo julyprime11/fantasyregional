@@ -376,6 +376,7 @@ export default async function MatchStatsPage({
         ) : (
           <section className="mt-8">
             <StatsManager
+              scoringVersion={match.fantasy_scoring_version}
               matchId={
                 id
               }
@@ -444,6 +445,17 @@ export default async function MatchStatsPage({
 
                   redCards: entry.red_cards,
                   redCardReason: entry.red_card_reason,
+
+                  extraStats: {
+                    penalties_won: entry.penalties_won,
+                    penalties_conceded: entry.penalties_conceded,
+                    penalties_missed: entry.penalties_missed,
+                    penalties_saved: entry.penalties_saved,
+                    errors_leading_to_goal: entry.errors_leading_to_goal,
+                    errors_leading_to_chance: entry.errors_leading_to_chance,
+                    big_chances_missed: entry.big_chances_missed,
+                    own_goals: entry.own_goals,
+                  },
 
                   cleanSheet:
                     entry.clean_sheet,
