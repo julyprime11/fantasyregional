@@ -2309,29 +2309,7 @@ export default function StatsManager({
 
 
 
-                    <span
 
-                      className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
-
-                        selectedPlayer.cleanSheet
-
-                          ? "bg-emerald-100 text-emerald-700"
-
-                          : "bg-zinc-100 text-zinc-500"
-
-                      }`}
-
-                    >
-
-                      🧤{" "}
-
-                      {selectedPlayer.cleanSheet
-
-                        ? "A cero"
-
-                        : "Sin P. cero"}
-
-                    </span>
 
                   </div>
 
@@ -3042,27 +3020,7 @@ function BenchPlayer({
 
 
 
-            {player.cleanSheet && (
-
-              <>
-
-                <span>
-
-                  ·
-
-                </span>
-
-
-
-                <span className="font-bold text-emerald-700">
-
-                  🧤 P. cero
-
-                </span>
-
-              </>
-
-            )}
+            
 
           </div>
 
@@ -3184,17 +3142,7 @@ function SubstitutedPlayer({
 
 
 
-            {player.cleanSheet && (
-
-              <>
-
-                {" · "}
-
-                🧤
-
-              </>
-
-            )}
+            
 
           </p>
 

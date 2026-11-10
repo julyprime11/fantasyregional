@@ -804,17 +804,6 @@ export default function StatsForm({
         )}
       </section>
 
-      {/* CLEAN SHEET SOLO INFORMATIVO */}
-      <section className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 ${cleanSheetValue ? "bg-emerald-50" : "bg-zinc-50"}`}>
-        <div className="min-w-0">
-          <p className="text-xs font-black text-zinc-950">🧤 Portería a cero</p>
-          <p className="text-[10px] text-zinc-500">Se gestiona por equipo</p>
-        </div>
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${cleanSheetValue ? "bg-emerald-600 text-white" : "bg-zinc-200 text-zinc-500"}`}>
-          {cleanSheetValue ? "SÍ" : "NO"}
-        </span>
-      </section>
-
       {/* MARCAR COMPLETADO */}
       <form
         action={

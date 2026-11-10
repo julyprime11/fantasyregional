@@ -170,82 +170,19 @@ export default async function MatchStatsPage({
       ),
     );
 
-  /*
-   * EQUIPOS GESTIONADOS
-   *
-   * Los detectamos automáticamente
-   * a partir de match_players.
-   *
-   * Ahora:
-   * - si solo tenemos jugadores del Castelló,
-   *   aparecerá únicamente Castelló.
-   *
-   * Futuro:
-   * - si también cargamos jugadores del rival,
-   *   aparecerán automáticamente los dos equipos.
-   *
-   * No dependemos del nombre del club.
-   * Trabajamos siempre con team_id.
-   */
-  const managedTeamsMap =
-    new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        cleanSheet: boolean;
-      }
-    >();
-
-  for (
-    const entry of
-    players
-  ) {
-    const current =
-      managedTeamsMap.get(
-        entry.team_id,
-      );
-
-    const teamName =
-      entry.team?.name ??
-      teamNames.get(
-        entry.team_id,
-      ) ??
-      "Equipo";
-
-    if (!current) {
-      managedTeamsMap.set(
+  // Equipos con jugadores convocados: este listado se utiliza para
+  // los eventos de gol del Match Center, nunca para asignar bonus.
+  const managedTeams = Array.from(
+    new Map(
+      players.map((entry) => [
         entry.team_id,
         {
-          id:
-            entry.team_id,
-
-          name:
-            teamName,
-
-          cleanSheet:
-            entry.clean_sheet,
+          id: entry.team_id,
+          name: entry.team?.name ?? teamNames.get(entry.team_id) ?? "Equipo",
         },
-      );
-
-      continue;
-    }
-
-    /*
-     * El equipo se considera con
-     * portería a cero únicamente si
-     * todos sus match_players tienen
-     * clean_sheet=true.
-     */
-    current.cleanSheet =
-      current.cleanSheet &&
-      entry.clean_sheet;
-  }
-
-  const managedTeams =
-    Array.from(
-      managedTeamsMap.values(),
-    );
+      ]),
+    ).values(),
+  );
 
   return (
     <main className="mx-auto min-h-screen max-w-xl">
@@ -314,6 +251,13 @@ export default async function MatchStatsPage({
               ),
             })).filter((event) => event.teamId !== "")}
           />
+          {match.fantasy_scoring_version === "v3" && (
+            <p className="mt-3 px-2 text-xs leading-5 text-zinc-500">
+              La portería a cero Fantasy se calcula automáticamente según los goles
+              encajados mientras cada jugador estuvo en el campo y sus minutos jugados.
+              Se exigen más de 60 minutos; el portero debe jugar el partido completo.
+            </p>
+          )}
         </section>
 
         {/* CRONOLOGÍA */}

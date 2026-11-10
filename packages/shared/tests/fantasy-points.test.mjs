@@ -687,3 +687,34 @@ test("V1 and V2 keep their existing clean-sheet rules for exactly 60 minutes", (
     ...base, scoring_version: "v3",
   }).breakdown.clean_sheet, 0);
 });
+
+test("V3 late substitute in the 80th minute gets no clean-sheet bonus", () => {
+  const lateSubstitute = createPlayerInput({
+    position: "CB",
+    minutes_played: 10,
+    match_minutes: 90,
+    starter: false,
+    clean_sheet: true,
+    goals_conceded_on_field: 0,
+    scoring_version: "v3",
+  });
+
+  const result = calculateFantasyPlayerPoints(lateSubstitute);
+  assert.equal(result.breakdown.clean_sheet, 0);
+  assert.equal(result.breakdown.minutes, 1);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...lateSubstitute,
+    position: "CM",
+  }).breakdown.clean_sheet, 0);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...lateSubstitute,
+    position: "ST",
+  }).breakdown.clean_sheet, 0);
+
+  // Los suplentes tambien pueden obtener el bonus si superan 60 minutos.
+  const earlySubstitute = {
+    ...lateSubstitute,
+    minutes_played: 61,
+  };
+  assert.equal(calculateFantasyPlayerPoints(earlySubstitute).breakdown.clean_sheet, 3);
+});
