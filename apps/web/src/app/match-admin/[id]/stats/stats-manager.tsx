@@ -44,6 +44,7 @@ import type {
 
 
 import StatsForm from "./stats-form";
+import type { FantasyExtraStats } from "@regional-fantasy/shared";
 
 import SubstitutionPanel from "./substitution-panel";
 
@@ -116,6 +117,7 @@ type StatsPlayer = {
   redCards: number;
   redCardReason: string | null;
   cleanSheet: boolean;
+  extraStats: FantasyExtraStats;
 
 };
 
@@ -198,6 +200,7 @@ function getFieldLine(
 export default function StatsManager({
 
   matchId,
+  scoringVersion,
 
   livePhase,
 
@@ -206,6 +209,7 @@ export default function StatsManager({
 }: {
 
   matchId: string;
+  scoringVersion: string;
 
 
 
@@ -2469,6 +2473,9 @@ export default function StatsManager({
 
             <StatsForm
 
+              scoringVersion={scoringVersion}
+              isGoalkeeper={selectedPlayer.position === "GK"}
+              extraStats={selectedPlayer.extraStats}
               key={
 
                 selectedPlayer.entryId
