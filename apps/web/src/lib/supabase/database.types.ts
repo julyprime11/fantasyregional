@@ -702,6 +702,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_match_player_extra_stat: {
+        Args: {
+          p_match_id: string
+          p_entry_id: string
+          p_field: string
+          p_delta: number
+        }
+        Returns: number
+      }
       register_live_goal_without_player: {
         Args: { p_match_id: string; p_scoring_team_id: string; p_is_own_goal?: boolean }
         Returns: number
