@@ -1022,6 +1022,7 @@ export default function StatsForm({
 }
 
 
+
 type ExtraStatDefinition = (typeof FANTASY_EXTRA_STATS)[number];
 
 function ExtraStatControl({
@@ -1045,54 +1046,60 @@ function ExtraStatControl({
   const infoId = `fantasy-stat-info-${stat.field}`;
   const pointsLabel = `${stat.points > 0 ? "+" : ""}${stat.points} pts`;
 
+  const controls = (
+    <div className={compact
+      ? "flex shrink-0 items-center gap-1"
+      : "mt-2 grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5"
+    }>
+      <button
+        type="button"
+        aria-label={`Restar ${stat.label}`}
+        disabled={disabled || value <= 0}
+        onClick={onMinus}
+        className={`flex shrink-0 items-center justify-center rounded-lg bg-white font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30 ${compact ? "h-9 w-8 text-base" : "h-10 w-9 text-lg"}`}
+      >
+        −
+      </button>
+      <span className={`text-center font-black tabular-nums text-zinc-950 ${compact ? "min-w-6 text-base" : "text-lg"}`}>
+        {pending ? "…" : value}
+      </span>
+      <button
+        type="button"
+        aria-label={`Sumar ${stat.label}`}
+        disabled={disabled || value >= 99}
+        onClick={onPlus}
+        className={`flex shrink-0 items-center justify-center rounded-lg bg-[#0f3d2e] font-black text-white active:scale-95 disabled:opacity-40 ${compact ? "h-9 w-8 text-base" : "h-10 w-9 text-lg"}`}
+      >
+        +
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-w-0 rounded-xl bg-zinc-50 p-2.5 ring-1 ring-black/5">
-      <div className="flex items-start gap-1.5">
-        <span className="shrink-0 text-lg" aria-hidden="true">{stat.icon}</span>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-black leading-4 text-zinc-800">
-            {stat.label}
-          </p>
-          <p className="text-[10px] font-semibold text-zinc-500">{pointsLabel}</p>
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex min-w-0 flex-1 items-start gap-1.5">
+          <span className="shrink-0 text-base" aria-hidden="true">{stat.icon}</span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-black leading-4 text-zinc-800">
+              {stat.label}
+            </p>
+            <p className="text-[10px] font-semibold text-zinc-500">{pointsLabel}</p>
+          </div>
+          <button
+            type="button"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+            aria-label={`Información sobre ${stat.label}`}
+            aria-controls={infoId}
+            aria-expanded={showInfo}
+            onClick={() => setShowInfo((open) => !open)}
+          >
+            ⓘ
+          </button>
         </div>
-        <button
-          type="button"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
-          aria-label={`Información sobre ${stat.label}`}
-          aria-controls={infoId}
-          aria-expanded={showInfo}
-          onClick={() => setShowInfo((open) => !open)}
-        >
-          ⓘ
-        </button>
+        {compact && controls}
       </div>
-
-      <div className={compact
-        ? "mt-2 grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5"
-        : "mt-2 grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5"
-      }>
-        <button
-          type="button"
-          aria-label={`Restar ${stat.label}`}
-          disabled={disabled || value <= 0}
-          onClick={onMinus}
-          className="flex h-10 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
-        >
-          −
-        </button>
-        <span className="text-center text-lg font-black tabular-nums text-zinc-950">
-          {pending ? "…" : value}
-        </span>
-        <button
-          type="button"
-          aria-label={`Sumar ${stat.label}`}
-          disabled={disabled || value >= 99}
-          onClick={onPlus}
-          className="flex h-10 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
-        >
-          +
-        </button>
-      </div>
+      {!compact && controls}
       {showInfo && (
         <p id={infoId} role="note" className="mt-2 rounded-lg bg-white p-2 text-[11px] leading-4 text-zinc-600">
           {stat.description}
