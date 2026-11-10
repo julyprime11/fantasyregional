@@ -618,83 +618,52 @@ export default function StatsForm({
   }
 
   return (
-    <div className="mt-3 space-y-3">
-      {/* ESTADO REALTIME */}
-      <div
-        className={`flex items-center justify-between rounded-xl px-2.5 py-1.5 ${
-          realtimeStatus ===
-          "connected"
-            ? "bg-[#edf5f1]"
-            : realtimeStatus ===
-                "error"
-              ? "bg-amber-50"
-              : "bg-zinc-100"
-        }`}
-      >
-        <div className="flex items-center gap-2">
+    <div className="mt-2 space-y-2">
+      {/* Estado de sincronización y cronómetro en una sola barra */}
+      <div className={`flex min-h-10 items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 ${
+        realtimeStatus === "error" ? "bg-amber-50" : "bg-[#e8f2ed]"
+      }`}>
+        <div className="flex min-w-0 items-center gap-1.5">
           <span
-            className={`h-2 w-2 rounded-full ${
-              realtimeStatus ===
-              "connected"
+            aria-hidden="true"
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              realtimeStatus === "connected"
                 ? "bg-emerald-500"
-                : realtimeStatus ===
-                    "error"
+                : realtimeStatus === "error"
                   ? "bg-amber-500"
                   : "animate-pulse bg-zinc-400"
             }`}
           />
-
-          <p
-            className={`text-[10px] font-black uppercase tracking-wide ${
-              realtimeStatus ===
-              "connected"
-                ? "text-[#0f3d2e]"
-                : realtimeStatus ===
-                    "error"
-                  ? "text-amber-700"
-                  : "text-zinc-500"
+          <span
+            role="status"
+            className={`truncate text-[10px] font-black ${
+              realtimeStatus === "error" ? "text-amber-700" : "text-[#0f3d2e]"
             }`}
           >
-            {realtimeStatus ===
-            "connected"
-              ? "Sincronizado en directo"
-              : realtimeStatus ===
-                  "error"
+            {realtimeStatus === "connected"
+              ? "Sincronizado · multiusuario"
+              : realtimeStatus === "error"
                 ? "Sincronización no disponible"
-                : "Conectando..."}
-          </p>
-        </div>
-
-        {realtimeStatus ===
-          "connected" && (
-          <span className="text-[9px] font-semibold text-[#557368]">
-            Multiusuario
+                : "Conectando…"}
           </span>
-        )}
-      </div>
-
-      {/* MINUTOS AUTOMÁTICOS */}
-      <section className="flex items-center justify-between gap-3 rounded-xl bg-[#e8f2ed] px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span aria-hidden="true" className="text-lg">⏱</span>
-          <div className="min-w-0">
-            <p className="text-[11px] font-black text-[#0f3d2e]">Minutos automáticos</p>
-            <p className="text-[10px] text-[#557368]">Cronómetro y sustituciones</p>
-          </div>
         </div>
-        <p className="shrink-0 text-2xl font-black tabular-nums text-[#0f3d2e]">
-          {minutes}<span className="ml-0.5 text-sm">&apos;</span>
-        </p>
-      </section>
+        <div className="flex shrink-0 items-center gap-1.5 text-[#0f3d2e]" aria-label={`Minutos automáticos: ${minutes}`}>
+          <span aria-hidden="true" className="text-sm">⏱</span>
+          <span className="text-[10px] font-bold">Min.</span>
+          <span className="text-lg font-black tabular-nums">
+            {minutes}<span className="text-xs">&apos;</span>
+          </span>
+        </div>
+      </div>
 
       {/* ESTADÍSTICAS RÁPIDAS */}
       <section>
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-black text-zinc-950">Estadísticas rápidas</h3>
-          <span className="text-[10px] font-semibold text-zinc-500">Guardado automático</span>
+          <h3 className="text-xs font-black text-zinc-950">Estadísticas rápidas</h3>
+          <span className="text-[9px] font-semibold text-zinc-500">Guardado automático</span>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-1 grid grid-cols-2 gap-1.5">
           <QuickStatControl
             icon="⚽"
             label="Goles"
@@ -816,7 +785,7 @@ export default function StatsForm({
             <p className="mt-1 text-[11px] text-red-700">
               Indica si fue directa o por segunda amarilla para calcular los puntos.
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
               {([
                 ["direct", "Roja directa"],
                 ["second_yellow", "Doble amarilla"],
@@ -863,7 +832,7 @@ export default function StatsForm({
       {scoringVersion === "v3" && (
         <>
           <section aria-labelledby="fantasy-extra-penalties">
-            <h3 id="fantasy-extra-penalties" className="text-base font-black text-zinc-950">
+            <h3 id="fantasy-extra-penalties" className="text-xs font-black text-zinc-950">
               Penaltis
             </h3>
             <div className="mt-2 grid grid-cols-2 gap-2">
@@ -885,10 +854,10 @@ export default function StatsForm({
           </section>
 
           <section aria-labelledby="fantasy-extra-other">
-            <h3 id="fantasy-extra-other" className="text-base font-black text-zinc-950">
+            <h3 id="fantasy-extra-other" className="text-xs font-black text-zinc-950">
               Errores y otras acciones
             </h3>
-            <div className="mt-2 space-y-2">
+            <div className="mt-1 space-y-1">
               {FANTASY_EXTRA_STATS
                 .filter((stat) => stat.group === "other")
                 .map((stat) => (
@@ -904,11 +873,6 @@ export default function StatsForm({
                   />
                 ))}
             </div>
-            <p className="mt-2 text-[11px] leading-4 text-zinc-500">
-              Los goles en propia puerta deben registrarse también en los eventos
-              del partido para actualizar el marcador. Este contador aplica
-              exclusivamente la penalización Fantasy al jugador.
-            </p>
           </section>
           {extraError && (
             <p role="alert" className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
@@ -923,7 +887,7 @@ export default function StatsForm({
         action={
           formAction
         }
-        className="border-t border-zinc-100 pt-3"
+        className="sticky bottom-0 z-20 -mx-3 border-t border-zinc-100 bg-white/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-4 sm:px-4"
       >
         {/*
          * El parser de la action sigue esperando
@@ -1015,7 +979,7 @@ export default function StatsForm({
           disabled={
             pending
           }
-          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-50"
+          className="flex min-h-11 w-full items-center justify-center rounded-xl bg-zinc-950 px-3 text-xs font-black text-white disabled:opacity-50"
         >
           {pending
             ? "Guardando..."
