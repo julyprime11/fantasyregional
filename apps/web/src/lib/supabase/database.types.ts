@@ -398,7 +398,6 @@ export type Database = {
         }
         Insert: {
           matchday_number?: number | null
-          matchday_number?: number | null
           fantasy_scoring_version?: string
           away_score?: number | null
           away_team_id: string
@@ -418,6 +417,7 @@ export type Database = {
           voting_opens_at?: string | null
         }
         Update: {
+          matchday_number?: number | null
           fantasy_scoring_version?: string
           away_score?: number | null
           away_team_id?: string
