@@ -15,6 +15,7 @@ export type FantasyStandingEntry = {
   total_points: number;
   played_matches: number;
   last_match_points: number | null;
+  match_points: { match_id: string; total_points: number }[];
   points_behind_leader: number;
   position_change: number | null;
 };
@@ -111,6 +112,10 @@ export async function getFantasyLeagueStandings(
           played_matches: history.ready.length,
           last_match_points:
             last?.total_points ?? null,
+          match_points: history.ready.map((day) => ({
+            match_id: day.match_id,
+            total_points: day.total_points ?? 0,
+          })),
           points_behind_leader: 0,
           position_change: null,
         };
