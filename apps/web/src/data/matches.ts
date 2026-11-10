@@ -778,6 +778,14 @@ export async function resetLiveMatch(
 
         red_cards:
           0,
+        penalties_won: 0,
+        penalties_conceded: 0,
+        penalties_missed: 0,
+        penalties_saved: 0,
+        errors_leading_to_goal: 0,
+        errors_leading_to_chance: 0,
+        big_chances_missed: 0,
+        own_goals: 0,
 
         clean_sheet:
           false,

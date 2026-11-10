@@ -18,12 +18,20 @@ import {
 
 import {
   updateQuickPlayerStatAction,
+  updateExtraPlayerStatAction,
   updateMatchRedCardReasonAction,
 } from "./actions";
 
 import type {
   QuickStatField,
 } from "@/data/match-players";
+
+import {
+  FANTASY_EXTRA_STATS,
+  FANTASY_EXTRA_STAT_FIELDS,
+  type FantasyExtraStatField,
+  type FantasyExtraStats,
+} from "@regional-fantasy/shared";
 
 type StatsFormProps = {
   matchId: string;
@@ -43,6 +51,9 @@ type StatsFormProps = {
   redCards: number;
   redCardReason: string | null;
   cleanSheet: boolean;
+  scoringVersion: string;
+  isGoalkeeper: boolean;
+  extraStats: FantasyExtraStats;
 
   onSaved?: () => void;
 };
@@ -69,7 +80,15 @@ type RealtimeMatchPlayer = {
   clean_sheet?: boolean;
 
   stats_completed?: boolean;
-};
+} & FantasyExtraStats;
+
+type ExtraValues = Record<FantasyExtraStatField, number>;
+
+function normalizeExtraStats(stats: FantasyExtraStats): ExtraValues {
+  return Object.fromEntries(
+    FANTASY_EXTRA_STAT_FIELDS.map((field) => [field, stats[field] ?? 0]),
+  ) as ExtraValues;
+}
 
 export default function StatsForm({
   matchId,
@@ -82,6 +101,9 @@ export default function StatsForm({
   redCards,
   redCardReason,
   cleanSheet,
+  scoringVersion,
+  isGoalkeeper,
+  extraStats,
   onSaved,
 }: StatsFormProps) {
   const action =
@@ -173,12 +195,16 @@ export default function StatsForm({
       cleanSheet,
     );
 
+  const [extraValues, setExtraValues] = useState<ExtraValues>(
+    () => normalizeExtraStats(extraStats),
+  );
+
   const [
     quickPendingField,
     setQuickPendingField,
   ] =
     useState<
-      QuickStatField | null
+      QuickStatField | FantasyExtraStatField | null
     >(null);
 
   const [
@@ -186,6 +212,8 @@ export default function StatsForm({
     setQuickError,
   ] =
     useState("");
+
+  const [extraError, setExtraError] = useState("");
 
   const [
     realtimeStatus,
@@ -252,6 +280,10 @@ export default function StatsForm({
     cleanSheet,
   ]);
 
+  useEffect(() => {
+    setExtraValues(normalizeExtraStats(extraStats));
+  }, [extraStats]);
+
   /*
    * ===============================
    * REALTIME / MULTIUSUARIO
@@ -282,18 +314,7 @@ export default function StatsForm({
           .from(
             "match_players",
           )
-          .select(
-            `
-              minutes_played,
-              goals,
-              assists,
-              yellow_cards,
-              red_cards,
-              red_card_reason,
-              clean_sheet,
-              stats_completed
-            `,
-          )
+          .select("*")
           .eq(
             "match_id",
             matchId,
@@ -348,6 +369,8 @@ export default function StatsForm({
         data.clean_sheet ??
           false,
       );
+
+      setExtraValues(normalizeExtraStats(data));
     }
 
     void loadLatest();
@@ -421,6 +444,15 @@ export default function StatsForm({
             if ("red_card_reason" in updated) {
               setRedReasonValue(updated.red_card_reason ?? null);
             }
+
+            setExtraValues((current) => ({
+              ...current,
+              ...Object.fromEntries(
+                FANTASY_EXTRA_STAT_FIELDS
+                  .filter((field) => typeof updated[field] === "number")
+                  .map((field) => [field, updated[field]]),
+              ),
+            }));
 
             if (
               typeof updated.clean_sheet ===
@@ -562,84 +594,76 @@ export default function StatsForm({
     }
   }
 
+
+  async function changeExtraStat(field: FantasyExtraStatField, delta: 1 | -1) {
+    if (quickPendingField !== null) return;
+    setExtraError("");
+    setQuickPendingField(field);
+    try {
+      const result = await updateExtraPlayerStatAction(
+        matchId, entryId, field, delta,
+      );
+      if (result.status === "error") {
+        setExtraError(result.message);
+        return;
+      }
+      if (typeof result.value === "number") {
+        setExtraValues((current) => ({ ...current, [field]: result.value as number }));
+      }
+    } catch {
+      setExtraError("No se pudo guardar. Comprueba la conexión e inténtalo de nuevo.");
+    } finally {
+      setQuickPendingField(null);
+    }
+  }
+
   return (
-    <div className="mt-3 space-y-3">
-      {/* ESTADO REALTIME */}
-      <div
-        className={`flex items-center justify-between rounded-xl px-2.5 py-1.5 ${
-          realtimeStatus ===
-          "connected"
-            ? "bg-[#edf5f1]"
-            : realtimeStatus ===
-                "error"
-              ? "bg-amber-50"
-              : "bg-zinc-100"
-        }`}
-      >
-        <div className="flex items-center gap-2">
+    <div className="mt-2 space-y-2">
+      {/* Estado de sincronización y cronómetro en una sola barra */}
+      <div className={`flex min-h-10 items-center justify-between gap-2 rounded-xl px-2.5 py-1.5 ${
+        realtimeStatus === "error" ? "bg-amber-50" : "bg-[#e8f2ed]"
+      }`}>
+        <div className="flex min-w-0 items-center gap-1.5">
           <span
-            className={`h-2 w-2 rounded-full ${
-              realtimeStatus ===
-              "connected"
+            aria-hidden="true"
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              realtimeStatus === "connected"
                 ? "bg-emerald-500"
-                : realtimeStatus ===
-                    "error"
+                : realtimeStatus === "error"
                   ? "bg-amber-500"
                   : "animate-pulse bg-zinc-400"
             }`}
           />
-
-          <p
-            className={`text-[10px] font-black uppercase tracking-wide ${
-              realtimeStatus ===
-              "connected"
-                ? "text-[#0f3d2e]"
-                : realtimeStatus ===
-                    "error"
-                  ? "text-amber-700"
-                  : "text-zinc-500"
+          <span
+            role="status"
+            className={`truncate text-[10px] font-black ${
+              realtimeStatus === "error" ? "text-amber-700" : "text-[#0f3d2e]"
             }`}
           >
-            {realtimeStatus ===
-            "connected"
-              ? "Sincronizado en directo"
-              : realtimeStatus ===
-                  "error"
+            {realtimeStatus === "connected"
+              ? "Sincronizado · multiusuario"
+              : realtimeStatus === "error"
                 ? "Sincronización no disponible"
-                : "Conectando..."}
-          </p>
-        </div>
-
-        {realtimeStatus ===
-          "connected" && (
-          <span className="text-[9px] font-semibold text-[#557368]">
-            Multiusuario
+                : "Conectando…"}
           </span>
-        )}
-      </div>
-
-      {/* MINUTOS AUTOMÁTICOS */}
-      <section className="flex items-center justify-between gap-3 rounded-xl bg-[#e8f2ed] px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span aria-hidden="true" className="text-lg">⏱</span>
-          <div className="min-w-0">
-            <p className="text-[11px] font-black text-[#0f3d2e]">Minutos automáticos</p>
-            <p className="text-[10px] text-[#557368]">Cronómetro y sustituciones</p>
-          </div>
         </div>
-        <p className="shrink-0 text-2xl font-black tabular-nums text-[#0f3d2e]">
-          {minutes}<span className="ml-0.5 text-sm">&apos;</span>
-        </p>
-      </section>
+        <div className="flex shrink-0 items-center gap-1.5 text-[#0f3d2e]" aria-label={`Minutos automáticos: ${minutes}`}>
+          <span aria-hidden="true" className="text-sm">⏱</span>
+          <span className="text-[10px] font-bold">Min.</span>
+          <span className="text-lg font-black tabular-nums">
+            {minutes}<span className="text-xs">&apos;</span>
+          </span>
+        </div>
+      </div>
 
       {/* ESTADÍSTICAS RÁPIDAS */}
       <section>
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-black text-zinc-950">Estadísticas rápidas</h3>
-          <span className="text-[10px] font-semibold text-zinc-500">Guardado automático</span>
+          <h3 className="text-xs font-black text-zinc-950">Estadísticas rápidas</h3>
+          <span className="text-[9px] font-semibold text-zinc-500">Guardado automático</span>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className="mt-1 grid grid-cols-2 gap-1.5">
           <QuickStatControl
             icon="⚽"
             label="Goles"
@@ -761,7 +785,7 @@ export default function StatsForm({
             <p className="mt-1 text-[11px] text-red-700">
               Indica si fue directa o por segunda amarilla para calcular los puntos.
             </p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
               {([
                 ["direct", "Roja directa"],
                 ["second_yellow", "Doble amarilla"],
@@ -804,12 +828,65 @@ export default function StatsForm({
         )}
       </section>
 
+
+      {scoringVersion === "v3" && (
+        <>
+          <section aria-labelledby="fantasy-extra-penalties">
+            <h3 id="fantasy-extra-penalties" className="text-xs font-black text-zinc-950">
+              Penaltis
+            </h3>
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
+              {FANTASY_EXTRA_STATS
+                .filter((stat) => stat.group === "penalties")
+                .filter((stat) => stat.field !== "penalties_saved" || isGoalkeeper)
+                .map((stat) => (
+                  <ExtraStatControl
+                    key={stat.field}
+                    stat={stat}
+                    value={extraValues[stat.field]}
+                    disabled={quickPendingField !== null}
+                    pending={quickPendingField === stat.field}
+                    onMinus={() => changeExtraStat(stat.field, -1)}
+                    onPlus={() => changeExtraStat(stat.field, 1)}
+                  />
+                ))}
+            </div>
+          </section>
+
+          <section aria-labelledby="fantasy-extra-other">
+            <h3 id="fantasy-extra-other" className="text-xs font-black text-zinc-950">
+              Errores y otras acciones
+            </h3>
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
+              {FANTASY_EXTRA_STATS
+                .filter((stat) => stat.group === "other")
+                .map((stat) => (
+                  <ExtraStatControl
+                    key={stat.field}
+                    stat={stat}
+                    value={extraValues[stat.field]}
+                    disabled={quickPendingField !== null}
+                    pending={quickPendingField === stat.field}
+                    onMinus={() => changeExtraStat(stat.field, -1)}
+                    onPlus={() => changeExtraStat(stat.field, 1)}
+                  />
+                ))}
+            </div>
+          </section>
+          {extraError && (
+            <p role="alert" className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
+              {extraError}
+            </p>
+          )}
+        </>
+      )}
+
       {/* MARCAR COMPLETADO */}
       <form
         action={
           formAction
         }
-        className="border-t border-zinc-100 pt-3"
+        className="sticky bottom-0 z-20 -mx-3 border-t border-zinc-100 bg-white/95 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur sm:-mx-4 sm:px-4"
       >
         {/*
          * El parser de la action sigue esperando
@@ -901,13 +978,91 @@ export default function StatsForm({
           disabled={
             pending
           }
-          className="flex min-h-12 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-bold text-white disabled:opacity-50"
+          className="flex min-h-11 w-full items-center justify-center rounded-xl bg-zinc-950 px-3 text-xs font-black text-white disabled:opacity-50"
         >
           {pending
             ? "Guardando..."
             : "Marcar estadísticas completadas"}
         </button>
       </form>
+    </div>
+  );
+}
+
+
+
+type ExtraStatDefinition = (typeof FANTASY_EXTRA_STATS)[number];
+
+/** Una tarjeta densa para las ocho acciones V3, sin ocultar ningún contador. */
+function ExtraStatControl({
+  stat,
+  value,
+  pending,
+  disabled,
+  onMinus,
+  onPlus,
+}: {
+  stat: ExtraStatDefinition;
+  value: number;
+  pending: boolean;
+  disabled: boolean;
+  onMinus: () => void;
+  onPlus: () => void;
+}) {
+  const [showInfo, setShowInfo] = useState(false);
+  const infoId = `fantasy-stat-info-${stat.field}`;
+  const pointsLabel = `${stat.points > 0 ? "+" : ""}${stat.points} pts`;
+
+  return (
+    <div className="min-w-0 rounded-lg bg-zinc-50 px-1.5 py-1 ring-1 ring-black/5">
+      <div className="flex min-h-7 min-w-0 items-center gap-1">
+        <span aria-hidden="true" className="shrink-0 text-sm leading-4">{stat.icon}</span>
+        <p className="min-w-0 flex-1 text-[10px] font-black leading-3 text-zinc-800">{stat.label}</p>
+        <button
+          type="button"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+          aria-label={`Información sobre ${stat.label}`}
+          aria-controls={infoId}
+          aria-expanded={showInfo}
+          onClick={() => setShowInfo((open) => !open)}
+        >
+          ⓘ
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-1">
+        <button
+          type="button"
+          aria-label={`Restar ${stat.label}`}
+          disabled={disabled || value <= 0}
+          onClick={onMinus}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="min-w-5 text-center text-base font-black tabular-nums text-zinc-950" aria-live="polite">
+          {pending ? "…" : value}
+        </span>
+        <button
+          type="button"
+          aria-label={`Sumar ${stat.label}`}
+          disabled={disabled || value >= 99}
+          onClick={onPlus}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+
+      {showInfo && (
+        <p id={infoId} role="note" className="mt-1 rounded-md bg-white px-2 py-1.5 text-[10px] leading-4 text-zinc-600">
+          <span className="font-bold text-[#0f3d2e]">Puntuación Fantasy: {pointsLabel}.</span>{" "}
+          {stat.description}
+          {stat.field === "own_goals" && (
+            <> Registra también el gol en los eventos del partido para actualizar el marcador.</>
+          )}
+        </p>
+      )}
     </div>
   );
 }
@@ -922,63 +1077,40 @@ function QuickStatControl({
   onPlus,
 }: {
   icon: string;
-
   label: string;
-
   value: number;
-
   pending: boolean;
-
   disabled: boolean;
-
   onMinus: () => void;
-
   onPlus: () => void;
 }) {
   return (
-    <div className="rounded-xl bg-zinc-50 p-2.5 ring-1 ring-black/5">
-      <div className="flex items-center gap-2">
-        <span className="text-base">
-          {icon}
-        </span>
-
-        <p className="text-xs font-black text-zinc-700">
+    <div className="min-w-0 rounded-lg bg-zinc-50 px-2 py-1.5 ring-1 ring-black/5">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span aria-hidden="true" className="shrink-0 text-sm">{icon}</span>
+        <p className="truncate text-[11px] font-black leading-4 text-zinc-700">
           {label}
         </p>
       </div>
-
-      <div className="mt-1.5 grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-1">
+      <div className="mt-0.5 flex items-center justify-center gap-1.5">
         <button
           type="button"
-          disabled={
-            disabled ||
-            value <= 0
-          }
-          onClick={
-            onMinus
-          }
-          className="flex h-11 items-center justify-center rounded-lg bg-white text-xl font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
+          disabled={disabled || value <= 0}
+          onClick={onMinus}
           aria-label={`Restar ${label}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
         >
           −
         </button>
-
-        <p className="text-center text-xl font-black tabular-nums text-zinc-950">
-          {pending
-            ? "…"
-            : value}
-        </p>
-
+        <span className="min-w-6 flex-1 text-center text-base font-black tabular-nums text-zinc-950" aria-live="polite">
+          {pending ? "…" : value}
+        </span>
         <button
           type="button"
-          disabled={
-            disabled
-          }
-          onClick={
-            onPlus
-          }
-          className="flex h-11 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
+          disabled={disabled}
+          onClick={onPlus}
           aria-label={`Sumar ${label}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
         >
           +
         </button>

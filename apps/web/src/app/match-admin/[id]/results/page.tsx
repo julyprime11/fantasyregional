@@ -763,6 +763,13 @@ export default async function MatchAdminResultsPage({
                                 }
                               />
 
+                              {result.scoring_version === "v3" && (
+                                <PointRow
+                                  label="Penaltis y otras acciones"
+                                  value={fantasy.breakdown.extra_stats}
+                                />
+                              )}
+
                               <PointRow
                                 label="Valoración"
                                 value={

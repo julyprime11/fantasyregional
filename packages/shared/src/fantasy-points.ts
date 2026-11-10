@@ -3,6 +3,12 @@ import type {
 } from "./domain";
 
 import {
+  FANTASY_EXTRA_STAT_FIELDS,
+  getFantasyExtraStatsPoints,
+  type FantasyExtraStats,
+} from "./fantasy-extra-stats";
+
+import {
   getFantasyLine,
 } from "./fantasy-lineup";
 
@@ -46,7 +52,7 @@ export type FantasyPlayerPointsInput = {
   scoring_version?: FantasyScoringVersion;
 
   is_mvp: boolean;
-};
+} & FantasyExtraStats;
 
 export type FantasyPlayerPointsBreakdown = {
   minutes: number;
@@ -60,6 +66,8 @@ export type FantasyPlayerPointsBreakdown = {
   goals_conceded: number;
 
   cards: number;
+
+  extra_stats: number;
 
   rating: number;
 
@@ -432,6 +440,7 @@ export function calculateFantasyPlayerPoints(
     input.red_cards,
     input.match_minutes,
     ...(input.goals_conceded_on_field == null ? [] : [input.goals_conceded_on_field]),
+    ...FANTASY_EXTRA_STAT_FIELDS.map((field) => input[field] ?? 0),
   ];
 
   if (
@@ -463,6 +472,7 @@ export function calculateFantasyPlayerPoints(
         clean_sheet: 0,
         goals_conceded: 0,
         cards: 0,
+        extra_stats: 0,
         rating: 0,
         mvp: 0,
       },
@@ -521,6 +531,18 @@ export function calculateFantasyPlayerPoints(
       input.scoring_version ?? "v2",
     );
 
+  // Solo los partidos V3 incluyen estas ocho acciones.
+  // Un partido histórico V1/V2 sigue puntuando exactamente igual.
+  const extraStatsPoints = input.scoring_version === "v3"
+    ? getFantasyExtraStatsPoints({
+        ...input,
+        // Los penaltis parados solo suman al portero.
+        penalties_saved: getFantasyLine(input.position) === "GK"
+          ? input.penalties_saved ?? 0
+          : 0,
+      })
+    : 0;
+
   const mvpPoints =
     input.is_mvp
       ? FANTASY_MVP_POINTS
@@ -544,6 +566,8 @@ export function calculateFantasyPlayerPoints(
     cards:
       cardsPoints,
 
+    extra_stats: extraStatsPoints,
+
     rating:
       rating.points,
 
@@ -558,6 +582,7 @@ export function calculateFantasyPlayerPoints(
     breakdown.clean_sheet +
     breakdown.goals_conceded +
     breakdown.cards +
+    breakdown.extra_stats +
     breakdown.rating +
     breakdown.mvp;
 

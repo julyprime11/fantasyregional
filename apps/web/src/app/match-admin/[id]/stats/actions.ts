@@ -6,6 +6,8 @@ import {
 
 import {
   InputError,
+  FANTASY_EXTRA_STAT_FIELDS,
+  type FantasyExtraStatField,
   parseMatchId,
   parseMatchPlayerId,
 } from "@regional-fantasy/shared";
@@ -20,6 +22,7 @@ import {
 
 import {
   updateMatchPlayerQuickStat,
+  updateMatchPlayerExtraStat,
   updateMatchRedCardReason,
   updateTeamCleanSheet,
   type QuickStatField,
@@ -447,6 +450,43 @@ export async function updateQuickPlayerStatAction(
               Error
             ? error.message
             : "No se pudo actualizar la estadística.",
+    };
+  }
+}
+
+
+/**
+ * Las nuevas acciones no se registran como goles del marcador:
+ * son métricas del jugador/partido que intervienen en Fantasy V3.
+ */
+export async function updateExtraPlayerStatAction(
+  matchId: string,
+  entryId: string,
+  field: FantasyExtraStatField,
+  delta: 1 | -1,
+): Promise<QuickStatActionState> {
+  const forbidden = await requireAdmin();
+  if (forbidden) return forbidden;
+
+  try {
+    if (!FANTASY_EXTRA_STAT_FIELDS.includes(field) ||
+        (delta !== 1 && delta !== -1)) {
+      throw new InputError("La estadística o el incremento no son válidos.");
+    }
+    const parsedMatchId = parseMatchId(matchId);
+    const parsedEntryId = parseMatchPlayerId(entryId);
+    const value = await updateMatchPlayerExtraStat(
+      parsedMatchId, parsedEntryId, field, delta,
+    );
+    refreshMatch(parsedMatchId);
+    return { status: "success", message: "Estadística actualizada.", value };
+  } catch (error) {
+    console.error("updateExtraPlayerStatAction:", error);
+    return {
+      status: "error",
+      message: error instanceof InputError ? error.message :
+        error instanceof Error ? error.message :
+        "No se pudo actualizar la estadística.",
     };
   }
 }

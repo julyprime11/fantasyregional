@@ -292,6 +292,14 @@ export type Database = {
       }
       match_players: {
         Row: {
+          penalties_won: number
+          penalties_conceded: number
+          penalties_missed: number
+          penalties_saved: number
+          errors_leading_to_goal: number
+          errors_leading_to_chance: number
+          big_chances_missed: number
+          own_goals: number
           assists: number
           card_dismissed: boolean
           clean_sheet: boolean
@@ -312,6 +320,14 @@ export type Database = {
           yellow_cards: number
         }
         Insert: {
+          penalties_won?: number
+          penalties_conceded?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          errors_leading_to_goal?: number
+          errors_leading_to_chance?: number
+          big_chances_missed?: number
+          own_goals?: number
           assists?: number
           card_dismissed?: boolean
           clean_sheet?: boolean
@@ -332,6 +348,14 @@ export type Database = {
           yellow_cards?: number
         }
         Update: {
+          penalties_won?: number
+          penalties_conceded?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          errors_leading_to_goal?: number
+          errors_leading_to_chance?: number
+          big_chances_missed?: number
+          own_goals?: number
           assists?: number
           card_dismissed?: boolean
           clean_sheet?: boolean
@@ -678,6 +702,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      join_fantasy_league_by_code: {
+        Args: { p_code: string }
+        Returns: { joined_league_id: string; already_member: boolean }[]
+      }
+      increment_match_player_extra_stat: {
+        Args: {
+          p_match_id: string
+          p_entry_id: string
+          p_field: string
+          p_delta: number
+        }
+        Returns: number
+      }
       register_live_goal_without_player: {
         Args: { p_match_id: string; p_scoring_team_id: string; p_is_own_goal?: boolean }
         Returns: number

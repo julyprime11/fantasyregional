@@ -345,7 +345,7 @@ test("players with zero minutes always receive zero including captain", () => {
   assert.equal(result.points, 0);
   assert.deepEqual(result.breakdown, {
     minutes: 0, goals: 0, assists: 0,
-    clean_sheet: 0, goals_conceded: 0, cards: 0, rating: 0, mvp: 0,
+    clean_sheet: 0, goals_conceded: 0, cards: 0, extra_stats: 0, rating: 0, mvp: 0,
   });
   assert.equal(result.rateable, false);
   assert.equal(result.rounded_rating, null);
@@ -717,4 +717,117 @@ test("V3 late substitute in the 80th minute gets no clean-sheet bonus", () => {
     minutes_played: 61,
   };
   assert.equal(calculateFantasyPlayerPoints(earlySubstitute).breakdown.clean_sheet, 3);
+});
+
+test("V3 extra penalty and mistake points use all eight requested weights", () => {
+  const expected = {
+    penalties_won: 2,
+    penalties_conceded: -2,
+    penalties_missed: -3,
+    penalties_saved: 4,
+    errors_leading_to_goal: -2,
+    errors_leading_to_chance: -1,
+    big_chances_missed: -1,
+    own_goals: -3,
+  };
+  const base = createPlayerInput({
+    minutes_played: 90,
+    starter: true,
+    scoring_version: "v3",
+  });
+  for (const [field, points] of Object.entries(expected)) {
+    const result = calculateFantasyPlayerPoints({
+      ...base,
+      position: field === "penalties_saved" ? "GK" : "CB",
+      [field]: 1,
+    });
+    assert.equal(result.breakdown.extra_stats, points, field);
+  }
+});
+
+test("V3 sums repeated extra actions without changing regular points", () => {
+  const base = createPlayerInput({
+    position: "GK", minutes_played: 90, starter: true,
+    scoring_version: "v3",
+  });
+  const all = {
+    ...base,
+    penalties_won: 2,
+    penalties_conceded: 1,
+    penalties_missed: 1,
+    penalties_saved: 1,
+    errors_leading_to_goal: 1,
+    errors_leading_to_chance: 1,
+    big_chances_missed: 1,
+    own_goals: 1,
+  };
+  const points = calculateFantasyPlayerPoints(all);
+  assert.equal(points.breakdown.extra_stats, -4); // -6 plus one more +2
+  assert.equal(
+    points.points,
+    calculateFantasyPlayerPoints(base).points - 4,
+  );
+});
+
+test("V1 and V2 never change for new stats and zero-minute players cannot score them", () => {
+  const actions = {
+    penalties_won: 3,
+    penalties_conceded: 2,
+    penalties_missed: 1,
+    penalties_saved: 1,
+    errors_leading_to_goal: 1,
+    errors_leading_to_chance: 1,
+    big_chances_missed: 1,
+    own_goals: 1,
+  };
+  for (const scoring_version of ["v1", "v2"]) {
+    const base = createPlayerInput({
+      minutes_played: 90, position: "GK", scoring_version,
+      panel_rating: 8,
+    });
+    const before = calculateFantasyPlayerPoints(base);
+    const after = calculateFantasyPlayerPoints({ ...base, ...actions });
+    assert.equal(after.points, before.points);
+    assert.equal(after.breakdown.extra_stats, 0);
+  }
+  const unplayed = calculateFantasyPlayerPoints(createPlayerInput({
+    ...actions, position: "GK", scoring_version: "v3",
+    minutes_played: 0,
+  }));
+  assert.equal(unplayed.points, 0);
+  assert.equal(unplayed.breakdown.extra_stats, 0);
+});
+
+test("V3 special counters reject invalid values and only goalkeepers earn saved-penalty points", () => {
+  const base = createPlayerInput({
+    minutes_played: 90, starter: true, scoring_version: "v3",
+  });
+  assert.equal(
+    calculateFantasyPlayerPoints({
+      ...base, position: "CB", penalties_saved: 1,
+    }).breakdown.extra_stats, 0,
+  );
+  assert.equal(
+    calculateFantasyPlayerPoints({
+      ...base, position: "GK", penalties_saved: 1,
+    }).breakdown.extra_stats, 4,
+  );
+  assert.throws(() => calculateFantasyPlayerPoints({
+    ...base, penalties_won: -1,
+  }), RangeError);
+  assert.throws(() => calculateFantasyPlayerPoints({
+    ...base, own_goals: 1.5,
+  }), RangeError);
+});
+
+test("the eight V3 actions have unique field names and readable explanations", async () => {
+  const { FANTASY_EXTRA_STATS } = await import("../src/fantasy-extra-stats.ts");
+  assert.equal(FANTASY_EXTRA_STATS.length, 8);
+  assert.equal(new Set(FANTASY_EXTRA_STATS.map((stat) => stat.field)).size, 8);
+  assert.equal(FANTASY_EXTRA_STATS.filter((stat) => stat.group === "penalties").length, 4);
+  assert.equal(FANTASY_EXTRA_STATS.filter((stat) => stat.group === "other").length, 4);
+  for (const stat of FANTASY_EXTRA_STATS) {
+    assert.ok(stat.description.length > 15);
+    assert.ok(stat.label.length > 5);
+  }
 });
