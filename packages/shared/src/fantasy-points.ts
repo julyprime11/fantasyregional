@@ -534,7 +534,13 @@ export function calculateFantasyPlayerPoints(
   // Solo los partidos V3 incluyen estas ocho acciones.
   // Un partido histórico V1/V2 sigue puntuando exactamente igual.
   const extraStatsPoints = input.scoring_version === "v3"
-    ? getFantasyExtraStatsPoints(input)
+    ? getFantasyExtraStatsPoints({
+        ...input,
+        // Los penaltis parados solo suman al portero.
+        penalties_saved: getFantasyLine(input.position) === "GK"
+          ? input.penalties_saved ?? 0
+          : 0,
+      })
     : 0;
 
   const mvpPoints =
