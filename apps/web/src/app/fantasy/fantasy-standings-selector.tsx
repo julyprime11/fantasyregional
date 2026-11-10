@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getAutomaticFantasyStandingView } from "@regional-fantasy/shared";
 
 import type { FantasyStandingEntry } from "@/data/fantasy-standings";
 
@@ -21,20 +22,6 @@ type Props = {
 
 const LOCK_BEFORE_MATCH_MS = 2 * 60 * 60 * 1000;
 
-/** Una jornada empieza a mostrarse de forma automática al bloquearse el XI. */
-function getAutomaticView(fixtures: readonly StandingFixture[], now: number): string {
-  const current = fixtures
-    .filter((fixture) =>
-      fixture.matchday_number !== null &&
-      fixture.status !== "closed" &&
-      Number.isFinite(Date.parse(fixture.match_date)) &&
-      now >= Date.parse(fixture.match_date) - LOCK_BEFORE_MATCH_MS
-    )
-    .sort((a, b) => Date.parse(b.match_date) - Date.parse(a.match_date))[0];
-
-  return current?.matchday_number == null ? "total" : String(current.matchday_number);
-}
-
 export default function FantasyStandingsSelector({
   standings,
   fixtures,
@@ -43,8 +30,8 @@ export default function FantasyStandingsSelector({
 }: Props) {
   const router = useRouter();
   const [now, setNow] = useState(serverNow);
-  const [selectedView, setSelectedView] = useState(() => getAutomaticView(fixtures, serverNow));
-  const automaticView = getAutomaticView(fixtures, now);
+  const [selectedView, setSelectedView] = useState(() => getAutomaticFantasyStandingView(fixtures, serverNow));
+  const automaticView = getAutomaticFantasyStandingView(fixtures, now);
   const lastAutomaticView = useRef(automaticView);
 
   // La selección manual se respeta hasta el siguiente cambio automático:
