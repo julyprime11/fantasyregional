@@ -236,7 +236,7 @@ export default function FantasyStandingsSelector({
                       </span>
                     )}
                     <span className="text-zinc-400">
-                      {index === 0 ? "Líder" : "-" + (leader.total_points - entry.total_points) + " pts"}
+                      {index === 0 ? "Líder" : "-" + ((leader?.total_points ?? 0) - entry.total_points) + " pts"}
                     </span>
                   </div>
                 </div>
