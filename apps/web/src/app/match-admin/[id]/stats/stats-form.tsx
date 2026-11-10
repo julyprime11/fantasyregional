@@ -835,7 +835,7 @@ export default function StatsForm({
             <h3 id="fantasy-extra-penalties" className="text-xs font-black text-zinc-950">
               Penaltis
             </h3>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
               {FANTASY_EXTRA_STATS
                 .filter((stat) => stat.group === "penalties")
                 .filter((stat) => stat.field !== "penalties_saved" || isGoalkeeper)
@@ -857,7 +857,7 @@ export default function StatsForm({
             <h3 id="fantasy-extra-other" className="text-xs font-black text-zinc-950">
               Errores y otras acciones
             </h3>
-            <div className="mt-1 space-y-1">
+            <div className="mt-1 grid grid-cols-2 gap-1.5">
               {FANTASY_EXTRA_STATS
                 .filter((stat) => stat.group === "other")
                 .map((stat) => (
@@ -867,7 +867,6 @@ export default function StatsForm({
                     value={extraValues[stat.field]}
                     disabled={quickPendingField !== null}
                     pending={quickPendingField === stat.field}
-                    compact
                     onMinus={() => changeExtraStat(stat.field, -1)}
                     onPlus={() => changeExtraStat(stat.field, 1)}
                   />
@@ -994,12 +993,12 @@ export default function StatsForm({
 
 type ExtraStatDefinition = (typeof FANTASY_EXTRA_STATS)[number];
 
+/** Una tarjeta densa para las ocho acciones V3, sin ocultar ningún contador. */
 function ExtraStatControl({
   stat,
   value,
   pending,
   disabled,
-  compact = false,
   onMinus,
   onPlus,
 }: {
@@ -1007,7 +1006,6 @@ function ExtraStatControl({
   value: number;
   pending: boolean;
   disabled: boolean;
-  compact?: boolean;
   onMinus: () => void;
   onPlus: () => void;
 }) {
@@ -1015,47 +1013,17 @@ function ExtraStatControl({
   const infoId = `fantasy-stat-info-${stat.field}`;
   const pointsLabel = `${stat.points > 0 ? "+" : ""}${stat.points} pts`;
 
-  const controls = (
-    <div className={`flex shrink-0 items-center justify-center gap-1 ${compact ? "" : "mt-1"}`}>
-      <button
-        type="button"
-        aria-label={`Restar ${stat.label}`}
-        disabled={disabled || value <= 0}
-        onClick={onMinus}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
-      >
-        −
-      </button>
-      <span className="min-w-6 text-center text-base font-black tabular-nums text-zinc-950" aria-live="polite">
-        {pending ? "…" : value}
-      </span>
-      <button
-        type="button"
-        aria-label={`Sumar ${stat.label}`}
-        disabled={disabled || value >= 99}
-        onClick={onPlus}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
-      >
-        +
-      </button>
-    </div>
-  );
-
   return (
-    <div className={`min-w-0 rounded-lg bg-zinc-50 px-2 py-1.5 ring-1 ring-black/5 ${compact ? "sm:py-2" : ""}`}>
-      <div className="flex min-w-0 items-center gap-1">
-        <span className="shrink-0 text-sm" aria-hidden="true">{stat.icon}</span>
+    <div className="min-w-0 rounded-lg bg-zinc-50 px-2 py-1.5 ring-1 ring-black/5">
+      <div className="flex min-h-8 min-w-0 items-start gap-1">
+        <span aria-hidden="true" className="shrink-0 text-sm leading-4">{stat.icon}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black leading-3.5 text-zinc-800">
-            {stat.label}
-          </p>
-          <p className="text-[9px] font-semibold leading-3 text-zinc-500">
-            {pointsLabel}
-          </p>
+          <p className="text-[10px] font-black leading-3 text-zinc-800">{stat.label}</p>
+          <p className="text-[9px] font-semibold leading-3 text-zinc-500">{pointsLabel}</p>
         </div>
         <button
           type="button"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
           aria-label={`Información sobre ${stat.label}`}
           aria-controls={infoId}
           aria-expanded={showInfo}
@@ -1063,15 +1031,34 @@ function ExtraStatControl({
         >
           ⓘ
         </button>
-        {compact && controls}
       </div>
-      {!compact && controls}
-      {showInfo && (
-        <p
-          id={infoId}
-          role="note"
-          className="mt-1 rounded-md bg-white px-2 py-1.5 text-[10px] leading-4 text-zinc-600"
+
+      <div className="mt-0.5 flex items-center justify-between gap-1">
+        <button
+          type="button"
+          aria-label={`Restar ${stat.label}`}
+          disabled={disabled || value <= 0}
+          onClick={onMinus}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
         >
+          −
+        </button>
+        <span className="min-w-5 text-center text-base font-black tabular-nums text-zinc-950" aria-live="polite">
+          {pending ? "…" : value}
+        </span>
+        <button
+          type="button"
+          aria-label={`Sumar ${stat.label}`}
+          disabled={disabled || value >= 99}
+          onClick={onPlus}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+
+      {showInfo && (
+        <p id={infoId} role="note" className="mt-1 rounded-md bg-white px-2 py-1.5 text-[10px] leading-4 text-zinc-600">
           {stat.description}
           {stat.field === "own_goals" && (
             <> Registra también el gol en los eventos del partido para actualizar el marcador.</>
