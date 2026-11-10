@@ -28,6 +28,7 @@ type MatchUpdate = Pick<
   | "home_team_id"
   | "away_team_id"
   | "match_date"
+  | "matchday_number"
   | "home_score"
   | "away_score"
   | "status"

@@ -279,6 +279,11 @@ export default async function MatchesPage() {
                       className="overflow-hidden rounded-[1.3rem] bg-white shadow-sm ring-1 ring-black/5"
                     >
                       <div className="p-4">
+                        <p className="mb-3 text-[10px] font-black text-[#0f3d2e]">
+                          {match.matchday_number === null
+                            ? "Sin jornada asignada"
+                            : `Jornada ${match.matchday_number}`}
+                        </p>
                         <div className="flex items-center justify-between gap-3">
                           <span className="rounded-full bg-[#e8f2ed] px-2.5 py-1 text-[8px] font-black uppercase tracking-wide text-[#0f3d2e]">
                             {

@@ -459,6 +459,11 @@ export default async function EditMatchPage({
                     match.match_date,
                   ),
 
+                matchday_number:
+                  match.matchday_number === null
+                    ? ""
+                    : String(match.matchday_number),
+
                 home_score:
                   match.home_score ===
                   null

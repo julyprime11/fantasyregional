@@ -18,6 +18,7 @@ export function matchFields(teams: TeamRow[], competitions: CompetitionRow[]): F
     { name: "home_team_id", label: "Equipo local", required: true, options, differentFrom: "away_team_id" },
     { name: "away_team_id", label: "Equipo visitante", required: true, options, differentFrom: "home_team_id" },
     { name: "match_date", label: "Fecha y hora del partido (UTC)", type: "datetime-local", required: true },
+    { name: "matchday_number", label: "Jornada oficial", type: "number", required: true },
     { name: "home_score", label: "Goles locales", type: "number" },
     { name: "away_score", label: "Goles visitantes", type: "number" },
     { name: "status", label: "Estado", required: true, options: MATCH_STATUSES.map(value => ({ value, label: matchStatusLabels[value] })) },
