@@ -18,12 +18,20 @@ import {
 
 import {
   updateQuickPlayerStatAction,
+  updateExtraPlayerStatAction,
   updateMatchRedCardReasonAction,
 } from "./actions";
 
 import type {
   QuickStatField,
 } from "@/data/match-players";
+
+import {
+  FANTASY_EXTRA_STATS,
+  FANTASY_EXTRA_STAT_FIELDS,
+  type FantasyExtraStatField,
+  type FantasyExtraStats,
+} from "@regional-fantasy/shared";
 
 type StatsFormProps = {
   matchId: string;
@@ -43,6 +51,9 @@ type StatsFormProps = {
   redCards: number;
   redCardReason: string | null;
   cleanSheet: boolean;
+  scoringVersion: string;
+  isGoalkeeper: boolean;
+  extraStats: FantasyExtraStats;
 
   onSaved?: () => void;
 };
@@ -69,7 +80,15 @@ type RealtimeMatchPlayer = {
   clean_sheet?: boolean;
 
   stats_completed?: boolean;
-};
+} & FantasyExtraStats;
+
+type ExtraValues = Record<FantasyExtraStatField, number>;
+
+function normalizeExtraStats(stats: FantasyExtraStats): ExtraValues {
+  return Object.fromEntries(
+    FANTASY_EXTRA_STAT_FIELDS.map((field) => [field, stats[field] ?? 0]),
+  ) as ExtraValues;
+}
 
 export default function StatsForm({
   matchId,
@@ -82,6 +101,9 @@ export default function StatsForm({
   redCards,
   redCardReason,
   cleanSheet,
+  scoringVersion,
+  isGoalkeeper,
+  extraStats,
   onSaved,
 }: StatsFormProps) {
   const action =
@@ -173,12 +195,16 @@ export default function StatsForm({
       cleanSheet,
     );
 
+  const [extraValues, setExtraValues] = useState<ExtraValues>(
+    () => normalizeExtraStats(extraStats),
+  );
+
   const [
     quickPendingField,
     setQuickPendingField,
   ] =
     useState<
-      QuickStatField | null
+      QuickStatField | FantasyExtraStatField | null
     >(null);
 
   const [
@@ -252,6 +278,10 @@ export default function StatsForm({
     cleanSheet,
   ]);
 
+  useEffect(() => {
+    setExtraValues(normalizeExtraStats(extraStats));
+  }, [extraStats]);
+
   /*
    * ===============================
    * REALTIME / MULTIUSUARIO
@@ -282,18 +312,7 @@ export default function StatsForm({
           .from(
             "match_players",
           )
-          .select(
-            `
-              minutes_played,
-              goals,
-              assists,
-              yellow_cards,
-              red_cards,
-              red_card_reason,
-              clean_sheet,
-              stats_completed
-            `,
-          )
+          .select("*")
           .eq(
             "match_id",
             matchId,
@@ -348,6 +367,8 @@ export default function StatsForm({
         data.clean_sheet ??
           false,
       );
+
+      setExtraValues(normalizeExtraStats(data));
     }
 
     void loadLatest();
@@ -421,6 +442,15 @@ export default function StatsForm({
             if ("red_card_reason" in updated) {
               setRedReasonValue(updated.red_card_reason ?? null);
             }
+
+            setExtraValues((current) => ({
+              ...current,
+              ...Object.fromEntries(
+                FANTASY_EXTRA_STAT_FIELDS
+                  .filter((field) => typeof updated[field] === "number")
+                  .map((field) => [field, updated[field]]),
+              ),
+            }));
 
             if (
               typeof updated.clean_sheet ===
@@ -559,6 +589,24 @@ export default function StatsForm({
         );
 
         break;
+    }
+  }
+
+
+  async function changeExtraStat(field: FantasyExtraStatField, delta: 1 | -1) {
+    if (quickPendingField !== null) return;
+    setQuickError("");
+    setQuickPendingField(field);
+    const result = await updateExtraPlayerStatAction(
+      matchId, entryId, field, delta,
+    );
+    setQuickPendingField(null);
+    if (result.status === "error") {
+      setQuickError(result.message);
+      return;
+    }
+    if (typeof result.value === "number") {
+      setExtraValues((current) => ({ ...current, [field]: result.value as number }));
     }
   }
 
