@@ -599,16 +599,21 @@ export default function StatsForm({
     if (quickPendingField !== null) return;
     setExtraError("");
     setQuickPendingField(field);
-    const result = await updateExtraPlayerStatAction(
-      matchId, entryId, field, delta,
-    );
-    setQuickPendingField(null);
-    if (result.status === "error") {
-      setExtraError(result.message);
-      return;
-    }
-    if (typeof result.value === "number") {
-      setExtraValues((current) => ({ ...current, [field]: result.value as number }));
+    try {
+      const result = await updateExtraPlayerStatAction(
+        matchId, entryId, field, delta,
+      );
+      if (result.status === "error") {
+        setExtraError(result.message);
+        return;
+      }
+      if (typeof result.value === "number") {
+        setExtraValues((current) => ({ ...current, [field]: result.value as number }));
+      }
+    } catch {
+      setExtraError("No se pudo guardar. Comprueba la conexión e inténtalo de nuevo.");
+    } finally {
+      setQuickPendingField(null);
     }
   }
 
