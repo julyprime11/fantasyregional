@@ -523,7 +523,7 @@ test("V3 goalkeeper ignores first on-field conceded goal, then loses one point p
 test("V3 derives clean sheets from on-field goals instead of manual clean_sheet flag", () => {
   const base = createPlayerInput({
     position: "CB",
-    minutes_played: 60,
+    minutes_played: 61,
     starter: true,
     clean_sheet: false,
     goals_conceded_on_field: 0,
@@ -559,11 +559,11 @@ test("V3 goalkeeper still needs to play the whole match for clean-sheet bonus", 
 test("V3 counts on-field goals across substitutions and excludes goals after the player leaves", () => {
   const match = { ...matchForConceded, away_score: 1 };
   const squad = [
-    participant("starter", { minutes_played: 60 }),
-    participant("substitute", { starter: false, minutes_played: 30, entered_minute: 60 }),
+    participant("starter", { minutes_played: 61 }),
+    participant("substitute", { starter: false, minutes_played: 29, entered_minute: 61 }),
   ];
   const timeline = [
-    event("substitution", 60, {
+    event("substitution", 61, {
       player_id: "starter",
       secondary_player_id: "substitute",
     }, 1),
@@ -574,12 +574,12 @@ test("V3 counts on-field goals across substitutions and excludes goals after the
   assert.equal(conceded?.get("substitute"), 1);
 
   const starter = calculateFantasyPlayerPoints(createPlayerInput({
-    player_id: "starter", position: "CB", minutes_played: 60,
+    player_id: "starter", position: "CB", minutes_played: 61,
     starter: true, clean_sheet: false,
     goals_conceded_on_field: conceded.get("starter"), scoring_version: "v3",
   }));
   const substitute = calculateFantasyPlayerPoints(createPlayerInput({
-    player_id: "substitute", position: "CB", minutes_played: 30,
+    player_id: "substitute", position: "CB", minutes_played: 29,
     starter: false, clean_sheet: true,
     goals_conceded_on_field: conceded.get("substitute"), scoring_version: "v3",
   }));
@@ -598,4 +598,92 @@ test("V3 preserves V2 human rating and forbids speculative clean-sheet bonuses",
   const points = calculateFantasyPlayerPoints(keeper);
   assert.equal(points.breakdown.clean_sheet, 0);
   assert.equal(points.breakdown.goals_conceded, 0);
+});
+
+test("V3 clean sheet requires strictly more than 60 minutes for outfield players", () => {
+  const pointsByMinutes = [
+    [59, 0],
+    [60, 0],
+    [61, 3],
+    [90, 3],
+  ];
+
+  for (const position of ["CB", "CM", "ST"]) {
+    const expectedBonus = { CB: 3, CM: 2, ST: 1 }[position];
+    for (const [minutes, defenderBonus] of pointsByMinutes) {
+      const result = calculateFantasyPlayerPoints(createPlayerInput({
+        position,
+        minutes_played: minutes,
+        starter: true,
+        match_minutes: 90,
+        clean_sheet: false,
+        goals_conceded_on_field: 0,
+        scoring_version: "v3",
+      }));
+      assert.equal(
+        result.breakdown.clean_sheet,
+        defenderBonus === 0 ? 0 : expectedBonus,
+        position + " with " + minutes + " minutes",
+      );
+    }
+  }
+});
+
+test("V3 clean sheet still depends on on-field goals after more than 60 minutes", () => {
+  const base = createPlayerInput({
+    position: "CB",
+    minutes_played: 61,
+    match_minutes: 90,
+    starter: true,
+    clean_sheet: true,
+    scoring_version: "v3",
+  });
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, goals_conceded_on_field: 0,
+  }).breakdown.clean_sheet, 3);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, goals_conceded_on_field: 1,
+  }).breakdown.clean_sheet, 0);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, goals_conceded_on_field: null,
+  }).breakdown.clean_sheet, 0);
+});
+
+test("V3 goalkeeper still requires playing the full match in addition to 60-plus minutes", () => {
+  const keeper = createPlayerInput({
+    position: "GK",
+    starter: true,
+    match_minutes: 90,
+    clean_sheet: false,
+    goals_conceded_on_field: 0,
+    scoring_version: "v3",
+  });
+  for (const minutes_played of [60, 61, 89]) {
+    assert.equal(calculateFantasyPlayerPoints({
+      ...keeper, minutes_played,
+    }).breakdown.clean_sheet, 0);
+  }
+  assert.equal(calculateFantasyPlayerPoints({
+    ...keeper, minutes_played: 90,
+  }).breakdown.clean_sheet, 4);
+});
+
+test("V1 and V2 keep their existing clean-sheet rules for exactly 60 minutes", () => {
+  const base = createPlayerInput({
+    position: "CB",
+    minutes_played: 60,
+    match_minutes: 90,
+    starter: true,
+    clean_sheet: true,
+    goals_conceded_on_field: 0,
+  });
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, scoring_version: "v1",
+  }).breakdown.clean_sheet, 3);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, scoring_version: "v2",
+  }).breakdown.clean_sheet, 3);
+  assert.equal(calculateFantasyPlayerPoints({
+    ...base, scoring_version: "v3",
+  }).breakdown.clean_sheet, 0);
 });

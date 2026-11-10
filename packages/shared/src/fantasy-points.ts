@@ -484,10 +484,12 @@ export function calculateFantasyPlayerPoints(
     input.assists *
     3;
 
-  // V3: porteria a cero por los goles realmente encajados mientras
-  // estaba en el terreno de juego. Cronologia incompleta = sin bonus.
+  // V3: porteria a cero solo con MAS de 60 minutos jugados
+  // y sin goles encajados durante la participacion del jugador.
+  // Cronologia incompleta = sin bonus. El GK conserva ademas
+  // el requisito historico de disputar el partido completo.
   const cleanSheet = input.scoring_version === "v3"
-    ? input.goals_conceded_on_field === 0
+    ? input.minutes_played > 60 && input.goals_conceded_on_field === 0
     : input.clean_sheet;
   const cleanSheetPoints =
     getCleanSheetFantasyPoints(
