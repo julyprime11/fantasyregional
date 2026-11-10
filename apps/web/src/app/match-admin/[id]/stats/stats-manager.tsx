@@ -2188,7 +2188,7 @@ export default function StatsManager({
 
           <div
 
-            className="max-h-[96dvh] w-full max-w-xl overflow-y-auto rounded-t-[1.5rem] bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[1.5rem] sm:p-4"
+            className="max-h-[97dvh] w-full max-w-xl overscroll-contain overflow-y-auto rounded-t-[1.5rem] bg-white p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[1.5rem] sm:p-4"
 
             onClick={(
 
@@ -2202,18 +2202,13 @@ export default function StatsManager({
 
           >
 
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-2">
 
-              <div className="flex items-start gap-3">
+              <div className="flex min-w-0 items-start gap-2">
 
-                <PlayerNumber
-
-                  player={
-
-                    selectedPlayer
-
-                  }
-                />
+                <div className="origin-top-left scale-90">
+                  <PlayerNumber player={selectedPlayer} />
+                </div>
 
 
 
@@ -2227,7 +2222,7 @@ export default function StatsManager({
 
 
 
-                  <h2 className="mt-0.5 text-xl font-black leading-tight tracking-tight text-zinc-950">
+                  <h2 className="mt-0.5 text-lg font-black leading-tight tracking-tight text-zinc-950">
 
                     {
 
@@ -2239,7 +2234,7 @@ export default function StatsManager({
 
 
 
-                  <p className="mt-0.5 text-xs leading-4 text-zinc-500">
+                  <p className="mt-0.5 text-[10px] leading-3.5 text-zinc-500">
 
                     {
 
@@ -2259,11 +2254,11 @@ export default function StatsManager({
 
 
 
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <div className="mt-1 flex flex-wrap gap-1">
 
                     <span
 
-                      className={`inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-wide ${
 
                         selectedPlayer.starter
 
@@ -2339,7 +2334,7 @@ export default function StatsManager({
 
                 aria-label="Cerrar estadísticas"
 
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-black text-zinc-700"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg font-black text-zinc-700"
 
               >
 
@@ -2385,7 +2380,7 @@ export default function StatsManager({
 
                   }}
 
-                  className="mt-2 min-h-11 w-full rounded-xl bg-red-50 px-3 text-sm font-black text-red-700 disabled:opacity-50"
+                  className="mt-1.5 min-h-10 w-full rounded-lg bg-red-50 px-3 text-xs font-black text-red-700 disabled:opacity-50"
 
                 >
 
@@ -2429,7 +2424,7 @@ export default function StatsManager({
 
                   }}
 
-                  className="mt-2 min-h-11 w-full rounded-xl bg-zinc-100 px-3 text-sm font-black text-zinc-950 disabled:opacity-50"
+                  className="mt-1.5 min-h-10 w-full rounded-lg bg-zinc-100 px-3 text-xs font-black text-zinc-950 disabled:opacity-50"
 
                 >
 
@@ -2459,7 +2454,7 @@ export default function StatsManager({
 
                   }
 
-                  className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl bg-[#e8f2ed] px-3 text-sm font-black text-[#0f3d2e]"
+                  className="mt-1.5 flex min-h-10 w-full items-center justify-center rounded-lg bg-[#e8f2ed] px-3 text-xs font-black text-[#0f3d2e]"
 
                 >
 
