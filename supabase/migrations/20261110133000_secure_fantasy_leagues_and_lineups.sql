@@ -105,7 +105,7 @@ RETURNS TABLE(joined_league_id uuid, already_member boolean)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
-AS $
+AS $invite_rpc$
 DECLARE
   v_user uuid := (SELECT auth.uid());
   v_league_id uuid;
@@ -138,7 +138,7 @@ BEGIN
   GET DIAGNOSTICS v_inserted = ROW_COUNT;
   RETURN QUERY SELECT v_league_id, (v_inserted = 0);
 END;
-$;
+$invite_rpc$;
 REVOKE ALL ON FUNCTION public.join_fantasy_league_by_code(text)
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.join_fantasy_league_by_code(text)
