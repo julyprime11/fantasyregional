@@ -213,6 +213,8 @@ export default function StatsForm({
   ] =
     useState("");
 
+  const [extraError, setExtraError] = useState("");
+
   const [
     realtimeStatus,
     setRealtimeStatus,
@@ -595,14 +597,14 @@ export default function StatsForm({
 
   async function changeExtraStat(field: FantasyExtraStatField, delta: 1 | -1) {
     if (quickPendingField !== null) return;
-    setQuickError("");
+    setExtraError("");
     setQuickPendingField(field);
     const result = await updateExtraPlayerStatAction(
       matchId, entryId, field, delta,
     );
     setQuickPendingField(null);
     if (result.status === "error") {
-      setQuickError(result.message);
+      setExtraError(result.message);
       return;
     }
     if (typeof result.value === "number") {
@@ -852,6 +854,65 @@ export default function StatsForm({
         )}
       </section>
 
+
+      {scoringVersion === "v3" && (
+        <>
+          <section aria-labelledby="fantasy-extra-penalties">
+            <h3 id="fantasy-extra-penalties" className="text-base font-black text-zinc-950">
+              Penaltis
+            </h3>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {FANTASY_EXTRA_STATS
+                .filter((stat) => stat.group === "penalties")
+                .filter((stat) => stat.field !== "penalties_saved" || isGoalkeeper)
+                .map((stat) => (
+                  <ExtraStatControl
+                    key={stat.field}
+                    stat={stat}
+                    value={extraValues[stat.field]}
+                    disabled={quickPendingField !== null}
+                    pending={quickPendingField === stat.field}
+                    onMinus={() => changeExtraStat(stat.field, -1)}
+                    onPlus={() => changeExtraStat(stat.field, 1)}
+                  />
+                ))}
+            </div>
+          </section>
+
+          <section aria-labelledby="fantasy-extra-other">
+            <h3 id="fantasy-extra-other" className="text-base font-black text-zinc-950">
+              Errores y otras acciones
+            </h3>
+            <div className="mt-2 space-y-2">
+              {FANTASY_EXTRA_STATS
+                .filter((stat) => stat.group === "other")
+                .map((stat) => (
+                  <ExtraStatControl
+                    key={stat.field}
+                    stat={stat}
+                    value={extraValues[stat.field]}
+                    disabled={quickPendingField !== null}
+                    pending={quickPendingField === stat.field}
+                    compact
+                    onMinus={() => changeExtraStat(stat.field, -1)}
+                    onPlus={() => changeExtraStat(stat.field, 1)}
+                  />
+                ))}
+            </div>
+            <p className="mt-2 text-[11px] leading-4 text-zinc-500">
+              Los goles en propia puerta deben registrarse también en los eventos
+              del partido para actualizar el marcador. Este contador aplica
+              exclusivamente la penalización Fantasy al jugador.
+            </p>
+          </section>
+          {extraError && (
+            <p role="alert" className="rounded-xl bg-red-50 p-3 text-xs font-bold text-red-700">
+              {extraError}
+            </p>
+          )}
+        </>
+      )}
+
       {/* MARCAR COMPLETADO */}
       <form
         action={
@@ -956,6 +1017,87 @@ export default function StatsForm({
             : "Marcar estadísticas completadas"}
         </button>
       </form>
+    </div>
+  );
+}
+
+
+type ExtraStatDefinition = (typeof FANTASY_EXTRA_STATS)[number];
+
+function ExtraStatControl({
+  stat,
+  value,
+  pending,
+  disabled,
+  compact = false,
+  onMinus,
+  onPlus,
+}: {
+  stat: ExtraStatDefinition;
+  value: number;
+  pending: boolean;
+  disabled: boolean;
+  compact?: boolean;
+  onMinus: () => void;
+  onPlus: () => void;
+}) {
+  const [showInfo, setShowInfo] = useState(false);
+  const infoId = `fantasy-stat-info-${stat.field}`;
+  const pointsLabel = `${stat.points > 0 ? "+" : ""}${stat.points} pts`;
+
+  return (
+    <div className="min-w-0 rounded-xl bg-zinc-50 p-2.5 ring-1 ring-black/5">
+      <div className="flex items-start gap-1.5">
+        <span className="shrink-0 text-lg" aria-hidden="true">{stat.icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-black leading-4 text-zinc-800">
+            {stat.label}
+          </p>
+          <p className="text-[10px] font-semibold text-zinc-500">{pointsLabel}</p>
+        </div>
+        <button
+          type="button"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-[#0f3d2e]"
+          aria-label={`Información sobre ${stat.label}`}
+          aria-controls={infoId}
+          aria-expanded={showInfo}
+          onClick={() => setShowInfo((open) => !open)}
+        >
+          ⓘ
+        </button>
+      </div>
+
+      <div className={compact
+        ? "mt-2 grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5"
+        : "mt-2 grid grid-cols-[36px_minmax(0,1fr)_36px] items-center gap-1.5"
+      }>
+        <button
+          type="button"
+          aria-label={`Restar ${stat.label}`}
+          disabled={disabled || value <= 0}
+          onClick={onMinus}
+          className="flex h-10 items-center justify-center rounded-lg bg-white text-lg font-black text-zinc-700 shadow-sm ring-1 ring-black/5 active:scale-95 disabled:opacity-30"
+        >
+          −
+        </button>
+        <span className="text-center text-lg font-black tabular-nums text-zinc-950">
+          {pending ? "…" : value}
+        </span>
+        <button
+          type="button"
+          aria-label={`Sumar ${stat.label}`}
+          disabled={disabled || value >= 99}
+          onClick={onPlus}
+          className="flex h-10 items-center justify-center rounded-lg bg-[#0f3d2e] text-lg font-black text-white active:scale-95 disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+      {showInfo && (
+        <p id={infoId} role="note" className="mt-2 rounded-lg bg-white p-2 text-[11px] leading-4 text-zinc-600">
+          {stat.description}
+        </p>
+      )}
     </div>
   );
 }
