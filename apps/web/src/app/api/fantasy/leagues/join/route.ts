@@ -3,16 +3,10 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { canJoinLeague } from "@/lib/roles";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import {
-  getFantasyLeagueByCode,
-  joinFantasyLeague,
-} from "@/data/fantasy-leagues";
+import { joinFantasyLeague } from "@/data/fantasy-leagues";
 
-export async function POST(
-  request: Request,
-) {
-  const user =
-    await getCurrentUser();
+export async function POST(request: Request) {
+  const user = await getCurrentUser();
 
   if (!user) {
     return NextResponse.json(
@@ -22,28 +16,16 @@ export async function POST(
   }
 
   try {
-    const supabase =
-      await createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("voter_role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    const {
-      data: profile,
-      error: profileError,
-    } =
-      await supabase
-        .from("profiles")
-        .select("voter_role")
-        .eq("id", user.id)
-        .maybeSingle();
+    if (profileError) throw profileError;
 
-    if (profileError) {
-      throw profileError;
-    }
-
-    if (
-      !canJoinLeague(
-        profile?.voter_role,
-      )
-    ) {
+    if (!canJoinLeague(profile?.voter_role)) {
       return NextResponse.json(
         {
           message:
@@ -53,89 +35,57 @@ export async function POST(
       );
     }
 
-
-    const body =
-      await request.json();
-
+    const body = await request.json();
     const code =
       typeof body.code === "string"
-        ? body.code
-            .trim()
-            .toUpperCase()
+        ? body.code.trim().toUpperCase()
         : "";
 
-    if (code.length < 4) {
+    if (code.length < 4 || code.length > 12) {
       return NextResponse.json(
-        {
-          message:
-            "Introduce un código de liga válido.",
-        },
-        {
-          status: 400,
-        },
+        { message: "Introduce un código de liga válido." },
+        { status: 400 },
       );
     }
 
-    const league =
-      await getFantasyLeagueByCode(
-        code,
-      );
-
-    if (!league) {
-      return NextResponse.json(
-        {
-          message:
-            "No existe ninguna liga con ese código.",
-        },
-        {
-          status: 404,
-        },
-      );
-    }
-
-    try {
-      await joinFantasyLeague({
-        leagueId: league.id,
-        userId: user.id,
-      });
-    } catch (error) {
-      const code =
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error
-          ? String(
-              error.code,
-            )
-          : "";
-
-      /*
-       * Ya pertenece a la liga.
-       * No lo tratamos como un error grave:
-       * simplemente lo enviamos a ella.
-       */
-      if (code === "23505") {
-        return NextResponse.json({
-          id: league.id,
-          alreadyMember: true,
-        });
-      }
-
-      throw error;
-    }
+    // La base de datos comprueba el código, el rol y la identidad real.
+    // Evita la unión directa por league_id a través de la API.
+    const result = await joinFantasyLeague(code);
 
     return NextResponse.json({
-      id: league.id,
-      alreadyMember: false,
+      id: result.leagueId,
+      alreadyMember: result.alreadyMember,
     });
-  } catch {
+  } catch (error) {
+    const errorCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? String(error.code)
+        : "";
+
+    if (errorCode === "P0002") {
+      return NextResponse.json(
+        { message: "No existe ninguna liga con ese código." },
+        { status: 404 },
+      );
+    }
+
+    if (errorCode === "42501") {
+      return NextResponse.json(
+        { message: "No tienes permisos para entrar en esta liga." },
+        { status: 403 },
+      );
+    }
+
+    if (errorCode === "22023") {
+      return NextResponse.json(
+        { message: "Introduce un código de liga válido." },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
-      {
-        message:
-          "No se pudo entrar en la liga. Inténtalo de nuevo.",
-      },
-      {
-        status: 500,
-      },
+      { message: "No se pudo entrar en la liga. Inténtalo de nuevo." },
+      { status: 500 },
     );
   }
 }
