@@ -52,9 +52,15 @@ ALTER TABLE public.match_players
   CHECK (own_goals BETWEEN 0 AND 99);
 
 -- Restricción por columna: ninguna llamada directa desde anon/authenticated
--- puede alterar los ocho contadores. Se mantienen las escrituras de campos
+-- puede INSERTAR ni alterar los ocho contadores. Se mantienen las escrituras de campos
 -- antiguos para no romper el funcionamiento actual de Match Admin.
-REVOKE UPDATE ON TABLE public.match_players FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE ON TABLE public.match_players FROM PUBLIC, anon, authenticated;
+GRANT INSERT (
+  id, match_id, player_id, team_id, starter, minutes_played,
+  goals, assists, yellow_cards, red_cards, clean_sheet,
+  created_at, stats_completed, on_field, entered_minute,
+  card_dismissed, dismissal_minute, red_card_reason
+) ON public.match_players TO anon, authenticated;
 GRANT UPDATE (
   id, match_id, player_id, team_id, starter, minutes_played,
   goals, assists, yellow_cards, red_cards, clean_sheet,
