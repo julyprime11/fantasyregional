@@ -251,6 +251,13 @@ export default async function MatchStatsPage({
               ),
             })).filter((event) => event.teamId !== "")}
           />
+          {match.fantasy_scoring_version === "v3" && (
+            <p className="mt-3 px-2 text-xs leading-5 text-zinc-500">
+              La portería a cero Fantasy se calcula automáticamente según los goles
+              encajados mientras cada jugador estuvo en el campo y sus minutos jugados.
+              Se exigen más de 60 minutos; el portero debe jugar el partido completo.
+            </p>
+          )}
         </section>
 
         {/* CRONOLOGÍA */}
