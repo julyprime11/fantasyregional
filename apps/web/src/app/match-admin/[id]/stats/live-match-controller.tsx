@@ -20,7 +20,6 @@ import {
   setLiveHalftimeAction,
   startLiveMatchAction,
   startLiveSecondHalfAction,
-  updateTeamCleanSheetAction,
   registerLiveGoalAction,
   type LiveMatchActionState,
 } from "./actions";
@@ -28,7 +27,6 @@ import {
 type ManagedTeam = {
   id: string;
   name: string;
-  cleanSheet: boolean;
 };
 
 type Props = {
@@ -58,7 +56,6 @@ type Props = {
 
   managedTeams:
     ManagedTeam[];
-  scoringVersion: string;
   initialGoals: { teamId: string }[];
 };
 
@@ -74,7 +71,6 @@ export default function LiveMatchController({
   clockSeconds,
   clockStartedAt,
   managedTeams,
-  scoringVersion,
   initialGoals,
 }: Props) {
   const router =
@@ -112,14 +108,6 @@ export default function LiveMatchController({
         clockSeconds,
         clockStartedAt,
       ),
-    );
-
-  const [
-    localManagedTeams,
-    setLocalManagedTeams,
-  ] =
-    useState(
-      managedTeams,
     );
 
   const managedTeamId = managedTeams.length === 1 ? managedTeams[0].id : null;
@@ -176,14 +164,6 @@ export default function LiveMatchController({
     setFinalScoreError,
   ] =
     useState("");
-
-  useEffect(() => {
-    setLocalManagedTeams(
-      managedTeams,
-    );
-  }, [
-    managedTeams,
-  ]);
 
   useEffect(() => {
     setFinalHomeScore(
@@ -375,86 +355,6 @@ export default function LiveMatchController({
         setFinalScoreOpen(
           false,
         );
-
-        setMessage(
-          result.message,
-        );
-
-        setMessageType(
-          "success",
-        );
-
-        router.refresh();
-      },
-    );
-  }
-
-  /*
-   * PORTERÍA A CERO
-   */
-  function changeCleanSheet(
-    teamId: string,
-    value: boolean,
-  ) {
-    setMessage("");
-
-    setMessageType(
-      null,
-    );
-
-    const previousTeams =
-      localManagedTeams;
-
-    /*
-     * Actualización optimista.
-     */
-    setLocalManagedTeams(
-      (
-        current,
-      ) =>
-        current.map(
-          (
-            team,
-          ) =>
-            team.id ===
-            teamId
-              ? {
-                  ...team,
-
-                  cleanSheet:
-                    value,
-                }
-              : team,
-        ),
-    );
-
-    startTransition(
-      async () => {
-        const result =
-          await updateTeamCleanSheetAction(
-            matchId,
-            teamId,
-            value,
-          );
-
-        if (
-          result.status ===
-          "error"
-        ) {
-          setLocalManagedTeams(
-            previousTeams,
-          );
-
-          setMessage(
-            result.message,
-          );
-
-          setMessageType(
-            "error",
-          );
-
-          return;
-        }
 
         setMessage(
           result.message,
@@ -728,83 +628,6 @@ export default function LiveMatchController({
               </div>
             )}
           </div>
-
-          {/* PORTERÍA A CERO */}
-          {scoringVersion !== "v3" && localManagedTeams.length >
-            0 && (
-            <div className="mt-4 rounded-[1.15rem] bg-white/5 p-3 text-left ring-1 ring-white/10">
-              <div className="flex items-center gap-2">
-                <span className="text-base">
-                  🧤
-                </span>
-
-                <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-                  Portería a cero
-                </p>
-              </div>
-
-              <div className="mt-2 space-y-2">
-                {localManagedTeams.map(
-                  (
-                    team,
-                  ) => (
-                    <div
-                      key={
-                        team.id
-                      }
-                      className="flex items-center justify-between gap-3 rounded-xl bg-black/20 px-3 py-2.5"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-black text-white">
-                          {team.name}
-                        </p>
-
-                        <p className="mt-0.5 text-[9px] font-semibold text-zinc-500">
-                          {team.cleanSheet
-                            ? "Activada"
-                            : "Desactivada"}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={
-                          pending
-                        }
-                        onClick={() =>
-                          changeCleanSheet(
-                            team.id,
-                            !team.cleanSheet,
-                          )
-                        }
-                        aria-pressed={
-                          team.cleanSheet
-                        }
-                        aria-label={
-                          team.cleanSheet
-                            ? `Desactivar portería a cero de ${team.name}`
-                            : `Activar portería a cero de ${team.name}`
-                        }
-                        className={`relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-50 ${
-                          team.cleanSheet
-                            ? "bg-[#d8f36a]"
-                            : "bg-white/15"
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${
-                            team.cleanSheet
-                              ? "left-7"
-                              : "left-1"
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  ),
-                )}
-              </div>
-            </div>
-          )}
 
           {/* MENSAJES */}
           {message &&
