@@ -404,7 +404,7 @@ export function parseMatchInput(
 
   const rawMatchday = text(input, "matchday_number", "Jornada oficial", true)!;
   const matchday_number = Number(rawMatchday);
-  if (!/^\\d+$/.test(rawMatchday) ||
+  if (!/^\d+$/.test(rawMatchday) ||
       !Number.isSafeInteger(matchday_number) ||
       matchday_number < 1 || matchday_number > 60) {
     throw new InputError("La jornada oficial debe ser un número entre 1 y 60.");
