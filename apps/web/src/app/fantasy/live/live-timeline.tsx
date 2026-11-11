@@ -3,7 +3,7 @@ import type { MatchEvent } from "@/data/match-events";
 
 type HistoricalStat = {
   playerId: string;
-  field: Exclude<FantasyExtraStatField, "own_goals">;
+  field: FantasyExtraStatField;
   count: number;
 };
 
