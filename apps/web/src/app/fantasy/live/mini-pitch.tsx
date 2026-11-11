@@ -11,6 +11,8 @@ export type MiniPitchPlayer = {
   shirtNumber: number | null;
   isPlaying: boolean;
   captain?: boolean;
+  /** Null cuando no hay una posición válida para calcular puntos. */
+  points?: number | null;
 };
 
 type Line = "GK" | "DEF" | "MID" | "FWD";
@@ -31,10 +33,12 @@ export default function MiniPitch({
   title,
   players,
   showLiveState = false,
+  totalPoints,
 }: {
   title: string;
   players: readonly MiniPitchPlayer[];
   showLiveState?: boolean;
+  totalPoints?: number | null;
 }) {
   const grouped = Object.fromEntries(
     LINES.map((line) => [
@@ -54,9 +58,14 @@ export default function MiniPitch({
         <h2 className="truncate text-[10px] font-black uppercase tracking-wide text-[#0f3d2e]">
           {title}
         </h2>
-        <span className="shrink-0 text-[9px] font-black text-zinc-500">
-          {players.length}/11
-        </span>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-[9px] font-bold text-zinc-400">{players.length}/11</span>
+          {totalPoints !== undefined && (
+            <span className="rounded-md bg-[#e8f2ed] px-1.5 py-1 text-[10px] font-black tabular-nums text-[#0f3d2e]">
+              {totalPoints === null ? "—" : totalPoints > 0 ? `+${totalPoints}` : totalPoints} pts
+            </span>
+          )}
+        </div>
       </div>
 
       <div
@@ -93,13 +102,15 @@ export default function MiniPitch({
                     title={
                       player.name +
                       (player.captain ? " · Capitán" : "") +
-                      (showLiveState ? (player.isPlaying ? " · En campo" : " · Fuera del campo") : "")
+                      (showLiveState ? (player.isPlaying ? " · En campo" : " · Fuera del campo") : "") +
+                      (player.points !== undefined ? ` · ${player.points ?? "Sin"} puntos provisionales` : "")
                     }
                     className="flex min-w-0 flex-1 flex-col items-center gap-0.5"
                     aria-label={
                       player.name + ", " + line +
                       (player.captain ? ", capitán Fantasy" : "") +
-                      (showLiveState ? (player.isPlaying ? ", en campo" : ", fuera del campo") : "")
+                      (showLiveState ? (player.isPlaying ? ", en campo" : ", fuera del campo") : "") +
+                      (player.points !== undefined ? `, ${player.points ?? "sin"} puntos provisionales` : "")
                     }
                   >
                     <div
@@ -120,6 +131,20 @@ export default function MiniPitch({
                     <span className="w-full truncate px-px text-center text-[clamp(6px,1.65vw,9px)] font-bold leading-3 text-white">
                       {shortName(player.name)}
                     </span>
+                    {player.points !== undefined && (
+                      <span
+                        className={
+                          "min-w-5 rounded px-1 py-0.5 text-center text-[9px] font-black leading-3 tabular-nums " +
+                          (player.points === null
+                            ? "bg-zinc-200 text-zinc-600"
+                            : player.points < 0
+                              ? "bg-red-100 text-red-800"
+                              : "bg-white text-[#0f3d2e]")
+                        }
+                      >
+                        {player.points === null ? "—" : player.points > 0 ? `+${player.points}` : player.points}
+                      </span>
+                    )}
                   </div>
                 ))
               )}
