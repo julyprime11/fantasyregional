@@ -15,6 +15,13 @@ export type MiniPitchPlayer = {
   points?: number | null;
 };
 
+/** Contribucion efectiva al XI: el capitan cuenta dos veces. */
+function getPitchPoints(player: MiniPitchPlayer): number | null | undefined {
+  return player.captain && typeof player.points === "number"
+    ? player.points * 2
+    : player.points;
+}
+
 type Line = "GK" | "DEF" | "MID" | "FWD";
 const LINES: readonly Line[] = ["FWD", "MID", "DEF", "GK"];
 
@@ -103,14 +110,18 @@ export default function MiniPitch({
                       player.name +
                       (player.captain ? " · Capitán" : "") +
                       (showLiveState ? (player.isPlaying ? " · En campo" : " · Fuera del campo") : "") +
-                      (player.points !== undefined ? ` · ${player.points ?? "Sin"} puntos provisionales` : "")
+                      (getPitchPoints(player) !== undefined
+                        ? ` · ${getPitchPoints(player) ?? "Sin"} puntos aportados al XI${player.captain ? " (capitan x2)" : ""}`
+                        : "")
                     }
                     className="flex min-w-0 flex-1 flex-col items-center gap-0.5"
                     aria-label={
                       player.name + ", " + line +
                       (player.captain ? ", capitán Fantasy" : "") +
                       (showLiveState ? (player.isPlaying ? ", en campo" : ", fuera del campo") : "") +
-                      (player.points !== undefined ? `, ${player.points ?? "sin"} puntos provisionales` : "")
+                      (getPitchPoints(player) !== undefined
+                        ? `, ${getPitchPoints(player) ?? "sin"} puntos aportados al XI${player.captain ? " (doble)" : ""}`
+                        : "")
                     }
                   >
                     <div
@@ -131,18 +142,22 @@ export default function MiniPitch({
                     <span className="w-full truncate px-px text-center text-[clamp(6px,1.65vw,9px)] font-bold leading-3 text-white">
                       {shortName(player.name)}
                     </span>
-                    {player.points !== undefined && (
+                    {getPitchPoints(player) !== undefined && (
                       <span
                         className={
                           "min-w-5 rounded px-1 py-0.5 text-center text-[9px] font-black leading-3 tabular-nums " +
-                          (player.points === null
+                          (getPitchPoints(player) === null
                             ? "bg-zinc-200 text-zinc-600"
-                            : player.points < 0
+                            : (getPitchPoints(player) ?? 0) < 0
                               ? "bg-red-100 text-red-800"
                               : "bg-white text-[#0f3d2e]")
                         }
                       >
-                        {player.points === null ? "—" : player.points > 0 ? `+${player.points}` : player.points}
+                        {getPitchPoints(player) === null
+                          ? "—"
+                          : (getPitchPoints(player) ?? 0) > 0
+                            ? `+${getPitchPoints(player)}`
+                            : getPitchPoints(player)}
                       </span>
                     )}
                   </div>
