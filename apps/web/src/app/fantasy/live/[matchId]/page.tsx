@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getFantasyCaptainBonus } from "@regional-fantasy/shared";
+import { getFantasyCaptainBonus, FANTASY_EXTRA_STATS } from "@regional-fantasy/shared";
 
 import { requireUser } from "@/lib/auth";
 import { getFantasyLeagueById, getUserFantasyLeagues } from "@/data/fantasy-leagues";
@@ -68,6 +68,20 @@ export default async function FantasyLiveMatchPage({
     getMatchEvents(matchId),
     getFantasyLineup({ leagueId, userId: user.id, matchId }),
   ]);
+
+  // Algunas estadísticas V3 se guardaron antes de disponer de eventos.
+  // Las mostramos sin inventar un minuto ni duplicar las acciones nuevas.
+  const historicalStats = squad.flatMap((entry) =>
+    FANTASY_EXTRA_STATS.filter((stat) => stat.field !== "own_goals").flatMap((stat) => {
+      const alreadyRecorded = events.filter(
+        (event) => event.player_id === entry.player_id && event.event_type === stat.field,
+      ).length;
+      const remaining = Math.max(0, (entry[stat.field] ?? 0) - alreadyRecorded);
+      return remaining > 0
+        ? [{ playerId: entry.player_id, field: stat.field, count: remaining }]
+        : [];
+    }),
+  );
 
   const selected = lineup ? await getFantasyLineupPlayers(lineup.id) : [];
   const playing = isFantasyMatchPlaying(match.live_phase);
@@ -301,6 +315,7 @@ export default async function FantasyLiveMatchPage({
 
           <LiveMatchTimeline
             events={events}
+            historicalStats={historicalStats}
             playerNames={Object.fromEntries(
               squad
                 .filter((entry) => entry.player !== null)
