@@ -19,6 +19,7 @@ import {
 
 import MiniPitch, { type MiniPitchPlayer } from "../mini-pitch";
 import RefreshLiveMatch from "../refresh-live-match";
+import LiveMatchTimeline from "../live-timeline";
 
 function fullName(first: string, last: string | null): string {
   return [first, last].filter(Boolean).join(" ");
@@ -187,7 +188,7 @@ export default async function FantasyLiveMatchPage({
               <span className="text-[11px] font-black text-[#0f3d2e]">
                 {getFantasyLivePhaseLabel(match.live_phase)} · {provisional.currentMinute}&apos;
               </span>
-              <RefreshLiveMatch />
+              <RefreshLiveMatch matchId={matchId} />
             </div>
           </section>
 
@@ -290,6 +291,19 @@ export default async function FantasyLiveMatchPage({
             </div>
           </section>
 
+          <LiveMatchTimeline
+            events={events}
+            playerNames={Object.fromEntries(
+              squad
+                .filter((entry) => entry.player !== null)
+                .map((entry) => [
+                  entry.player_id,
+                  fullName(entry.player!.first_name, entry.player!.last_name),
+                ]),
+            )}
+            teamNames={Object.fromEntries(teamNames)}
+          />
+
           <section className="rounded-[1.4rem] bg-[#e8f2ed] p-4">
             <p className="text-sm font-black text-[#0f3d2e]">
               Puntuación en curso
@@ -307,7 +321,9 @@ export default async function FantasyLiveMatchPage({
               </p>
             )}
             <p className="mt-2 text-[10px] text-[#557368]">
-              Próximo bloque: timeline y sincronización automática en directo.
+              El marcador, las estadísticas, las alineaciones y la cronología se
+              sincronizan con las anotaciones de Directiva. Si pierdes la conexión,
+              puedes actualizar manualmente desde arriba.
             </p>
           </section>
         </div>
