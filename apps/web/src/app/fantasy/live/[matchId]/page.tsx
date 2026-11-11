@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { getFantasyCaptainBonus } from "@regional-fantasy/shared";
+
 import { requireUser } from "@/lib/auth";
 import { getFantasyLeagueById, getUserFantasyLeagues } from "@/data/fantasy-leagues";
 import { getFantasyLineup, getFantasyLineupPlayers } from "@/data/fantasy-lineups";
 import { getMatchById } from "@/data/matches";
 import { getMatchPlayers } from "@/data/match-players";
 import { getMatchEvents } from "@/data/match-events";
+import { calculateFantasyLivePoints } from "@/data/fantasy-live-points";
 import { getTeams } from "@/data/teams";
 import {
   isFantasyMatchFollowable,
@@ -67,6 +70,19 @@ export default async function FantasyLiveMatchPage({
   const selected = lineup ? await getFantasyLineupPlayers(lineup.id) : [];
   const playing = isFantasyMatchPlaying(match.live_phase);
   const byPlayerId = new Map(squad.map((player) => [player.player_id, player]));
+  const provisional = calculateFantasyLivePoints({
+    match,
+    squad,
+    events,
+    now: Date.now(),
+  });
+
+  function playerPoints(playerId: string): number | null {
+    const score = provisional.pointsByPlayerId.get(playerId);
+    // Los no convocados no han participado y tienen cero puntos.
+    // Si hay convocatoria pero no posición válida, no inventamos la nota.
+    return score ? score.points : byPlayerId.has(playerId) ? null : 0;
+  }
   const clubEntries = squad.filter((entry) => entry.team_id === league.team_id);
   const realXI: MiniPitchPlayer[] = clubEntries
     .filter((entry) => entry.starter)
@@ -78,6 +94,7 @@ export default async function FantasyLiveMatchPage({
       position: entry.player?.position ?? "",
       shirtNumber: entry.player?.shirt_number ?? null,
       isPlaying: entry.on_field,
+      points: playerPoints(entry.player_id),
     }));
 
   const fantasyXI: MiniPitchPlayer[] = selected.map((entry) => ({
@@ -89,7 +106,19 @@ export default async function FantasyLiveMatchPage({
     shirtNumber: entry.player?.shirt_number ?? null,
     isPlaying: byPlayerId.get(entry.player_id)?.on_field ?? false,
     captain: entry.player_id === lineup?.captain_player_id,
+    points: playerPoints(entry.player_id),
   }));
+
+  const realTotal = realXI.reduce((total, player) => total + (player.points ?? 0), 0);
+  const fantasyBaseTotal = fantasyXI.reduce((total, player) => total + (player.points ?? 0), 0);
+  const captainBonus = getFantasyCaptainBonus(
+    selected.flatMap((entry) => {
+      const result = provisional.pointsByPlayerId.get(entry.player_id);
+      return result ? [result] : [];
+    }),
+    lineup?.captain_player_id ?? null,
+  );
+  const fantasyTotal = fantasyBaseTotal + captainBonus;
 
   const teamNames = new Map(teams.map((team) => [team.id, team.name]));
   const homeTeam = teamNames.get(match.home_team_id) ?? "Equipo local";
@@ -156,7 +185,7 @@ export default async function FantasyLiveMatchPage({
             </div>
             <div className="mt-3 flex items-center justify-center gap-3 border-t border-zinc-100 pt-2.5">
               <span className="text-[11px] font-black text-[#0f3d2e]">
-                {getFantasyLivePhaseLabel(match.live_phase)}
+                {getFantasyLivePhaseLabel(match.live_phase)} · {provisional.currentMinute}&apos;
               </span>
               <RefreshLiveMatch />
             </div>
@@ -173,8 +202,18 @@ export default async function FantasyLiveMatchPage({
             </div>
 
             <div className="grid grid-cols-2 items-start gap-2">
-              <MiniPitch title="XI real" players={realXI} showLiveState={playing} />
-              <MiniPitch title="Mi XI Fantasy" players={fantasyXI} showLiveState={playing} />
+              <MiniPitch
+                title="XI real"
+                players={realXI}
+                showLiveState={playing}
+                totalPoints={realTotal}
+              />
+              <MiniPitch
+                title="Mi XI Fantasy"
+                players={fantasyXI}
+                showLiveState={playing}
+                totalPoints={fantasyTotal}
+              />
             </div>
 
             <div className="mt-2 rounded-xl bg-white px-3 py-2 text-[10px] leading-4 text-zinc-600 ring-1 ring-black/5">
@@ -196,16 +235,79 @@ export default async function FantasyLiveMatchPage({
                 </p>
               )}
             </div>
+
+            <div className="mt-3 rounded-[1.2rem] bg-white p-3 shadow-sm ring-1 ring-black/5">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wide text-zinc-500">
+                    Puntos provisionales · Mi XI
+                  </p>
+                  <p className="mt-1 text-2xl font-black tabular-nums text-[#0f3d2e]">
+                    {fantasyTotal} <span className="text-xs">pts</span>
+                  </p>
+                </div>
+                <div className="text-right text-[10px] leading-4 text-zinc-500">
+                  <p>Jugadores: <strong className="text-zinc-800">{fantasyBaseTotal}</strong></p>
+                  <p>Capitán: <strong className="text-zinc-800">{captainBonus > 0 ? `+${captainBonus}` : captainBonus}</strong></p>
+                </div>
+              </div>
+
+              <details className="mt-2 border-t border-zinc-100 pt-2">
+                <summary className="cursor-pointer py-1 text-[11px] font-black text-[#0f3d2e]">
+                  Ver desglose provisional por jugador
+                </summary>
+                <div className="mt-2 space-y-1.5">
+                  {fantasyXI.map((player) => {
+                    const result = provisional.pointsByPlayerId.get(player.id);
+                    return (
+                      <div key={player.id} className="rounded-lg bg-zinc-50 px-2.5 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate text-[11px] font-bold text-zinc-800">
+                            {player.name} {player.captain ? "ⓒ" : ""}
+                          </span>
+                          <span className="shrink-0 text-[11px] font-black tabular-nums text-[#0f3d2e]">
+                            {player.points === null ? "—" : player.points} pts
+                          </span>
+                        </div>
+                        {result ? (
+                          <p className="mt-1 text-[10px] leading-4 text-zinc-500">
+                            Minutos {result.breakdown.minutes} · Goles {result.breakdown.goals} ·
+                            Asistencias {result.breakdown.assists} ·
+                            Tarjetas {result.breakdown.cards} ·
+                            Extras V3 {result.breakdown.extra_stats} ·
+                            Encajados {result.breakdown.goals_conceded}
+                          </p>
+                        ) : (
+                          <p className="mt-0.5 text-[10px] text-zinc-500">
+                            {player.points === null ? "Sin posición válida para calcular" : "Aún no ha participado"}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            </div>
           </section>
 
           <section className="rounded-[1.4rem] bg-[#e8f2ed] p-4">
             <p className="text-sm font-black text-[#0f3d2e]">
-              Siguiente bloque: puntos y timeline en directo
+              Puntuación en curso
             </p>
             <p className="mt-1 text-xs leading-5 text-[#557368]">
-              Esta primera versión muestra alineaciones reales y el marcador. Los
-              puntos provisionales por jugador y el timeline se incorporarán a
-              continuación, sin inventar puntuaciones ni alterar el cálculo Fantasy.
+              Incluye estadísticas registradas por Directiva, minutos transcurridos
+              y penalizaciones reconstruidas del partido. No anticipa votos,
+              MVP ni bonificación por portería a cero. Los puntos pueden cambiar
+              hasta que finalice el encuentro y se cierren las valoraciones.
+            </p>
+            {provisional.goalsConcededPending && (
+              <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] font-bold leading-4 text-amber-900">
+                Hay goles encajados pendientes de comprobar en la cronología;
+                todavía no se aplica su penalización Fantasy.
+              </p>
+            )}
+            <p className="mt-2 text-[10px] text-[#557368]">
+              Próximo bloque: timeline y sincronización automática en directo.
             </p>
           </section>
         </div>
