@@ -1059,7 +1059,7 @@ function ExtraStatControl({
           <span className="font-bold text-[#0f3d2e]">Puntuación Fantasy: {pointsLabel}.</span>{" "}
           {stat.description}
           {stat.field === "own_goals" && (
-            <> Registra también el gol en los eventos del partido para actualizar el marcador.</>
+            <> Se registra automáticamente en el timeline y suma un gol al equipo rival.</>
           )}
         </p>
       )}
