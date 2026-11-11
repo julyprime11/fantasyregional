@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import type { LiveMatchPhase } from "@/data/matches";
 import { calculateLiveClockSeconds, formatLiveClock } from "@/lib/live-match-clock";
 
 type Props = {
-  phase: LiveMatchPhase;
+  phase: string;
   clockSeconds: number;
   clockStartedAt: string | null;
 };
