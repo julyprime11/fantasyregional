@@ -507,22 +507,27 @@ export default function LiveMatchController({
           <div className="mt-6">
             {phase ===
               "not_started" && (
-              <button
-                type="button"
-                disabled={
-                  pending
-                }
-                onClick={() =>
-                  execute(
-                    startLiveMatchAction,
-                  )
-                }
-                className="flex min-h-14 w-full items-center justify-center rounded-[1.1rem] bg-[#d8f36a] px-5 text-base font-black text-zinc-950 transition active:scale-[0.99] disabled:opacity-50"
-              >
-                {pending
-                  ? "Iniciando..."
-                  : "▶ Iniciar partido"}
-              </button>
+              <div>
+                <button
+                  type="button"
+                  disabled={
+                    pending
+                  }
+                  onClick={() =>
+                    execute(
+                      startLiveMatchAction,
+                    )
+                  }
+                  className="flex min-h-14 w-full items-center justify-center rounded-[1.1rem] bg-[#d8f36a] px-5 text-base font-black text-zinc-950 transition active:scale-[0.99] disabled:opacity-50"
+                >
+                  {pending
+                    ? "Iniciando..."
+                    : "▶ Iniciar partido"}
+                </button>
+                <p className="mt-2 text-center text-[11px] leading-5 text-white/60">
+                  Para iniciar, alinea exactamente 11 titulares por equipo.
+                </p>
+              </div>
             )}
 
             {phase ===

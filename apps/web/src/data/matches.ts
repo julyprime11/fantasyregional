@@ -305,11 +305,49 @@ export async function startLiveMatch(
     );
   }
 
-  const now =
-    new Date().toISOString();
-
   const supabase =
     await createServerSupabaseClient();
+
+  // No iniciar el reloj ni modificar el campo si falta el XI de
+  // cualquiera de los equipos que tienen jugadores convocados.
+  // Se comprueba en el servidor, aunque el navegador omita la UI.
+  const { data: lineup, error: lineupError } =
+    await supabase
+      .from("match_players")
+      .select("team_id, starter")
+      .eq("match_id", matchId);
+
+  if (lineupError) {
+    throw lineupError;
+  }
+
+  const startersByTeam = new Map<string, number>();
+
+  for (const entry of lineup ?? []) {
+    startersByTeam.set(
+      entry.team_id,
+      (startersByTeam.get(entry.team_id) ?? 0) + (entry.starter ? 1 : 0),
+    );
+  }
+
+  if (startersByTeam.size === 0) {
+    throw new InputError(
+      "No puedes iniciar el partido: no hay jugadores convocados. Selecciona 11 titulares en Match Admin.",
+    );
+  }
+
+  const incompleteXI = [...startersByTeam.values()].find(
+    (count) => count !== 11,
+  );
+
+  if (incompleteXI !== undefined) {
+    throw new InputError(
+      `No puedes iniciar el partido: hay ${incompleteXI} de 11 titulares seleccionados${startersByTeam.size > 1 ? " en uno de los equipos" : ""}. Completa el XI inicial antes de empezar.`,
+    );
+  }
+
+  const now =
+    new Date().toISOString();
 
   /*
    * Iniciamos el reloj.
