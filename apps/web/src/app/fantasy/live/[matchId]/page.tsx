@@ -20,6 +20,7 @@ import {
 import MiniPitch, { type MiniPitchPlayer } from "../mini-pitch";
 import RefreshLiveMatch from "../refresh-live-match";
 import LiveMatchTimeline from "../live-timeline";
+import FantasyLiveClock from "../live-match-clock";
 
 function fullName(first: string, last: string | null): string {
   return [first, last].filter(Boolean).join(" ");
@@ -184,10 +185,17 @@ export default async function FantasyLiveMatchPage({
                 {awayTeam}
               </p>
             </div>
-            <div className="mt-3 flex items-center justify-center gap-3 border-t border-zinc-100 pt-2.5">
-              <span className="text-[11px] font-black text-[#0f3d2e]">
-                {getFantasyLivePhaseLabel(match.live_phase)} · {provisional.currentMinute}&apos;
-              </span>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-2 border-t border-zinc-100 pt-2.5">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-[11px] font-black text-[#0f3d2e]">
+                  {getFantasyLivePhaseLabel(match.live_phase)}
+                </span>
+                <FantasyLiveClock
+                  phase={match.live_phase}
+                  clockSeconds={match.live_clock_seconds ?? 0}
+                  clockStartedAt={match.live_clock_started_at}
+                />
+              </div>
               <RefreshLiveMatch matchId={matchId} />
             </div>
           </section>
