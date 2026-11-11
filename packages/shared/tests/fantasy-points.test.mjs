@@ -831,3 +831,228 @@ test("the eight V3 actions have unique field names and readable explanations", a
     assert.ok(stat.label.length > 5);
   }
 });
+
+test("live Fantasy points include current match stats but never provisional rating, MVP or clean sheet", async () => {
+  const { calculateProvisionalFantasyPlayerPoints } =
+    await import("../src/fantasy-live-points.ts");
+  const result = calculateProvisionalFantasyPlayerPoints({
+    ...createPlayerInput({
+      player_id: "defender-live",
+      position: "CB",
+      scoring_version: "v3",
+      minutes_played: 70,
+      starter: true,
+      match_minutes: 70,
+      goals: 1,
+      assists: 1,
+      penalties_won: 1,
+      yellow_cards: 1,
+      goals_conceded_on_field: 0,
+    }),
+    panel_rating: undefined,
+    is_mvp: undefined,
+    clean_sheet: undefined,
+  });
+  assert.equal(result.breakdown.minutes, 3);
+  assert.equal(result.breakdown.goals, 6);
+  assert.equal(result.breakdown.assists, 3);
+  assert.equal(result.breakdown.cards, -2);
+  assert.equal(result.breakdown.extra_stats, 2);
+  assert.equal(result.breakdown.clean_sheet, 0);
+  assert.equal(result.breakdown.rating, 0);
+  assert.equal(result.breakdown.mvp, 0);
+  assert.equal(result.points, 12);
+  assert.equal(result.rateable, false);
+});
+
+test("live Fantasy goalkeeper saves and own goal penalties use the central V3 rules", async () => {
+  const { calculateProvisionalFantasyPlayerPoints } =
+    await import("../src/fantasy-live-points.ts");
+  const goalkeeper = calculateProvisionalFantasyPlayerPoints({
+    ...createPlayerInput({
+      player_id: "gk-live",
+      position: "GK",
+      scoring_version: "v3",
+      minutes_played: 75,
+      starter: true,
+      match_minutes: 75,
+      penalties_saved: 1,
+      own_goals: 1,
+      goals_conceded_on_field: 2,
+    }),
+    panel_rating: undefined,
+    is_mvp: undefined,
+    clean_sheet: undefined,
+  });
+  assert.equal(goalkeeper.breakdown.extra_stats, 1);
+  assert.equal(goalkeeper.breakdown.goals_conceded, -1);
+  assert.equal(goalkeeper.breakdown.clean_sheet, 0);
+  assert.equal(goalkeeper.points, 3);
+});
+
+test("live Fantasy captain doubles both positive and negative provisional points", async () => {
+  const { calculateProvisionalFantasyPlayerPoints } =
+    await import("../src/fantasy-live-points.ts");
+  const positive = calculateProvisionalFantasyPlayerPoints({
+    ...createPlayerInput({
+      player_id: "positive-live",
+      position: "ST",
+      scoring_version: "v3",
+      minutes_played: 12,
+      starter: true,
+      match_minutes: 12,
+      goals: 1,
+    }),
+    panel_rating: undefined,
+    is_mvp: undefined,
+    clean_sheet: undefined,
+  });
+  const negative = calculateProvisionalFantasyPlayerPoints({
+    ...createPlayerInput({
+      player_id: "negative-live",
+      position: "ST",
+      scoring_version: "v3",
+      minutes_played: 12,
+      starter: true,
+      match_minutes: 12,
+      penalties_missed: 1,
+    }),
+    panel_rating: undefined,
+    is_mvp: undefined,
+    clean_sheet: undefined,
+  });
+  const total = positive.points + negative.points;
+  assert.equal(positive.points, 5);
+  assert.equal(negative.points, -2);
+  assert.equal(total + getFantasyCaptainBonus([positive, negative], "positive-live"), 8);
+  assert.equal(total + getFantasyCaptainBonus([positive, negative], "negative-live"), 1);
+});
+
+test("live Fantasy does not grant points to unplayed players or retroactively change V1 V2", async () => {
+  const { calculateProvisionalFantasyPlayerPoints } =
+    await import("../src/fantasy-live-points.ts");
+  for (const scoring_version of ["v1", "v2", "v3"]) {
+    const unplayed = calculateProvisionalFantasyPlayerPoints({
+      ...createPlayerInput({
+        minutes_played: 0,
+        starter: false,
+        scoring_version,
+        goals: 1,
+        penalties_won: 1,
+      }),
+      panel_rating: undefined,
+      is_mvp: undefined,
+      clean_sheet: undefined,
+    });
+    assert.equal(unplayed.points, 0);
+
+    const played = calculateProvisionalFantasyPlayerPoints({
+      ...createPlayerInput({
+        minutes_played: 10,
+        starter: true,
+        scoring_version,
+        penalties_won: 1,
+      }),
+      panel_rating: undefined,
+      is_mvp: undefined,
+      clean_sheet: undefined,
+    });
+    assert.equal(played.breakdown.extra_stats, scoring_version === "v3" ? 2 : 0);
+  }
+});
+
+test("live clock and player minutes obey halftime, substitution and missing entry minute", async () => {
+  const { getFantasyLiveMatchMinute, getFantasyLivePlayedMinutes } =
+    await import("../src/fantasy-live-points.ts");
+  const now = Date.parse("2026-11-11T12:05:00Z");
+  const firstHalf = {
+    live_phase: "first_half",
+    live_clock_seconds: 40 * 60,
+    live_clock_started_at: "2026-11-11T12:00:00Z",
+  };
+  assert.equal(getFantasyLiveMatchMinute(firstHalf, now), 45);
+  assert.equal(getFantasyLiveMatchMinute({
+    ...firstHalf,
+    live_phase: "halftime",
+  }, now), 40);
+  assert.equal(getFantasyLiveMatchMinute({
+    ...firstHalf,
+    live_phase: "second_half",
+    live_clock_seconds: 45 * 60,
+  }, now), 50);
+
+  assert.equal(getFantasyLivePlayedMinutes({
+    starter: true,
+    on_field: true,
+    entered_minute: 0,
+    minutes_played: 0,
+  }, 45), 45);
+
+  assert.equal(getFantasyLivePlayedMinutes({
+    starter: false,
+    on_field: true,
+    entered_minute: 32,
+    minutes_played: 0,
+  }, 45), 13);
+
+  assert.equal(getFantasyLivePlayedMinutes({
+    starter: false,
+    on_field: false,
+    entered_minute: 32,
+    minutes_played: 8,
+  }, 45), 8);
+
+  assert.equal(getFantasyLivePlayedMinutes({
+    starter: false,
+    on_field: true,
+    entered_minute: null,
+    minutes_played: 0,
+  }, 45), 0);
+});
+
+test("live score counts player goals without scoring_team_id and keeps opponent own goals", async () => {
+  const { getFantasyMatchScoringTeamId } =
+    await import("../src/fantasy-live-points.ts");
+
+  const playerTeams = new Map([
+    ["grau", "home"],
+    ["catala", "home"],
+    ["andreu", "home"],
+  ]);
+  const goals = [
+    { player_id: "grau", scoring_team_id: null, is_own_goal: false },
+    { player_id: "catala", scoring_team_id: null, is_own_goal: false },
+    { player_id: null, scoring_team_id: "away", is_own_goal: false },
+    { player_id: "andreu", scoring_team_id: "away", is_own_goal: true },
+  ];
+
+  const scoredFor = goals.map((goal) =>
+    getFantasyMatchScoringTeamId(goal, playerTeams, "home", "away"),
+  );
+
+  assert.deepEqual(scoredFor, ["home", "home", "away", "away"]);
+  assert.equal(scoredFor.filter((team) => team === "home").length, 2);
+  assert.equal(scoredFor.filter((team) => team === "away").length, 2);
+
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: "andreu", scoring_team_id: null, is_own_goal: true },
+      playerTeams, "home", "away",
+    ),
+    "away",
+  );
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: null, scoring_team_id: null, is_own_goal: false },
+      playerTeams, "home", "away",
+    ),
+    null,
+  );
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: "grau", scoring_team_id: "away", is_own_goal: false },
+      playerTeams, "home", "away",
+    ),
+    "away",
+  );
+});

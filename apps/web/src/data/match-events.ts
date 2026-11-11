@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   InputError,
+  type FantasyExtraStatField,
 } from "@regional-fantasy/shared";
 
 import {
@@ -13,7 +14,8 @@ export type MatchEventType =
   | "assist"
   | "yellow_card"
   | "red_card"
-  | "substitution";
+  | "substitution"
+  | Exclude<FantasyExtraStatField, "own_goals">;
 
 export type MatchEvent = {
   id: string;

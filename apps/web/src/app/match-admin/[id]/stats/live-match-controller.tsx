@@ -14,6 +14,8 @@ import type {
   LiveMatchPhase,
 } from "@/data/matches";
 
+import { calculateLiveClockSeconds, formatLiveClock } from "@/lib/live-match-clock";
+
 import {
   finishLiveMatchAction,
   resetLiveMatchAction,
@@ -103,7 +105,7 @@ export default function LiveMatchController({
     setDisplaySeconds,
   ] =
     useState(() =>
-      calculateDisplaySeconds(
+      calculateLiveClockSeconds(
         phase,
         clockSeconds,
         clockStartedAt,
@@ -185,7 +187,7 @@ export default function LiveMatchController({
    */
   useEffect(() => {
     setDisplaySeconds(
-      calculateDisplaySeconds(
+      calculateLiveClockSeconds(
         phase,
         clockSeconds,
         clockStartedAt,
@@ -205,7 +207,7 @@ export default function LiveMatchController({
       window.setInterval(
         () => {
           setDisplaySeconds(
-            calculateDisplaySeconds(
+            calculateLiveClockSeconds(
               phase,
               clockSeconds,
               clockStartedAt,
@@ -431,7 +433,7 @@ export default function LiveMatchController({
         {/* CRONÓMETRO */}
         <div className="px-5 pb-5 pt-6 text-center">
           <p className="font-mono text-6xl font-black tracking-tighter">
-            {formatClock(
+            {formatLiveClock(
               displaySeconds,
             )}
           </p>
@@ -505,22 +507,27 @@ export default function LiveMatchController({
           <div className="mt-6">
             {phase ===
               "not_started" && (
-              <button
-                type="button"
-                disabled={
-                  pending
-                }
-                onClick={() =>
-                  execute(
-                    startLiveMatchAction,
-                  )
-                }
-                className="flex min-h-14 w-full items-center justify-center rounded-[1.1rem] bg-[#d8f36a] px-5 text-base font-black text-zinc-950 transition active:scale-[0.99] disabled:opacity-50"
-              >
-                {pending
-                  ? "Iniciando..."
-                  : "▶ Iniciar partido"}
-              </button>
+              <div>
+                <button
+                  type="button"
+                  disabled={
+                    pending
+                  }
+                  onClick={() =>
+                    execute(
+                      startLiveMatchAction,
+                    )
+                  }
+                  className="flex min-h-14 w-full items-center justify-center rounded-[1.1rem] bg-[#d8f36a] px-5 text-base font-black text-zinc-950 transition active:scale-[0.99] disabled:opacity-50"
+                >
+                  {pending
+                    ? "Iniciando..."
+                    : "▶ Iniciar partido"}
+                </button>
+                <p className="mt-2 text-center text-[11px] leading-5 text-white/60">
+                  Para iniciar, alinea exactamente 11 titulares por equipo.
+                </p>
+              </div>
             )}
 
             {phase ===
@@ -917,88 +924,6 @@ function ScoreEditor({
       </div>
     </div>
   );
-}
-
-function calculateDisplaySeconds(
-  phase: LiveMatchPhase,
-  storedSeconds: number,
-  startedAt:
-    | string
-    | null,
-): number {
-  if (
-    (
-      phase !==
-        "first_half" &&
-      phase !==
-        "second_half"
-    ) ||
-    !startedAt
-  ) {
-    return storedSeconds;
-  }
-
-  const start =
-    new Date(
-      startedAt,
-    ).getTime();
-
-  if (
-    !Number.isFinite(
-      start,
-    )
-  ) {
-    return storedSeconds;
-  }
-
-  const elapsed =
-    Math.max(
-      0,
-      Math.floor(
-        (
-          Date.now() -
-          start
-        ) /
-          1000,
-      ),
-    );
-
-  return (
-    storedSeconds +
-    elapsed
-  );
-}
-
-function formatClock(
-  seconds: number,
-): string {
-  const safeSeconds =
-    Math.max(
-      0,
-      seconds,
-    );
-
-  const minutes =
-    Math.floor(
-      safeSeconds /
-        60,
-    );
-
-  const remainingSeconds =
-    safeSeconds %
-    60;
-
-  return `${String(
-    minutes,
-  ).padStart(
-    2,
-    "0",
-  )}:${String(
-    remainingSeconds,
-  ).padStart(
-    2,
-    "0",
-  )}`;
 }
 
 function getPhaseLabel(

@@ -11,6 +11,7 @@ export { parseMatchPlayerId, parseMatchPlayerStats } from "./master-data";
 export { InputError, parseClubInput, parseTeamInput, parsePlayerInput, parsePlayerId, parseStaffInput, parseStaffId } from "./master-data";
 export * from "./fantasy-lineup";
 export * from "./fantasy-points";
+export * from "./fantasy-live-points";
 export * from "./fantasy-extra-stats";
 export * from "./fantasy-economy";
 export * from "./fantasy-standings-view";

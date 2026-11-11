@@ -190,6 +190,7 @@ import ShareLeagueButton from "./share-league-button";
 
 import LatestMatchdaySummary from "./latest-matchday-summary";
 import FantasyStandingsSelector from "./fantasy-standings-selector";
+import { getFantasyLiveMatch, getFantasyLivePhaseLabel, isFantasyMatchPlaying } from "@/lib/fantasy-live-match";
 
 export default async function FantasyPage({
 
@@ -1244,6 +1245,8 @@ export default async function FantasyPage({
    */
 
 
+
+  const liveMatch = getFantasyLiveMatch(matches, activeLeague.team_id);
 
   const nextMatch =
 
@@ -2958,11 +2961,61 @@ export default async function FantasyPage({
 
 
 
+          {/* SEGUIMIENTO DEL PARTIDO EN DIRECTO */}
+          {liveMatch && (
+            <section className="mt-4">
+              <div className="mb-2 flex items-center justify-between px-1">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#0f3d2e]">
+                    Jornada en curso
+                  </p>
+                  <h2 className="mt-1 text-xl font-black text-zinc-950">
+                    Sigue el partido
+                  </h2>
+                </div>
+                <span className="rounded-full bg-[#e8f2ed] px-3 py-1 text-[9px] font-black text-[#0f3d2e]">
+                  {isFantasyMatchPlaying(liveMatch.live_phase) ? "● EN DIRECTO" : "FINALIZADO"}
+                </span>
+              </div>
+              <Link
+                href={"/fantasy/live/" + liveMatch.id + "?league=" + activeLeague.id}
+                className="block overflow-hidden rounded-[1.5rem] bg-[#0f3d2e] text-white shadow-md ring-1 ring-black/5 transition active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f3d2e]"
+              >
+                <div className="relative overflow-hidden px-4 py-5">
+                  <div aria-hidden="true" className="absolute -right-12 -top-14 h-36 w-36 rounded-full border-[22px] border-white/10" />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-white/60">
+                        {getFantasyLivePhaseLabel(liveMatch.live_phase)}
+                      </p>
+                      <p className="mt-2 text-sm font-black leading-5">
+                        {teamNames.get(liveMatch.home_team_id) ?? "Equipo local"}
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-white/70">contra</p>
+                      <p className="mt-0.5 text-sm font-black leading-5">
+                        {teamNames.get(liveMatch.away_team_id) ?? "Equipo visitante"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-center gap-2">
+                      <span aria-hidden="true" className="text-3xl">⚽</span>
+                      <span className="rounded-xl bg-white px-3 py-2 text-[10px] font-black text-[#0f3d2e]">
+                        Ver directo →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-white/10 bg-white/10 px-4 py-2.5 text-[10px] font-bold text-white/85">
+                  XI real y tu XI Fantasy sobre el campo
+                </div>
+              </Link>
+            </section>
+          )}
+
           {/* PRÓXIMA JORNADA / ESTADO DEL XI */}
 
 
 
-          {nextMatch ? (
+          {!liveMatch && (nextMatch ? (
 
 
 
@@ -3654,7 +3707,7 @@ export default async function FantasyPage({
 
 
 
-          )}
+          ))}
 
 
 
