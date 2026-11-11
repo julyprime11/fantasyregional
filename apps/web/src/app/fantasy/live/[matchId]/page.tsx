@@ -178,9 +178,18 @@ export default async function FantasyLiveMatchPage({
             </div>
 
             <div className="mt-2 rounded-xl bg-white px-3 py-2 text-[10px] leading-4 text-zinc-600 ring-1 ring-black/5">
-              <span className="font-bold text-[#0f3d2e]">Verde:</span> jugador en campo ·
-              <span className="font-bold text-zinc-600"> Gris:</span> fuera del campo ·
-              <span className="font-black text-amber-700"> C:</span> capitán Fantasy.
+              {playing ? (
+                <>
+                  <span className="font-bold text-[#0f3d2e]">Verde:</span> jugador en campo ·
+                  <span className="font-bold text-zinc-600"> Gris:</span> fuera del campo ·{" "}
+                </>
+              ) : null}
+              <span className="font-black text-amber-700">C:</span> capitán Fantasy.
+              {realXI.length === 0 && (
+                <p className="mt-1 text-amber-700">
+                  Directiva todavía no ha definido el XI titular de este equipo.
+                </p>
+              )}
               {fantasyXI.length === 0 && (
                 <p className="mt-1 text-amber-700">
                   No guardaste un XI Fantasy para este partido.
