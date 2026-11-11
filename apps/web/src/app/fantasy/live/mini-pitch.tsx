@@ -41,12 +41,15 @@ export default function MiniPitch({
   players,
   showLiveState = false,
   totalPoints,
+  variant = "real",
 }: {
   title: string;
   players: readonly MiniPitchPlayer[];
   showLiveState?: boolean;
   totalPoints?: number | null;
+  variant?: "real" | "fantasy";
 }) {
+  const isFantasy = variant === "fantasy";
   const grouped = Object.fromEntries(
     LINES.map((line) => [
       line,
@@ -59,16 +62,19 @@ export default function MiniPitch({
   return (
     <section
       aria-label={title}
-      className="min-w-0 rounded-[1rem] bg-white p-1.5 shadow-sm ring-1 ring-black/5"
+      className={"min-w-0 rounded-[1rem] bg-white p-1.5 shadow-sm ring-1 " +
+        (isFantasy ? "ring-teal-200" : "ring-black/5")}
     >
       <div className="flex min-h-8 items-center justify-between gap-1 px-1">
-        <h2 className="truncate text-[10px] font-black uppercase tracking-wide text-[#0f3d2e]">
+        <h2 className={"truncate text-[10px] font-black uppercase tracking-wide " +
+          (isFantasy ? "text-[#115e59]" : "text-[#0f3d2e]")}>
           {title}
         </h2>
         <div className="flex shrink-0 items-center gap-1.5">
           <span className="text-[9px] font-bold text-zinc-400">{players.length}/11</span>
           {totalPoints !== undefined && (
-            <span className="rounded-md bg-[#e8f2ed] px-1.5 py-1 text-[10px] font-black tabular-nums text-[#0f3d2e]">
+            <span className={"rounded-md px-1.5 py-1 text-[10px] font-black tabular-nums " +
+              (isFantasy ? "bg-[#d4f4ec] text-[#115e59]" : "bg-[#e8f2ed] text-[#0f3d2e]")}>
               {totalPoints === null ? "—" : totalPoints > 0 ? `+${totalPoints}` : totalPoints} pts
             </span>
           )}
@@ -76,7 +82,8 @@ export default function MiniPitch({
       </div>
 
       <div
-        className="relative aspect-[168/270] overflow-hidden rounded-[0.7rem] border border-white/40 bg-[#087443]"
+        className={"relative aspect-[168/270] overflow-hidden rounded-[0.7rem] border border-white/40 " +
+          (isFantasy ? "bg-[#0f766e]" : "bg-[#087443]")}
         aria-label={title + ": " + players.length + " jugadores por posiciones"}
       >
         <div
@@ -129,7 +136,9 @@ export default function MiniPitch({
                         "relative flex size-[clamp(16px,4.1vw,23px)] shrink-0 items-center justify-center rounded-full border text-[8px] font-black tabular-nums shadow-sm " +
                         (showLiveState && !player.isPlaying
                           ? "border-white/65 bg-zinc-500 text-white"
-                          : "border-white bg-[#0f3d2e] text-white")
+                          : isFantasy
+                            ? "border-white bg-[#134e4a] text-white"
+                            : "border-white bg-[#0f3d2e] text-white")
                       }
                     >
                       {player.shirtNumber ?? "·"}
@@ -150,7 +159,9 @@ export default function MiniPitch({
                             ? "bg-zinc-200 text-zinc-600"
                             : (getPitchPoints(player) ?? 0) < 0
                               ? "bg-red-100 text-red-800"
-                              : "bg-white text-[#0f3d2e]")
+                              : isFantasy
+                                ? "bg-white text-[#115e59]"
+                                : "bg-white text-[#0f3d2e]")
                         }
                       >
                         {getPitchPoints(player) === null

@@ -14,7 +14,7 @@ type ConnectionState = "connecting" | "connected" | "reconnecting";
  */
 export default function RefreshLiveMatch({ matchId }: { matchId: string }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRefresh = useRef(0);
@@ -138,34 +138,19 @@ export default function RefreshLiveMatch({ matchId }: { matchId: string }) {
   }, [matchId, router, startTransition]);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-1.5">
-      <span
-        className={
-          "text-[9px] font-bold " +
-          (connection === "connected" ? "text-emerald-700" : "text-zinc-500")
-        }
-        role="status"
-        aria-live="polite"
-      >
-        {connection === "connected"
-          ? "● Sincronizado"
-          : connection === "connecting"
-            ? "Conectando…"
-            : "Reconectando…"}
-      </span>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => {
-          lastRefresh.current = Date.now();
-          startTransition(() => router.refresh());
-        }}
-        aria-label="Actualizar el marcador, los puntos y la cronología"
-        className="flex min-h-10 items-center gap-1.5 rounded-lg bg-[#e8f2ed] px-3 text-[11px] font-black text-[#0f3d2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f3d2e] disabled:opacity-50"
-      >
-        <span aria-hidden="true">↻</span>
-        {pending ? "Actualizando…" : "Actualizar"}
-      </button>
-    </div>
+    <span
+      className={
+        "shrink-0 whitespace-nowrap text-[10px] font-bold " +
+        (connection === "connected" ? "text-emerald-700" : "text-zinc-500")
+      }
+      role="status"
+      aria-live="polite"
+    >
+      {connection === "connected"
+        ? "● Sincronizado"
+        : connection === "connecting"
+          ? "Conectando…"
+          : "Reconectando…"}
+    </span>
   );
 }

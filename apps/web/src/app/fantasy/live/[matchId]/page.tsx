@@ -226,12 +226,14 @@ export default async function FantasyLiveMatchPage({
 
             <div className="grid grid-cols-2 items-start gap-2">
               <MiniPitch
+                variant="real"
                 title="XI real"
                 players={realXI}
                 showLiveState={playing}
                 totalPoints={realTotal}
               />
               <MiniPitch
+                variant="fantasy"
                 title="Mi XI Fantasy"
                 players={fantasyXI}
                 showLiveState={playing}
@@ -345,8 +347,8 @@ export default async function FantasyLiveMatchPage({
             )}
             <p className="mt-2 text-[10px] text-[#557368]">
               El marcador, las estadísticas, las alineaciones y la cronología se
-              sincronizan con las anotaciones de Directiva. Si pierdes la conexión,
-              puedes actualizar manualmente desde arriba.
+              sincronizan automáticamente con las anotaciones de Directiva. Si se
+              interrumpe la conexión, se actualizan al recuperarla o al volver a la pantalla.
             </p>
           </section>
         </div>
