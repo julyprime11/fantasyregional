@@ -4,6 +4,39 @@ import {
   type FantasyPlayerPointsResult,
 } from "./fantasy-points";
 
+
+/**
+ * El equipo beneficiado por un gol es el dato explicito si existe.
+ * En goles historicos con goleador pero sin equipo, se infiere del jugador;
+ * si es un autogol, se atribuye al rival. Sin datos fiables, devuelve null.
+ * Se utiliza tanto para el marcador como para los puntos provisionales.
+ */
+export function getFantasyMatchScoringTeamId(
+  event: {
+    player_id: string | null;
+    scoring_team_id: string | null;
+    is_own_goal: boolean;
+  },
+  playerTeams: ReadonlyMap<string, string>,
+  homeTeamId: string,
+  awayTeamId: string,
+): string | null {
+  if (event.scoring_team_id !== null) return event.scoring_team_id;
+
+  const actorTeam = event.player_id
+    ? playerTeams.get(event.player_id) ?? null
+    : null;
+  if (!actorTeam) return null;
+
+  if (event.is_own_goal) {
+    if (actorTeam === homeTeamId) return awayTeamId;
+    if (actorTeam === awayTeamId) return homeTeamId;
+    return null;
+  }
+
+  return actorTeam;
+}
+
 /**
  * Puntuación basada únicamente en estadísticas registradas durante el partido.
  * No se anticipan valoración humana, MVP ni portería a cero: las dos últimas

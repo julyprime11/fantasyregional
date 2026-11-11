@@ -1009,3 +1009,50 @@ test("live clock and player minutes obey halftime, substitution and missing entr
     minutes_played: 0,
   }, 45), 0);
 });
+
+test("live score counts player goals without scoring_team_id and keeps opponent own goals", async () => {
+  const { getFantasyMatchScoringTeamId } =
+    await import("../src/fantasy-live-points.ts");
+
+  const playerTeams = new Map([
+    ["grau", "home"],
+    ["catala", "home"],
+    ["andreu", "home"],
+  ]);
+  const goals = [
+    { player_id: "grau", scoring_team_id: null, is_own_goal: false },
+    { player_id: "catala", scoring_team_id: null, is_own_goal: false },
+    { player_id: null, scoring_team_id: "away", is_own_goal: false },
+    { player_id: "andreu", scoring_team_id: "away", is_own_goal: true },
+  ];
+
+  const scoredFor = goals.map((goal) =>
+    getFantasyMatchScoringTeamId(goal, playerTeams, "home", "away"),
+  );
+
+  assert.deepEqual(scoredFor, ["home", "home", "away", "away"]);
+  assert.equal(scoredFor.filter((team) => team === "home").length, 2);
+  assert.equal(scoredFor.filter((team) => team === "away").length, 2);
+
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: "andreu", scoring_team_id: null, is_own_goal: true },
+      playerTeams, "home", "away",
+    ),
+    "away",
+  );
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: null, scoring_team_id: null, is_own_goal: false },
+      playerTeams, "home", "away",
+    ),
+    null,
+  );
+  assert.equal(
+    getFantasyMatchScoringTeamId(
+      { player_id: "grau", scoring_team_id: "away", is_own_goal: false },
+      playerTeams, "home", "away",
+    ),
+    "away",
+  );
+});

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getFantasyCaptainBonus, FANTASY_EXTRA_STATS } from "@regional-fantasy/shared";
+import { getFantasyCaptainBonus, getFantasyMatchScoringTeamId, FANTASY_EXTRA_STATS } from "@regional-fantasy/shared";
 
 import { requireUser } from "@/lib/auth";
 import { getFantasyLeagueById, getUserFantasyLeagues } from "@/data/fantasy-leagues";
@@ -140,15 +140,22 @@ export default async function FantasyLiveMatchPage({
   const homeTeam = teamNames.get(match.home_team_id) ?? "Equipo local";
   const awayTeam = teamNames.get(match.away_team_id) ?? "Equipo visitante";
 
-  // El Match Center contabiliza los eventos de gol (también los autogoles).
+  // En goles antiguos de jugador, scoring_team_id puede ser null.
+  // Se usa el mismo criterio que el calculo Fantasy global, incluidos autogoles.
   // En un partido terminado prevalece el marcador final confirmado.
-  const recordedGoals = events.filter((event) => event.event_type === "goal");
-  const liveHomeScore = recordedGoals.filter(
-    (event) => event.scoring_team_id === match.home_team_id,
-  ).length;
-  const liveAwayScore = recordedGoals.filter(
-    (event) => event.scoring_team_id === match.away_team_id,
-  ).length;
+  const teamByPlayer = new Map(squad.map((entry) => [entry.player_id, entry.team_id]));
+  const goalTeams = events
+    .filter((event) => event.event_type === "goal")
+    .map((event) =>
+      getFantasyMatchScoringTeamId(
+        event,
+        teamByPlayer,
+        match.home_team_id,
+        match.away_team_id,
+      ),
+    );
+  const liveHomeScore = goalTeams.filter((teamId) => teamId === match.home_team_id).length;
+  const liveAwayScore = goalTeams.filter((teamId) => teamId === match.away_team_id).length;
   const homeScore = match.status === "finished"
     ? (match.home_score ?? liveHomeScore)
     : liveHomeScore;

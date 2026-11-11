@@ -5,6 +5,7 @@ import {
   getFantasyLiveMatchMinute,
   getFantasyLivePlayedMinutes,
   getMatchGoalsConcededOnField,
+  getFantasyMatchScoringTeamId,
   PLAYER_POSITIONS,
   type FantasyPlayerPointsResult,
   type FantasyScoringVersion,
@@ -61,27 +62,17 @@ export function calculateFantasyLivePoints({
     ]),
   );
 
-  // Un gol en propia puerta beneficia al equipo contrario, como en Match Admin.
-  // Los eventos sin equipo beneficiario se intentan resolver por el autor.
+  // La atribucion de goles es identica a la del marcador en directo.
   const teamByPlayer = new Map(squad.map((entry) => [entry.player_id, entry.team_id]));
-  const resolvedEvents = events.map((event) => {
-    const actorTeam = event.player_id
-      ? teamByPlayer.get(event.player_id) ?? null
-      : null;
-
-    const fallbackScorerTeam = event.is_own_goal && actorTeam
-      ? actorTeam === match.home_team_id
-        ? match.away_team_id
-        : actorTeam === match.away_team_id
-          ? match.home_team_id
-          : null
-      : actorTeam;
-
-    return {
-      ...event,
-      scoring_team_id: event.scoring_team_id ?? fallbackScorerTeam,
-    };
-  });
+  const resolvedEvents = events.map((event) => ({
+    ...event,
+    scoring_team_id: getFantasyMatchScoringTeamId(
+      event,
+      teamByPlayer,
+      match.home_team_id,
+      match.away_team_id,
+    ),
+  }));
 
   const homeGoals = resolvedEvents.filter(
     (event) => event.event_type === "goal" && event.scoring_team_id === match.home_team_id,
