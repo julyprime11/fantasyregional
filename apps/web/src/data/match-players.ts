@@ -18,7 +18,6 @@ import {
   type MatchRow,
 } from "./matches";
 
-import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { currentUserIsAdmin } from "@/lib/admin-auth";
 
 import type {
@@ -398,8 +397,9 @@ export async function updateMatchPlayerQuickStat(
  */
 
 /**
- * Estadísticas V3: guardado atómico autorizado exclusivamente desde
- * la capa de servidor. El navegador nunca recibe credenciales elevadas.
+ * Estadísticas V3: guardado atómico con sesión autenticada.
+ * Los permisos de Directiva se validan tanto en el servidor como dentro
+ * de la función SQL SECURITY DEFINER. No requiere service_role.
  */
 export async function updateMatchPlayerExtraStat(
   matchId: string,
@@ -410,7 +410,7 @@ export async function updateMatchPlayerExtraStat(
   if (!(await currentUserIsAdmin())) {
     throw new InputError("No tienes permisos para modificar las estadísticas.");
   }
-  const supabase = createAdminSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc(
     "increment_match_player_extra_stat",
     {
