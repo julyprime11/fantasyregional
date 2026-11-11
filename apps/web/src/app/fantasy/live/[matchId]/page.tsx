@@ -246,7 +246,7 @@ export default async function FantasyLiveMatchPage({
                   <span className="font-bold text-zinc-600"> Gris:</span> fuera del campo ·{" "}
                 </>
               ) : null}
-              <span className="font-black text-amber-700">C:</span> capitán Fantasy.
+              <span className="font-black text-amber-700">C:</span> capitán Fantasy (sus puntos cuentan ×2 en este campo).
               {realXI.length === 0 && (
                 <p className="mt-1 text-amber-700">
                   Directiva todavía no ha definido el XI titular de este equipo.
