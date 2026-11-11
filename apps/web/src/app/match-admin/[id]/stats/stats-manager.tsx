@@ -2172,7 +2172,7 @@ export default function StatsManager({
 
         <div
 
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 pt-[max(0.75rem,env(safe-area-inset-top))] sm:items-center sm:p-4"
 
           onClick={() =>
 
@@ -2188,7 +2188,10 @@ export default function StatsManager({
 
           <div
 
-            className="max-h-[97dvh] w-full max-w-xl overscroll-contain overflow-y-auto rounded-t-[1.5rem] bg-white p-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl sm:rounded-[1.5rem] sm:p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="match-player-stats-title"
+            className="flex max-h-full min-h-0 w-full max-w-xl flex-col overflow-hidden rounded-t-[1.5rem] bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-[1.5rem]"
 
             onClick={(
 
@@ -2202,9 +2205,9 @@ export default function StatsManager({
 
           >
 
-            <div className="flex items-start justify-between gap-2">
+            <div className="z-20 flex shrink-0 items-start justify-between gap-2 border-b border-zinc-100 bg-white px-3 pb-2 pt-3 sm:px-4 sm:pt-4">
 
-              <div className="flex min-w-0 items-start gap-2">
+              <div className="flex min-w-0 flex-1 items-start gap-2">
 
                 <div className="origin-top-left scale-90">
                   <PlayerNumber player={selectedPlayer} />
@@ -2222,7 +2225,7 @@ export default function StatsManager({
 
 
 
-                  <h2 className="mt-0.5 text-lg font-black leading-tight tracking-tight text-zinc-950">
+                  <h2 id="match-player-stats-title" className="mt-0.5 text-lg font-black leading-tight tracking-tight text-zinc-950">
 
                     {
 
@@ -2354,7 +2357,7 @@ export default function StatsManager({
 
                 aria-label="Cerrar estadísticas"
 
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg font-black text-zinc-700"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xl font-black text-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f3d2e]"
 
               >
 
@@ -2365,6 +2368,9 @@ export default function StatsManager({
             </div>
 
 
+
+            {/* El encabezado permanece fijo, el cuerpo tiene su propio scroll. */}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 [-webkit-overflow-scrolling:touch] sm:px-4">
 
             {/* SUSTITUCIÓN */}
 
@@ -2472,7 +2478,7 @@ export default function StatsManager({
 
             />
 
-
+            </div>
 
           </div>
 

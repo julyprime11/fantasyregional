@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   updateMatchPlayerAction,
@@ -106,6 +107,8 @@ export default function StatsForm({
   extraStats,
   onSaved,
 }: StatsFormProps) {
+  const router = useRouter();
+
   const action =
     updateMatchPlayerAction.bind(
       null,
@@ -609,6 +612,11 @@ export default function StatsForm({
       }
       if (typeof result.value === "number") {
         setExtraValues((current) => ({ ...current, [field]: result.value as number }));
+        if (field === "own_goals") {
+          // Actualiza la cronología y el marcador del Match Center.
+          // La tabla de eventos puede no emitir DELETE filtrados en Realtime.
+          router.refresh();
+        }
       }
     } catch {
       setExtraError("No se pudo guardar. Comprueba la conexión e inténtalo de nuevo.");
@@ -1059,7 +1067,7 @@ function ExtraStatControl({
           <span className="font-bold text-[#0f3d2e]">Puntuación Fantasy: {pointsLabel}.</span>{" "}
           {stat.description}
           {stat.field === "own_goals" && (
-            <> Registra también el gol en los eventos del partido para actualizar el marcador.</>
+            <> Se registra automáticamente en el timeline y suma un gol al equipo rival.</>
           )}
         </p>
       )}
