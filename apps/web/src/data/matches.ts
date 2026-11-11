@@ -657,151 +657,28 @@ export async function finishLiveMatch(
  * a su estado previo al inicio.
  */
 
+/**
+ * Reinicio transaccional autorizado en PostgreSQL.
+ * No actualizamos partido, eventos y jugadores mediante peticiones separadas:
+ * un fallo intermedio dejaría el partido a medio reiniciar.
+ */
 export async function resetLiveMatch(
   matchId: string,
 ): Promise<void> {
-  const supabase =
-    await createServerSupabaseClient();
-
-  /*
-   * Reiniciamos completamente
-   * el estado del partido.
-   */
-  const {
-    error: matchError,
-  } =
-    await supabase
-      .from("matches")
-      .update({
-        home_score:
-          null,
-
-        away_score:
-          null,
-
-        live_phase:
-          "not_started",
-
-        live_clock_seconds:
-          0,
-
-        live_clock_started_at:
-          null,
-
-        live_started_at:
-          null,
-
-        live_finished_at:
-          null,
-
-        status:
-          "scheduled",
-      } as never)
-      .eq(
-        "id",
-        matchId,
-      );
-
-  if (matchError) {
-    throw matchError;
+  if (!matchId) {
+    throw new InputError("Partido no válido.");
   }
 
-  /*
-   * Eliminamos toda la cronología
-   * del intento anterior:
-   *
-   * goles
-   * asistencias
-   * amarillas
-   * rojas
-   * sustituciones
-   */
-  const {
-    error: eventsError,
-  } =
-    await supabase
-      .from("match_events")
-      .delete()
-      .eq(
-        "match_id",
-        matchId,
-      );
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("reset_live_match", {
+    p_match_id: matchId,
+  });
 
-  if (eventsError) {
-    throw eventsError;
-  }
-
-  /*
-   * Restauramos todos los jugadores.
-   *
-   * Conservamos:
-   * - convocatoria
-   * - titular / suplente
-   *
-   * Limpiamos:
-   * - minutos
-   * - estadísticas
-   * - estado en campo
-   * - expulsión automática
-   * - portería a cero
-   * - estado completado
-   */
-  const {
-    error: playersError,
-  } =
-    await supabase
-      .from("match_players")
-      .update({
-        on_field:
-          false,
-
-        entered_minute:
-          null,
-
-        card_dismissed:
-          false,
-
-        dismissal_minute:
-          null,
-
-        minutes_played:
-          0,
-
-        goals:
-          0,
-
-        assists:
-          0,
-
-        yellow_cards:
-          0,
-
-        red_cards:
-          0,
-        penalties_won: 0,
-        penalties_conceded: 0,
-        penalties_missed: 0,
-        penalties_saved: 0,
-        errors_leading_to_goal: 0,
-        errors_leading_to_chance: 0,
-        big_chances_missed: 0,
-        own_goals: 0,
-
-        clean_sheet:
-          false,
-
-        stats_completed:
-          false,
-      } as never)
-      .eq(
-        "match_id",
-        matchId,
-      );
-
-  if (playersError) {
-    throw playersError;
+  if (error) {
+    throw error;
   }
 }
+
 export async function deleteMatch(
   matchId: string,
 ): Promise<void> {

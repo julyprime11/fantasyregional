@@ -728,6 +728,10 @@ export type Database = {
         }
         Returns: string
       }
+      reset_live_match: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
       finalize_match_player_minutes: {
         Args: { p_match_id: string }
         Returns: undefined
