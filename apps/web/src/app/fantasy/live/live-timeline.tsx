@@ -1,7 +1,14 @@
-import { FANTASY_EXTRA_STATS } from "@regional-fantasy/shared";
+import { FANTASY_EXTRA_STATS, type FantasyExtraStatField } from "@regional-fantasy/shared";
 import type { MatchEvent } from "@/data/match-events";
 
+type HistoricalStat = {
+  playerId: string;
+  field: Exclude<FantasyExtraStatField, "own_goals">;
+  count: number;
+};
+
 type Props = {
+  historicalStats?: readonly HistoricalStat[];
   events: readonly MatchEvent[];
   playerNames: Readonly<Record<string, string>>;
   teamNames: Readonly<Record<string, string>>;
@@ -44,6 +51,7 @@ export default function LiveMatchTimeline({
   events,
   playerNames,
   teamNames,
+  historicalStats = [],
 }: Props) {
   const latestFirst = [...events].sort(
     (a, b) =>
@@ -64,17 +72,18 @@ export default function LiveMatchTimeline({
           </h2>
         </div>
         <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[10px] font-black text-zinc-600 ring-1 ring-black/5">
-          {events.length} {events.length === 1 ? "acción" : "acciones"}
+          {events.length + historicalStats.reduce((sum, item) => sum + item.count, 0)} acciones
         </span>
       </div>
 
-      {latestFirst.length === 0 ? (
+      {latestFirst.length === 0 && historicalStats.length === 0 ? (
         <div className="rounded-[1.25rem] bg-white px-4 py-5 text-xs leading-5 text-zinc-500 shadow-sm ring-1 ring-black/5">
           Todavía no hay eventos. Los goles, tarjetas, sustituciones y las estadísticas
           que registre Directiva aparecerán aquí.
         </div>
       ) : (
-        <ol className="overflow-hidden rounded-[1.25rem] bg-white shadow-sm ring-1 ring-black/5">
+        <div className="space-y-2">
+        {latestFirst.length > 0 && <ol className="overflow-hidden rounded-[1.25rem] bg-white shadow-sm ring-1 ring-black/5">
           {latestFirst.map((event) => {
             const info = eventLabel(event);
             const player = event.player_id
@@ -125,7 +134,25 @@ export default function LiveMatchTimeline({
               </li>
             );
           })}
-        </ol>
+        </ol>}
+        {historicalStats.length > 0 && (
+          <div className="rounded-[1.25rem] bg-white px-3 py-3 text-xs shadow-sm ring-1 ring-black/5">
+            <p className="mb-2 font-black text-zinc-700">Estadísticas anteriores · minuto no registrado</p>
+            <ul className="space-y-2">
+              {historicalStats.map((item) => {
+                const stat = FANTASY_EXTRA_STATS.find((entry) => entry.field === item.field);
+                if (!stat) return null;
+                return (
+                  <li key={`${item.playerId}-${item.field}`} className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 text-zinc-700">{stat.icon} {stat.label} · {playerNames[item.playerId] ?? "Jugador"}</span>
+                    <span className="shrink-0 font-black tabular-nums text-[#0f3d2e]">×{item.count}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+        </div>
       )}
     </section>
   );
