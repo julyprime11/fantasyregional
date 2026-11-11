@@ -6,6 +6,11 @@ import {
 } from "react";
 
 import {
+  FANTASY_EXTRA_STATS,
+  type FantasyExtraStatField,
+} from "@regional-fantasy/shared";
+
+import {
   createBrowserSupabaseClient,
 } from "@/lib/supabase/client";
 
@@ -19,7 +24,8 @@ type TimelineEvent = {
     | "assist"
     | "yellow_card"
     | "red_card"
-    | "substitution";
+    | "substitution"
+    | Exclude<FantasyExtraStatField, "own_goals">;
 
   playerId:
     | string
@@ -382,6 +388,20 @@ function TimelineRow({
               {player}
             </p>
           </>
+        )}
+
+        {FANTASY_EXTRA_STATS.filter((stat) => stat.field !== "own_goals").map(
+          (stat) =>
+            event.eventType === stat.field && (
+              <div key={stat.field}>
+                <p className="font-black text-zinc-950">
+                  {stat.icon} {stat.label}
+                </p>
+                <p className="mt-0.5 text-xs font-semibold text-zinc-500">
+                  {player}
+                </p>
+              </div>
+            ),
         )}
 
         {event.eventType ===
