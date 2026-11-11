@@ -1,4 +1,3 @@
-import type { LiveMatchPhase } from "@/data/matches";
 
 /**
  * Mismo reloj para Match Admin y Fantasy:
@@ -6,7 +5,7 @@ import type { LiveMatchPhase } from "@/data/matches";
  * Nunca suma tiempo durante descanso, partido preparado o finalizado.
  */
 export function calculateLiveClockSeconds(
-  phase: LiveMatchPhase,
+  phase: string,
   storedSeconds: number,
   startedAt: string | null,
   nowMs: number = Date.now(),
