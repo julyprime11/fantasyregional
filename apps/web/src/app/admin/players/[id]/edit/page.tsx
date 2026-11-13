@@ -33,6 +33,8 @@ import {
   playerFields,
 } from "../../fields";
 
+import { PlayerPhotoUploadForm } from "./photo-upload-form";
+
 export default async function EditPlayerPage({
   params,
 }: {
@@ -161,6 +163,12 @@ export default async function EditPlayerPage({
       </header>
 
       <div className="px-4 pb-10">
+        <PlayerPhotoUploadForm
+          playerId={player.id}
+          playerName={fullName}
+          currentImageUrl={player.image_url}
+        />
+
         <section className="mt-4 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="mb-5">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#557368]">
@@ -182,9 +190,7 @@ export default async function EditPlayerPage({
           )}
 
           <CreateForm
-            key={
-              player.id
-            }
+            key={`${player.id}:${player.image_url ?? ""}`}
             action={updatePlayerAction.bind(
               null,
               player.id,

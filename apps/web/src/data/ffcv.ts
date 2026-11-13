@@ -321,7 +321,8 @@ export async function syncCastelloPlayersFromFfcv(
           id,
           first_name,
           last_name,
-          ffcv_player_code
+          ffcv_player_code,
+          image_url
         `,
       )
       .eq(
@@ -432,6 +433,10 @@ export async function syncCastelloPlayersFromFfcv(
         ffcvPlayer.foto &&
         ffcvPlayer.foto.startsWith(
           "data:image/",
+        ) &&
+        // Una foto subida manualmente por Directiva prevalece sobre FFCV.
+        !localPlayer.image_url?.includes(
+          "/storage/v1/object/public/player-images/manual/",
         )
       ) {
         const image =
