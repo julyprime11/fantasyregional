@@ -772,9 +772,12 @@ export default async function MatchAdminResultsPage({
 
                               <PointRow
                                 label="Valoración"
-                                value={
-                                  fantasy.breakdown.rating
-                                }
+                                value={fantasy.breakdown.rating}
+                              />
+
+                              <PointRow
+                                label="MVP"
+                                value={fantasy.breakdown.mvp}
                               />
                             </div>
 
