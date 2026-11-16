@@ -1,12 +1,6 @@
 import "server-only";
 
-import {
-  calculateFantasyLineupPoints,
-  getFantasyCaptainBonus,
-  PLAYER_POSITIONS,
-  type FantasyPlayerPointsResult,
-  type PlayerPosition,
-} from "@regional-fantasy/shared";
+import type { FantasyPlayerPointsResult } from "@regional-fantasy/shared";
 
 import {
   getFantasyLineup,
@@ -54,30 +48,7 @@ export type FantasyMatchPlayerPoints = {
   rateable:
     boolean;
 
-  breakdown: {
-    minutes:
-      number;
-
-    goals:
-      number;
-
-    assists:
-      number;
-
-    clean_sheet:
-      number;
-
-    goals_conceded: number;
-
-    cards:
-      number;
-
-    rating:
-      number;
-
-    mvp:
-      number;
-  };
+  breakdown: FantasyPlayerPointsResult["breakdown"];
 };
 
 export type FantasyMatchPointsResult =
@@ -102,23 +73,6 @@ export type FantasyMatchPointsResult =
       players:
         FantasyMatchPlayerPoints[];
     };
-
-function toPlayerPosition(
-  value:
-    string | null | undefined,
-): PlayerPosition | null {
-  if (!value) {
-    return null;
-  }
-
-  return PLAYER_POSITIONS.includes(
-    value as PlayerPosition,
-  )
-    ? (
-        value as PlayerPosition
-      )
-    : null;
-}
 
 export async function getFantasyMatchPoints(
   input: {
@@ -192,154 +146,8 @@ export async function getFantasyMatchPoints(
       ),
     );
 
-  /*
-   * Duración real aproximada del partido:
-   * usamos el mayor número de minutos
-   * registrado entre todos los participantes.
-   *
-   * Esto permite aplicar correctamente
-   * la regla del portero que debe disputar
-   * todo el encuentro.
-   */
-  const matchMinutes =
-    Math.max(
-      0,
-      ...results.rows.map(
-        (
-          row,
-        ) =>
-          row.entry.minutes_played,
-      ),
-    );
-
-  /*
-   * El MVP se obtiene del mismo resultado
-   * oficial calculado para el partido.
-   *
-   * Si existe MVP compartido, todos los
-   * jugadores incluidos reciben el bonus.
-   */
-  const mvpPlayerIds =
-    new Set(
-      results.mvp.players.map(
-        (
-          player,
-        ) =>
-          player.player_id,
-      ),
-    );
-
-  const fantasyInputs =
-    lineupPlayers
-      .map(
-        (
-          lineupEntry,
-        ) => {
-          const result =
-            resultByPlayer.get(
-              lineupEntry.player_id,
-            );
-
-          if (!result) {
-            return null;
-          }
-
-          const position =
-            toPlayerPosition(
-              result.entry.player
-                ?.position ??
-                lineupEntry.player
-                  ?.position ??
-                null,
-            );
-
-          if (!position) {
-            return null;
-          }
-
-          return {
-            player_id:
-              lineupEntry.player_id,
-
-            position,
-
-            minutes_played:
-              result.entry
-                .minutes_played,
-
-            goals:
-              result.entry
-                .goals,
-
-            assists:
-              result.entry
-                .assists,
-
-            yellow_cards:
-              result.entry
-                .yellow_cards,
-
-            red_cards:
-              result.entry
-                .red_cards,
-
-            red_card_reason:
-              result.entry.red_card_reason as "direct" | "second_yellow" | null,
-
-            clean_sheet:
-              result.entry
-                .clean_sheet,
-
-            starter:
-              result.entry
-                .starter,
-
-            match_minutes:
-              matchMinutes,
-
-            goals_conceded_on_field: result.goalsConcededOnField,
-
-            panel_rating:
-              result.rating
-                .final_rating,
-
-            scoring_version: results.scoring_version,
-
-            is_mvp:
-              mvpPlayerIds.has(
-                lineupEntry.player_id,
-              ),
-          };
-        },
-      )
-      .filter(
-        (
-          entry,
-        ): entry is NonNullable<
-          typeof entry
-        > =>
-          entry !== null,
-      );
-
-  const fantasy =
-    calculateFantasyLineupPoints(
-      fantasyInputs,
-    );
-
-  const pointsByPlayer =
-    new Map<
-      string,
-      FantasyPlayerPointsResult
-    >(
-      fantasy.players.map(
-        (
-          player,
-        ) => [
-          player.player_id,
-          player,
-        ],
-      ),
-    );
+  // La puntuación Fantasy es global por jugador y partido: Match Admin
+  // ya calculó V3, valoración y MVP. Las ligas no la recalculan.
 
   const players =
     lineupPlayers.map(
@@ -352,9 +160,7 @@ export async function getFantasyMatchPoints(
           );
 
         const playerPoints =
-          pointsByPlayer.get(
-            entry.player_id,
-          );
+          result?.fantasy ?? null;
 
         const playerName =
           entry.player
@@ -434,6 +240,9 @@ export async function getFantasyMatchPoints(
               cards:
                 0,
 
+               extra_stats:
+                 0,
+
               rating:
                 0,
 
@@ -448,9 +257,9 @@ export async function getFantasyMatchPoints(
     status:
       "ready",
 
-    total_points:
-      fantasy.total_points +
-      getFantasyCaptainBonus(fantasy.players, lineup.captain_player_id),
+    // La puntuación de liga suma los puntos globales del XI,
+     // aplicando el bonus solo al capitán seleccionado.
+     total_points: players.reduce((sum, player) => sum + player.points, 0),
 
     players,
   };
