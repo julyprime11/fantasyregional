@@ -48,6 +48,10 @@ const POINT_ROWS: ReadonlyArray<{
     label: "Tarjetas",
   },
   {
+    key: "extra_stats",
+    label: "Penaltis y otras acciones",
+  },
+  {
     key: "rating",
     label: "Valoración",
   },
@@ -249,6 +253,9 @@ export default function PlayerPointsTrigger({
             {POINT_ROWS.map(({ key, label }) => {
               const points =
                 player.breakdown[key];
+
+              // Las acciones V3 no aparecen en jornadas antiguas ni si suman 0.
+              if (key === "extra_stats" && points === 0) return null;
 
               return (
                 <div
