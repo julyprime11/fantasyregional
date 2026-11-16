@@ -1056,3 +1056,33 @@ test("live score counts player goals without scoring_team_id and keeps opponent 
     "away",
   );
 });
+
+test("V3 final scoring includes a won penalty and MVP: 27 versus historical V2 25", () => {
+  const input = createPlayerInput({
+    player_id: "v3-final-regression",
+    position: "CM",
+    minutes_played: 94,
+    match_minutes: 94,
+    goals: 2,
+    panel_rating: 9.49,
+    penalties_won: 1,
+    scoring_version: "v3",
+    is_mvp: true,
+  });
+  const scored = calculateFantasyPlayerPoints(input);
+  assert.equal(scored.points, 27);
+  assert.deepEqual(
+    [scored.breakdown.minutes, scored.breakdown.goals,
+     scored.breakdown.extra_stats, scored.breakdown.rating, scored.breakdown.mvp],
+    [3, 10, 2, 10, 2],
+  );
+  const lineup = calculateFantasyLineupPoints([input]);
+  assert.equal(lineup.total_points, 27);
+  assert.equal(
+    lineup.total_points + getFantasyCaptainBonus(lineup.players, input.player_id),
+    54,
+  );
+  const historic = calculateFantasyPlayerPoints({ ...input, scoring_version: "v2" });
+  assert.equal(historic.points, 25);
+  assert.equal(historic.breakdown.extra_stats, 0);
+});
