@@ -510,3 +510,27 @@ export async function deleteFantasyLeague(
     );
   }
 }
+/**
+ * Abandona exclusivamente la liga indicada y el usuario autenticado.
+ * El FK ON DELETE CASCADE borra los XI de esta membresía, sin tocar otras
+ * ligas ni las votaciones globales de los jugadores.
+ */
+export async function leaveFantasyLeague(
+  leagueId: string,
+  userId: string,
+): Promise<boolean> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data: deleted, error } = await supabase
+    .from("fantasy_league_members")
+    .delete()
+    .eq("league_id", leagueId)
+    .eq("user_id", userId)
+    .select("id");
+
+  if (error) {
+    throw error;
+  }
+
+  return deleted?.length === 1;
+}

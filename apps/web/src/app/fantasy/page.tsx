@@ -9,6 +9,7 @@ import Link from "next/link";
 import {
   DeleteLeagueButton,
 } from "@/app/fantasy/leagues/delete-league-button";
+import { LeaveLeagueButton } from "@/app/fantasy/leagues/leave-league-button";
 
 import {
 
@@ -4860,6 +4861,27 @@ export default async function FantasyPage({
     </div>
   </section>
 )}
+
+          {/* SALIR DE LA LIGA ACTIVA */}
+          <section
+            aria-labelledby="leave-league-title"
+            className="mt-9 rounded-[1.4rem] bg-white p-4 shadow-sm ring-1 ring-black/5"
+          >
+            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
+              Configuración de liga
+            </p>
+            <h2 id="leave-league-title" className="mt-2 text-base font-black text-zinc-950">
+              Abandonar liga
+            </h2>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Saldrás únicamente de <span className="font-bold text-zinc-700">{activeLeague.name}</span>.
+              Tus otras ligas no cambiarán.
+            </p>
+            <div className="mt-4">
+              <LeaveLeagueButton leagueId={activeLeague.id} leagueName={activeLeague.name} />
+            </div>
+          </section>
+
 
 
 

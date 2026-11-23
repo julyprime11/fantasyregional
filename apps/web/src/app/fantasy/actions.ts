@@ -11,6 +11,7 @@ import {
 import {
   deleteFantasyLeague,
   getFantasyLeagueById,
+  leaveFantasyLeague,
 } from "@/data/fantasy-leagues";
 
 import {
@@ -102,4 +103,48 @@ export async function deleteFantasyLeagueAction(
   redirect(
     "/fantasy",
   );
+}
+export type LeaveLeagueState = {
+  status: "idle" | "error";
+  message: string;
+};
+
+/**
+ * El cliente envía solo el ID de la liga; nunca decide qué usuario
+ * eliminar. La sesión y la política RLS verifican la identidad.
+ */
+export async function leaveFantasyLeagueAction(
+  leagueId: string,
+  _previous: LeaveLeagueState,
+  _form: FormData,
+): Promise<LeaveLeagueState> {
+  const user = await requireUser();
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(leagueId)) {
+    return {
+      status: "error",
+      message: "La liga seleccionada no es válida.",
+    };
+  }
+
+  try {
+    const removed = await leaveFantasyLeague(leagueId, user.id);
+    if (!removed) {
+      return {
+        status: "error",
+        message: "Ya no perteneces a esa liga. Recarga la página.",
+      };
+    }
+
+    revalidatePath("/fantasy", "layout");
+    revalidatePath("/fantasy/leagues");
+    revalidatePath("/");
+  } catch {
+    return {
+      status: "error",
+      message: "No se pudo abandonar la liga. Inténtalo de nuevo.",
+    };
+  }
+
+  redirect("/fantasy");
 }
