@@ -72,6 +72,9 @@ export type FantasyMatchPointsResult =
 
       players:
         FantasyMatchPlayerPoints[];
+
+      other_players:
+        FantasyMatchPlayerPoints[];
     };
 
 export async function getFantasyMatchPoints(
@@ -84,6 +87,9 @@ export async function getFantasyMatchPoints(
 
     matchId:
       string;
+
+    // Opcional: sólo la página de jornada consulta el resto de convocados.
+    squadTeamId?: string;
   },
 ): Promise<FantasyMatchPointsResult> {
   const lineup =
@@ -253,6 +259,51 @@ export async function getFantasyMatchPoints(
       },
     );
 
+  // Los puntos fuera del XI son el resultado global del jugador/partido,
+  // sin multiplicador de capitán. Excluimos el XI elegido por este usuario.
+  const selectedPlayerIds = new Set(lineupPlayers.map((entry) => entry.player_id));
+  const otherPlayers: FantasyMatchPlayerPoints[] = input.squadTeamId
+    ? results.rows
+        .filter(
+          (row) =>
+            row.entry.team_id === input.squadTeamId &&
+            !selectedPlayerIds.has(row.entry.player_id),
+        )
+        .map((row) => {
+          const fantasy = row.fantasy;
+          const points = fantasy?.points ?? 0;
+          return {
+            player_id: row.entry.player_id,
+            player_name: row.entry.player
+              ? `${row.entry.player.first_name} ${row.entry.player.last_name ?? ""}`.trim()
+              : "Jugador no disponible",
+            shirt_number: row.entry.player?.shirt_number ?? null,
+            position: row.entry.player?.position ?? null,
+            starter: row.entry.starter,
+            minutes_played: row.entry.minutes_played,
+            final_rating: row.rating.final_rating,
+            rounded_rating: fantasy?.rounded_rating ?? null,
+            points,
+            base_points: points,
+            captain_bonus: 0,
+            is_captain: false,
+            rateable: fantasy?.rateable ?? false,
+            breakdown: fantasy?.breakdown ?? {
+              minutes: 0,
+              goals: 0,
+              assists: 0,
+              clean_sheet: 0,
+              goals_conceded: 0,
+              cards: 0,
+              extra_stats: 0,
+              rating: 0,
+              mvp: 0,
+            },
+          };
+        })
+        .sort((a, b) => b.points - a.points || a.player_name.localeCompare(b.player_name, "es"))
+    : [];
+
   return {
     status:
       "ready",
@@ -262,5 +313,6 @@ export async function getFantasyMatchPoints(
      total_points: players.reduce((sum, player) => sum + player.points, 0),
 
     players,
+    other_players: otherPlayers,
   };
 }

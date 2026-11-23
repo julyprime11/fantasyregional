@@ -384,6 +384,7 @@ export default async function FantasyMatchPointsPage({
         selectedUserId,
 
       matchId,
+      squadTeamId: league.team_id,
 
     });
 
@@ -1484,6 +1485,46 @@ export default async function FantasyMatchPointsPage({
 
           </div>
 
+        </section>
+
+        {/* RESTO DE LA CONVOCATORIA (NO SUMA AL XI) */}
+        <section className="mt-7" aria-labelledby="other-squad-title">
+          <div className="flex items-end justify-between gap-3 px-1">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#0f3d2e]">
+                Plantilla del partido
+              </p>
+              <h2 id="other-squad-title" className="mt-0.5 text-xl font-black tracking-tight text-zinc-950">
+                Resto de la convocatoria
+              </h2>
+            </div>
+            <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[10px] font-black text-zinc-500 shadow-sm ring-1 ring-black/5">
+              {result.other_players.length}
+            </span>
+          </div>
+
+          <p className="mt-1.5 px-1 text-[11px] leading-5 text-zinc-500">
+            Jugadores convocados del {league.team?.name ?? "equipo"} que no estaban en{" "}
+            {isOwnLineup ? "tu XI Fantasy" : `el XI de ${selectedName}`}.
+            Sus puntos no se añaden al total de ese XI.
+          </p>
+
+          {result.other_players.length > 0 ? (
+            <div className="mt-3 overflow-hidden rounded-[1.3rem] bg-white shadow-sm ring-1 ring-black/5">
+              {result.other_players.map((player) => (
+                <PlayerPointsTrigger
+                  key={player.player_id}
+                  player={player}
+                  variant="list"
+                  scoreContext="match"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-[1.3rem] bg-white px-4 py-5 text-center text-xs font-semibold text-zinc-500 shadow-sm ring-1 ring-black/5">
+              No hay otros jugadores convocados fuera de este XI.
+            </div>
+          )}
         </section>
 
       </div>

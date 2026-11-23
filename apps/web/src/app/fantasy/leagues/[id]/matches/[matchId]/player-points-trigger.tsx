@@ -14,6 +14,7 @@ type Props = {
   player: FantasyMatchPlayerPoints;
   variant: "pitch" | "list";
   position?: number;
+  scoreContext?: "lineup" | "match";
 };
 
 type PointKey =
@@ -73,6 +74,7 @@ export default function PlayerPointsTrigger({
   player,
   variant,
   position,
+  scoreContext = "lineup",
 }: Props) {
   const dialogRef =
     useRef<HTMLDialogElement>(null);
@@ -233,7 +235,7 @@ export default function PlayerPointsTrigger({
 
           <div className="mt-5 flex items-end justify-between border-t border-white/15 pt-4">
             <span className="text-sm font-bold text-white/70">
-              Total para tu XI
+              {scoreContext === "match" ? "Puntos del partido" : "Total para tu XI"}
             </span>
             <span className="text-3xl font-black">
               {player.points}
